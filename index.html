@@ -1291,6 +1291,33 @@ input,select,textarea{font-size:16px !important;}
 #app-projects.on{display:flex;}
 #app-projects .proj-topbar{background:linear-gradient(135deg,#1B5E20,#2E7D32);height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
 #app-projects .proj-scroll{flex:1;overflow-y:auto;padding:12px 14px 90px;}
+
+/* ── BOQ MODULE ── */
+#app-boq{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
+#app-boq.on{display:flex;}
+#app-boq .boq-topbar{background:linear-gradient(135deg,#4A148C,#7B1FA2);height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
+#app-boq .boq-tabs{display:flex;background:white;border-bottom:2px solid var(--border);flex-shrink:0;}
+#app-boq .boq-tab{flex:1;padding:10px 6px;font-size:12px;font-weight:800;color:var(--text3);text-align:center;cursor:pointer;border-bottom:3px solid transparent;transition:.2s;}
+#app-boq .boq-tab.on{color:#7B1FA2;border-bottom-color:#7B1FA2;}
+#app-boq .boq-scroll{flex:1;overflow-y:auto;padding:10px 14px 90px;}
+.boq-card{background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;cursor:pointer;}
+.boq-card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.boq-card-code{font-size:10px;font-family:monospace;background:#EDE7F6;color:#7B1FA2;padding:2px 7px;border-radius:6px;font-weight:700;}
+.boq-card-name{font-size:14px;font-weight:800;color:var(--text);flex:1;}
+.boq-card-foot{padding:8px 14px 10px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);background:#FAFAFA;}
+.boq-stat{font-size:11px;color:var(--text2);display:flex;flex-direction:column;align-items:center;flex:1;}
+.boq-stat-val{font-size:13px;font-weight:900;color:#4A148C;}
+.boq-stat-lbl{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;}
+.boq-progress-bar{height:6px;background:#E8EAF6;border-radius:99px;overflow:hidden;margin:6px 14px 10px;}
+.boq-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#7B1FA2,#AB47BC);transition:width .4s;}
+.jm-card{background:#F3E5F5;border-radius:12px;padding:12px;margin-bottom:8px;border:1px solid #CE93D8;}
+.jm-card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.jm-badge{background:#7B1FA2;color:white;font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;}
+.exec-entry{background:white;border-radius:10px;padding:10px 12px;margin-bottom:6px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;}
+.exec-type-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;}
+.exec-sc{background:#E3F2FD;color:#1565C0;}
+.exec-labour{background:#E8F5E9;color:#2E7D32;}
+.exec-material{background:#FFF3E0;color:#E65100;}
 </style>
 </head>
 <body>
@@ -1564,14 +1591,12 @@ input,select,textarea{font-size:16px !important;}
 
 <!-- TOPBAR -->
 <div class="topbar">
-  <div class="topbar-logo">AIPL<span>.</span></div>
-  <div class="topbar-sep">›</div>
-  <div class="topbar-title">Attendance Module</div>
-  <div class="topbar-project">📍 NH-48 Bypass Road · AIPL-PRJ-001</div>
+  <button class="tb-btn" onclick="showApp('dashboard')" style="margin-right:4px;">&#8592;</button>
+  <div class="topbar-title">Attendance</div>
+  <div style="flex:1;"></div>
   <div class="topbar-right">
     <div class="topbar-date" id="topbar-date">Mon, 23 Feb 2026</div>
-    <button class="btn btn-outline" style="color:#FFF;border-color:rgba(255,255,255,0.2);" onclick="openLeaveModal()">+ Apply Leave</button>
-    <button class="btn btn-outline" style="color:#FFF;border-color:rgba(255,255,255,0.2);" onclick="showToast('Attendance exported to Excel','success')">📥 Export</button>
+    <button class="btn btn-outline" style="color:#FFF;border-color:rgba(255,255,255,0.2);" onclick="openLeaveModal()">+ Leave</button>
   </div>
 </div>
 
@@ -1650,8 +1675,19 @@ input,select,textarea{font-size:16px !important;}
 
   <!-- TODAY'S PUNCH LOG -->
   <div class="punch-log-wrap" id="punch-log-wrap">
-    <div class="punch-log-title" id="punch-log-date">📋 Today's Punch Log</div>
-    <div id="punch-log-list"><div class="punch-log-empty">No punches recorded yet</div></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 0;">
+      <div class="punch-log-title" id="punch-log-date" style="margin:0;padding:0;">📋 Today's Punch Log</div>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <select id="att-log-filter" class="fsel" style="font-size:11px;padding:4px 8px;height:32px;border-radius:8px;" onchange="filterAttLog()">
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month">This Month</option>
+          <option value="all">All</option>
+        </select>
+        <button onclick="clearAttLog()" style="font-size:11px;padding:4px 10px;height:32px;background:#FEE2E2;color:#C62828;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Clear</button>
+      </div>
+    </div>
+    <div id="punch-log-list" style="padding:8px 0 4px;"><div class="punch-log-empty">No punches recorded yet</div></div>
   </div>
 
   <!-- SUMMARY CARDS (managers only) -->
@@ -2097,6 +2133,45 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="proj-sheet-foot"></div>
 </div>
 
+
+<!-- BOQ & EXECUTION SCREEN -->
+<div class="app-screen" id="app-boq">
+  <div class="boq-topbar">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">BOQ &amp; Execution</div>
+    <div style="flex:1;"></div>
+    <button class="tb-btn" id="boq-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Add</button>
+  </div>
+  <!-- Project selector -->
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()">
+      <option value="">— Select Project —</option>
+    </select>
+  </div>
+  <!-- Tabs -->
+  <div class="boq-tabs">
+    <div class="boq-tab on" id="boq-tab-boq" onclick="boqSwitchTab('boq')">📋 BOQ Items</div>
+    <div class="boq-tab" id="boq-tab-exec" onclick="boqSwitchTab('exec')">🔧 Execution</div>
+    <div class="boq-tab" id="boq-tab-summary" onclick="boqSwitchTab('summary')">📊 Summary</div>
+  </div>
+  <!-- Content -->
+  <div class="boq-scroll" id="boq-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>
+  </div>
+</div>
+
+<!-- BOQ SHEET -->
+<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
+<div class="sheet" id="sh-boq">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title" id="boq-sheet-title">New BOQ Item</div>
+    <span class="sh-close" onclick="closeBOQSheet()">&#10005;</span>
+  </div>
+  <div class="sh-body" id="boq-sheet-body"></div>
+  <div class="sh-foot" id="boq-sheet-foot"></div>
+</div>
+
 <div class="app-screen" id="app-registry">
   
 
@@ -2361,6 +2436,7 @@ function showApp(name){
   if(name==='attendance' && !window._attInit){window._attInit=true;initAttendance();}
   if(name==='registry'){initRegistry();startSync();}
   else if(name==='projects'){initProjects();stopSync();}
+  else if(name==='boq'){initBOQ();stopSync();}
   else {stopSync();}
 }
 
@@ -2918,6 +2994,7 @@ verifyOTP=async function(){
 // ATTENDANCE JS
 // ═══════════════════════════════════════════
 function initAttendance(){
+  loadPunchLog();
   initPunchLogDate();
   try{
     tick();
@@ -3122,7 +3199,7 @@ function confirmPunch() {
     label.textContent = 'PUNCH OUT';
     status.textContent = `Punched In at ${punchInTime.toLocaleTimeString()}`;
     document.getElementById('stat-mytime').textContent = `In: ${punchInTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}`;
-    punchLog.push({type:'in', time: punchInTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}), loc:'On-Site', lat:currentLat, lng:currentLng});
+    punchLog.push({type:'in', time: punchInTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}), loc:'On-Site', lat:currentLat, lng:currentLng, date:new Date().toDateString()}); savePunchLog();
     renderPunchLog();
     showToast(`✅ Punched In at ${punchInTime.toLocaleTimeString()} · Location verified · Selfie saved`, 'success');
   } else {
@@ -3134,7 +3211,7 @@ function confirmPunch() {
     label.textContent = 'PUNCH IN';
     status.textContent = `Last Out: ${outTime.toLocaleTimeString()} · ${diff}m worked`;
     document.getElementById('stat-mytime').textContent = `${Math.floor(diff/60)}h ${diff%60}m`;
-    punchLog.push({type:'out', time: outTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}), loc:'On-Site', lat:currentLat, lng:currentLng, duration: diff});
+    punchLog.push({type:'out', time: outTime.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'}), loc:'On-Site', lat:currentLat, lng:currentLng, duration: diff, date:new Date().toDateString()}); savePunchLog();
     renderPunchLog();
     showToast(`✅ Punched Out · ${Math.floor(diff/60)}h ${diff%60}m logged today`, 'success');
   }
@@ -4738,32 +4815,96 @@ function updateDateDisplay(inp){var d=inp.value;if(!d)return;var p=d.split('-');
 
 var punchLog = [];
 
+function filterAttLog(){
+  renderPunchLog();
+}
+
+function clearAttLog(){
+  if(!confirm('Clear all punch log entries?')) return;
+  punchLog = [];
+  try{ localStorage.removeItem('aipl_punchlog'); }catch(e){}
+  renderPunchLog();
+  toast('Punch log cleared','success');
+}
+
+function savePunchLog(){
+  try{ localStorage.setItem('aipl_punchlog', JSON.stringify(punchLog)); }catch(e){}
+}
+
+function loadPunchLog(){
+  try{
+    var saved = localStorage.getItem('aipl_punchlog');
+    if(saved) punchLog = JSON.parse(saved)||[];
+  }catch(e){ punchLog=[]; }
+}
+
 function renderPunchLog() {
   var list = document.getElementById('punch-log-list');
   if (!list) return;
-  if (punchLog.length === 0) {
-    list.innerHTML = '<div class="punch-log-empty">No punches recorded yet</div>';
+
+  // Filter based on dropdown
+  var filter = document.getElementById('att-log-filter');
+  var filterVal = filter ? filter.value : 'today';
+  var now = new Date();
+  var filtered = punchLog.filter(function(e){
+    if(!e.date) return filterVal==='today';
+    var d = new Date(e.date);
+    if(filterVal==='today'){
+      return d.toDateString()===now.toDateString();
+    } else if(filterVal==='week'){
+      var weekAgo = new Date(now); weekAgo.setDate(weekAgo.getDate()-7);
+      return d>=weekAgo;
+    } else if(filterVal==='month'){
+      return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = '<div class="punch-log-empty">No punches recorded</div>';
     return;
   }
-  list.innerHTML = punchLog.map(function(entry, i) {
-    var durHtml = '';
-    if (entry.type === 'out' && entry.duration !== undefined) {
-      var h = Math.floor(entry.duration / 60), m = entry.duration % 60;
-      durHtml = '<div class="punch-entry-dur">' + h + 'h ' + m + 'm</div>';
-    }
-    var latStr = entry.lat ? Math.abs(entry.lat).toFixed(4)+'°'+(entry.lat>=0?'N':'S') : '';
-    var lngStr = entry.lng ? Math.abs(entry.lng).toFixed(4)+'°'+(entry.lng>=0?'E':'W') : '';
-    var coordLabel = latStr && lngStr ? latStr+', '+lngStr : 'Location';
-    return '<div class="punch-entry" style="cursor:pointer;" onclick="openPunchMap('+i+')">' +
-      '<div class="punch-dot ' + (entry.type === 'in' ? 'punch-dot-in' : 'punch-dot-out') + '"></div>' +
-      '<div class="punch-entry-info">' +
-        '<div class="punch-entry-type">' + (entry.type === 'in' ? '✅ Punch In' : '⏹ Punch Out') + '</div>' +
-        '<div class="punch-entry-time">' + entry.time + ' · <span style="color:var(--blue2);">📍 ' + coordLabel + '</span></div>' +
-      '</div>' +
-      durHtml +
-      '<div style="font-size:18px;color:var(--text3);padding-left:4px;">›</div>' +
-    '</div>';
-  }).join('');
+
+  // Group by date
+  var groups = {};
+  var order = [];
+  filtered.forEach(function(entry, i){
+    var dateKey = entry.date || new Date().toDateString();
+    if(!groups[dateKey]){ groups[dateKey]=[]; order.push(dateKey); }
+    groups[dateKey].push({entry:entry, idx:punchLog.indexOf(entry)});
+  });
+
+  var html = '';
+  order.forEach(function(dateKey){
+    var d = new Date(dateKey);
+    var label = d.toDateString()===now.toDateString() ? 'Today' :
+                d.toDateString()===new Date(now-86400000).toDateString() ? 'Yesterday' :
+                d.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+    html += '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;padding:8px 16px 4px;">'+label+'</div>';
+    groups[dateKey].forEach(function(item){
+      var entry = item.entry; var i = item.idx;
+      var isIn = entry.type==='in';
+      var durHtml = '';
+      if(!isIn && entry.duration!==undefined){
+        var h=Math.floor(entry.duration/60), m=entry.duration%60;
+        durHtml='<div class="punch-entry-dur">'+h+'h '+m+'m</div>';
+      }
+      var latStr = entry.lat ? Math.abs(entry.lat).toFixed(4)+'°'+(entry.lat>=0?'N':'S') : '';
+      var lngStr = entry.lng ? Math.abs(entry.lng).toFixed(4)+'°'+(entry.lng>=0?'E':'W') : '';
+      var coordLabel = latStr&&lngStr ? latStr+', '+lngStr : 'No GPS';
+      var mapBtn = entry.lat ? ' onclick="openPunchMap('+i+')" style="cursor:pointer;"' : '';
+      html += '<div class="punch-entry"'+mapBtn+'>'+
+        '<div class="punch-dot '+(isIn?'punch-dot-in':'punch-dot-out')+'"></div>'+
+        '<div class="punch-entry-info">'+
+          '<div class="punch-entry-type">'+(isIn?'✅ Punch In':'⏹ Punch Out')+'</div>'+
+          '<div class="punch-entry-time">'+entry.time+' · <span style="color:var(--blue2);">📍 '+coordLabel+'</span></div>'+
+        '</div>'+
+        durHtml+
+        (entry.lat?'<div style="font-size:18px;color:var(--text3);padding-left:4px;">›</div>':'')+
+      '</div>';
+    });
+  });
+  list.innerHTML = html;
 }
 
 function openPunchMap(idx) {
@@ -5773,6 +5914,605 @@ async function deleteProjConfirm(id){
 }
 // ═══════════════════════════════════════════════════════════
 
+
+
+
+
+
+function boqSetJMTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddJM(itemId, boqQty, unit);
+}
+
+function boqSetDeleteTarget(btn){
+  var id = btn.getAttribute('data-id');
+  boqDeleteItem(id);
+}
+
+function boqSetEditTarget(btn){
+  var id = btn.getAttribute('data-id');
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
+  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
+}
+
+
+function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
+
+function boqSetJMTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddJM(itemId, boqQty, unit);
+}
+
+function boqSetDeleteTarget(btn){
+  var id = btn.getAttribute('data-id');
+  boqDeleteItem(id);
+}
+
+function boqSetEditTarget(btn){
+  var id = btn.getAttribute('data-id');
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
+  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
+}
+
+
+
+function boqSaveJMBtn(btn){
+  boqSaveJM(
+    btn.getAttribute('data-item'),
+    parseFloat(btn.getAttribute('data-boqqty'))||0,
+    parseFloat(btn.getAttribute('data-existjm'))||0,
+    parseInt(btn.getAttribute('data-jmnum'))||1,
+    btn.getAttribute('data-unit')
+  );
+}
+
+function boqSaveExecBtn(btn){
+  boqSaveExec(btn.getAttribute('data-item'), btn.getAttribute('data-jm'));
+}
+function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
+
+function boqSetJMTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddJM(itemId, boqQty, unit);
+}
+
+function boqSetDeleteTarget(btn){
+  var id = btn.getAttribute('data-id');
+  boqDeleteItem(id);
+}
+
+function boqSetEditTarget(btn){
+  var id = btn.getAttribute('data-id');
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
+  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
+}
+
+
+
+function boqSaveJMBtn(btn){
+  boqSaveJM(
+    btn.getAttribute('data-item'),
+    parseFloat(btn.getAttribute('data-boqqty'))||0,
+    parseFloat(btn.getAttribute('data-existjm'))||0,
+    parseInt(btn.getAttribute('data-jmnum'))||1,
+    btn.getAttribute('data-unit')
+  );
+}
+
+function boqSaveExecBtn(btn){
+  boqSaveExec(btn.getAttribute('data-item'), btn.getAttribute('data-jm'));
+}
+function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
+
+function boqSetJMTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddJM(itemId, boqQty, unit);
+}
+
+function boqSetDeleteTarget(btn){
+  var id = btn.getAttribute('data-id');
+  boqDeleteItem(id);
+}
+
+function boqSetEditTarget(btn){
+  var id = btn.getAttribute('data-id');
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
+  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
+}
+
+
+
+function boqSaveJMBtn(btn){
+  boqSaveJM(
+    btn.getAttribute('data-item'),
+    parseFloat(btn.getAttribute('data-boqqty'))||0,
+    parseFloat(btn.getAttribute('data-existjm'))||0,
+    parseInt(btn.getAttribute('data-jmnum'))||1,
+    btn.getAttribute('data-unit')
+  );
+}
+
+function boqSaveExecBtn(btn){
+  boqSaveExec(btn.getAttribute('data-item'), btn.getAttribute('data-jm'));
+}
+function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
+
+function boqSetJMTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddJM(itemId, boqQty, unit);
+}
+
+function boqSetDeleteTarget(btn){
+  var id = btn.getAttribute('data-id');
+  boqDeleteItem(id);
+}
+
+function boqSetEditTarget(btn){
+  var id = btn.getAttribute('data-id');
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
+  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
+}
+// ═══════════════════════════════════════════════════════════
+// BOQ & EXECUTION MODULE
+// ═══════════════════════════════════════════════════════════
+var BOQ_ITEMS = [];
+var BOQ_JMS = [];
+var BOQ_EXECS = [];
+var BOQ_TAB = 'boq';
+var BOQ_SELECTED_ITEM = null;
+
+function initBOQ(){
+  var btn = document.getElementById('boq-add-btn');
+  if(btn){ btn.onclick = function(){ boqOpenAddItem(); }; }
+  boqLoadProjects();
+}
+
+async function boqLoadProjects(){
+  var sel = document.getElementById('boq-proj-sel');
+  if(!sel) return;
+  try{
+    var data = await sbFetch('projects',{select:'id,name',order:'name.asc'});
+    var projs = Array.isArray(data)?data:[];
+    sel.innerHTML = '<option value="">— Select Project —</option>'+
+      projs.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+  }catch(e){ console.error(e); }
+}
+
+async function boqLoadItems(){
+  var sel = document.getElementById('boq-proj-sel');
+  var projId = sel ? sel.value : '';
+  var content = document.getElementById('boq-content');
+  if(!projId){ if(content) content.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>'; return; }
+  if(content) content.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">⏳ Loading...</div>';
+  try{
+    var [items, jms, execs] = await Promise.all([
+      sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),
+      sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),
+      sbFetch('boq_execution',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'})
+    ]);
+    BOQ_ITEMS = Array.isArray(items)?items:[];
+    BOQ_JMS = Array.isArray(jms)?jms:[];
+    BOQ_EXECS = Array.isArray(execs)?execs:[];
+  }catch(e){ BOQ_ITEMS=[]; BOQ_JMS=[]; BOQ_EXECS=[]; console.error(e); }
+  boqRender();
+}
+
+function boqSwitchTab(tab){
+  BOQ_TAB = tab;
+  ['boq','exec','summary'].forEach(function(t){
+    var el = document.getElementById('boq-tab-'+t);
+    if(el) el.classList.toggle('on', t===tab);
+  });
+  boqRender();
+}
+
+function boqRender(){
+  var projId = document.getElementById('boq-proj-sel')&&document.getElementById('boq-proj-sel').value;
+  if(!projId) return;
+  if(BOQ_TAB==='boq') boqRenderItems();
+  else if(BOQ_TAB==='exec') boqRenderExec();
+  else if(BOQ_TAB==='summary') boqRenderSummary();
+}
+
+function boqRenderItems(){
+  var el = document.getElementById('boq-content');
+  if(!el) return;
+  if(!BOQ_ITEMS.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;margin-bottom:10px;">📋</div><div style="font-weight:700;">No BOQ items yet</div><div style="font-size:12px;margin-top:6px;">Tap + Add to create BOQ items</div></div>';
+    return;
+  }
+  el.innerHTML = BOQ_ITEMS.map(function(item){
+    // Calculate totals
+    var totalJMQty = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+    var totalExecQty = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+    var boqQty = parseFloat(item.boq_qty)||0;
+    var pct = boqQty>0 ? Math.min(100,Math.round(totalJMQty/boqQty*100)) : 0;
+    var amt = boqQty * (parseFloat(item.rate)||0);
+    return '<div class="boq-card" onclick="boqOpenItemDetail(\''+item.id+'\')">'+
+      '<div class="boq-card-head">'+
+        '<div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'+
+            '<span class="boq-card-code">'+item.item_code+'</span>'+
+          '</div>'+
+          '<div class="boq-card-name">'+item.description+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;">'+
+          '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+fmtINR(amt)+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+boqQty+' '+item.unit+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="boq-progress-bar"><div class="boq-progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div class="boq-card-foot">'+
+        '<div class="boq-stat"><div class="boq-stat-val">'+boqQty+' '+item.unit+'</div><div class="boq-stat-lbl">BOQ Qty</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val" style="color:#1565C0;">'+totalJMQty+' '+item.unit+'</div><div class="boq-stat-lbl">JM Qty</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val" style="color:#2E7D32;">'+totalExecQty+' '+item.unit+'</div><div class="boq-stat-lbl">Executed</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val" style="color:'+(boqQty-totalJMQty<0?'#C62828':'#37474F')+';">'+(boqQty-totalJMQty)+' '+item.unit+'</div><div class="boq-stat-lbl">Balance</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val">'+pct+'%</div><div class="boq-stat-lbl">JM Done</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function fmtINR(n){
+  if(!n) return '₹0';
+  n = parseFloat(n);
+  return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:0});
+}
+
+function boqRenderExec(){
+  var el = document.getElementById('boq-content');
+  if(!el) return;
+  if(!BOQ_ITEMS.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Add BOQ items first</div>';
+    return;
+  }
+  // Show execution grouped by BOQ item
+  el.innerHTML = BOQ_ITEMS.map(function(item){
+    var itemJMs = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;});
+    var itemExecs = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
+    var totalExec = itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+    var boqQty = parseFloat(item.boq_qty)||0;
+    var jmsHtml = itemJMs.length ? itemJMs.map(function(jm){
+      var jmExecs = BOQ_EXECS.filter(function(e){return e.jm_id===jm.id;});
+      var jmExecTotal = jmExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+      return '<div class="jm-card">'+
+        '<div class="jm-card-head">'+
+          '<span class="jm-badge">JM-'+jm.jm_number+'</span>'+
+          '<span style="font-size:12px;font-weight:700;color:#4A148C;">'+jm.jm_qty+' '+item.unit+' agreed</span>'+
+          '<span style="font-size:11px;color:var(--text3);margin-left:auto;">'+jm.date+'</span>'+
+          '<button onclick="event.stopPropagation();boqSetExecTarget(this)" data-item="'+item.id+'" data-jm="'+jm.id+'" data-unit="'+item.unit+'" style="background:#7B1FA2;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;margin-left:6px;">+ Entry</button>'+
+        '</div>'+
+        (jmExecs.length ? jmExecs.map(function(e){
+          var typeClass = e.exec_type==='sc'?'exec-sc':e.exec_type==='labour'?'exec-labour':'exec-material';
+          var typeLbl = e.exec_type==='sc'?'SC':e.exec_type==='labour'?'Labour':'Material';
+          return '<div class="exec-entry">'+
+            '<span class="exec-type-badge '+typeClass+'">'+typeLbl+'</span>'+
+            '<div style="flex:1;">'+
+              '<div style="font-size:12px;font-weight:700;">'+e.party_name+'</div>'+
+              '<div style="font-size:11px;color:var(--text3);">'+e.date+' · '+e.qty+' '+item.unit+' @ ₹'+e.rate+'</div>'+
+            '</div>'+
+            '<div style="font-size:13px;font-weight:900;color:#1565C0;">'+fmtINR(e.qty*e.rate)+'</div>'+
+          '</div>';
+        }).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0;">No execution entries yet</div>')+
+        '<div style="font-size:11px;font-weight:700;color:#4A148C;margin-top:6px;">Executed: '+jmExecTotal+' / '+jm.jm_qty+' '+item.unit+'</div>'+
+      '</div>';
+    }).join('') : '<div style="font-size:12px;color:var(--text3);padding:4px 0 8px;">No JMs yet. <button onclick="boqSetJMTarget(this)" data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" style="border:none;background:none;color:#7B1FA2;font-weight:700;cursor:pointer;font-size:12px;padding:0;">+ Add JM</button></div>';
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:#F3E5F5;">'+
+        '<span class="boq-card-code">'+item.item_code+'</span>'+
+        '<span style="font-size:13px;font-weight:800;flex:1;">'+item.description+'</span>'+
+        '<span style="font-size:11px;color:#7B1FA2;font-weight:700;">'+totalExec+'/'+boqQty+' '+item.unit+'</span>'+
+        '<button onclick="boqSetJMTarget(this)" data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ JM</button>'+
+      '</div>'+
+      '<div style="padding:10px 14px;">'+jmsHtml+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+function boqRenderSummary(){
+  var el = document.getElementById('boq-content');
+  if(!el) return;
+  var totalBOQ=0, totalJM=0, totalExec=0, totalBOQAmt=0, totalExecAmt=0;
+  BOQ_ITEMS.forEach(function(item){
+    var bq = parseFloat(item.boq_qty)||0;
+    var rate = parseFloat(item.rate)||0;
+    totalBOQ += bq;
+    totalBOQAmt += bq*rate;
+    var jmQty = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+    totalJM += jmQty;
+    var execs = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
+    var execQty = execs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+    totalExec += execQty;
+    totalExecAmt += execs.reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  });
+  var scAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  var labAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  var matAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'+
+      statCard('📋 BOQ Value',fmtINR(totalBOQAmt),'Total contract value','#4A148C')+
+      statCard('🔧 Execution Cost',fmtINR(totalExecAmt),'Total cost incurred','#1565C0')+
+      statCard('📐 JM Qty',totalJM+' units','Agreed for execution','#F57F17')+
+      statCard('✅ Executed',totalExec+' units','Actually completed','#2E7D32')+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">Execution Breakup</div>'+
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px;">'+
+      ir('Subcontractor Work',fmtINR(scAmt),true)+
+      ir('Own Labour',fmtINR(labAmt))+
+      ir('Material Purchase',fmtINR(matAmt))+
+      ir('Total Execution Cost',fmtINR(totalExecAmt))+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">BOQ Items Progress</div>'+
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;">'+
+    BOQ_ITEMS.map(function(item){
+      var jmQty = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+      var bq = parseFloat(item.boq_qty)||0;
+      var pct = bq>0?Math.min(100,Math.round(jmQty/bq*100)):0;
+      return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'+
+          '<span style="font-size:12px;font-weight:700;">'+item.item_code+' — '+item.description+'</span>'+
+          '<span style="font-size:12px;font-weight:800;color:#4A148C;">'+pct+'%</span>'+
+        '</div>'+
+        '<div style="height:5px;background:#E8EAF6;border-radius:99px;overflow:hidden;">'+
+          '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
+        '</div>'+
+        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">'+jmQty+' / '+bq+' '+item.unit+'</div>'+
+      '</div>';
+    }).join('')+
+    '</div>';
+}
+
+function statCard(title, val, sub, col){
+  return '<div style="background:white;border-radius:14px;border:1px solid var(--border);padding:14px;">'+
+    '<div style="font-size:11px;color:var(--text3);font-weight:700;margin-bottom:4px;">'+title+'</div>'+
+    '<div style="font-size:18px;font-weight:900;color:'+col+';">'+val+'</div>'+
+    '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+sub+'</div>'+
+  '</div>';
+}
+
+// ── SHEETS ───────────────────────────────────────────────────────────────────
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+function boqOpenAddItem(editItem){
+  var v = editItem||{};
+  document.getElementById('boq-sheet-title').textContent = editItem ? 'Edit BOQ Item' : 'New BOQ Item';
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<label class="flbl">Item Code *</label><input id="bi-code" class="finp" placeholder="e.g. CIVIL-001" value="'+(v.item_code||'')+'">'+
+    '<label class="flbl">Description *</label><input id="bi-desc" class="finp" placeholder="e.g. Earthwork Excavation" value="'+(v.description||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Unit</label><input id="bi-unit" class="finp" placeholder="m³, m², Rmt, Nos..." value="'+(v.unit||'')+'"></div>'+
+    '<div><label class="flbl">BOQ Qty *</label><input id="bi-qty" class="finp" type="number" step="0.001" placeholder="0" value="'+(v.boq_qty||'')+'"></div></div>'+
+    '<label class="flbl">Rate (₹ per unit)</label><input id="bi-rate" class="finp" type="number" step="0.01" placeholder="0" value="'+(v.rate||'')+'" oninput="boqCalcAmt()">'+
+    '<label class="flbl">Amount (₹)</label><input id="bi-amt" class="finp" readonly placeholder="Auto calculated" style="background:#F8FAFC;opacity:.8;" value="'+(v.boq_qty&&v.rate?fmtINR(v.boq_qty*v.rate):'')+'">'+
+    '<label class="flbl">Remarks</label><textarea id="bi-remarks" class="ftxt" placeholder="Optional remarks">'+(v.remarks||'')+'</textarea>';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveItemBtn(this)" data-id="'+(editItem?editItem.id:'')+'">✓ '+(editItem?'Save Changes':'Add Item')+'</button>';
+  openBOQSheet();
+}
+
+function boqCalcAmt(){
+  var qty = parseFloat(document.getElementById('bi-qty')&&document.getElementById('bi-qty').value)||0;
+  var rate = parseFloat(document.getElementById('bi-rate')&&document.getElementById('bi-rate').value)||0;
+  var amtEl = document.getElementById('bi-amt');
+  if(amtEl) amtEl.value = qty&&rate ? fmtINR(qty*rate) : '';
+}
+
+async function boqSaveItem(editId){
+  var code = document.getElementById('bi-code').value.trim();
+  var desc = document.getElementById('bi-desc').value.trim();
+  var qty = parseFloat(document.getElementById('bi-qty').value)||0;
+  if(!code||!desc||!qty){ toast('Code, description and qty are required','warning'); return; }
+  var projId = document.getElementById('boq-proj-sel').value;
+  var data = {
+    project_id: projId,
+    item_code: code,
+    description: desc,
+    unit: document.getElementById('bi-unit').value.trim()||'Nos',
+    boq_qty: qty,
+    rate: parseFloat(document.getElementById('bi-rate').value)||0,
+    remarks: document.getElementById('bi-remarks').value.trim()||null
+  };
+  try{
+    toast('Saving...','info');
+    if(editId){
+      await sbUpdate('boq_items',editId,data);
+      var idx=BOQ_ITEMS.findIndex(function(i){return i.id===editId;});
+      if(idx>-1) BOQ_ITEMS[idx]=Object.assign(BOQ_ITEMS[idx],data);
+      toast('Item updated!','success');
+    } else {
+      var res = await sbInsert('boq_items',data);
+      if(res&&res[0]) BOQ_ITEMS.push(res[0]);
+      toast('Item added!','success');
+    }
+    closeBOQSheet();
+    boqRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+// ADD JM
+function boqOpenAddJM(itemId, boqQty, unit){
+  var existingJMQty = BOQ_JMS.filter(function(j){return j.boq_item_id===itemId;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+  var remaining = boqQty - existingJMQty;
+  var jmNum = BOQ_JMS.filter(function(j){return j.boq_item_id===itemId;}).length + 1;
+  document.getElementById('boq-sheet-title').textContent = 'Add Joint Measurement (JM-'+jmNum+')';
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<div style="background:#EDE7F6;border-radius:12px;padding:12px;margin-bottom:14px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#4A148C;">BOQ Balance Available</div>'+
+      '<div style="font-size:22px;font-weight:900;color:#4A148C;">'+remaining+' '+unit+'</div>'+
+      '<div style="font-size:11px;color:var(--text3);">Cumulative JM so far: '+existingJMQty+' / '+boqQty+' '+unit+'</div>'+
+    '</div>'+
+    '<label class="flbl">JM Date *</label><input id="jm-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">JM Qty Agreed ('+unit+') *</label><input id="jm-qty" class="finp" type="number" step="0.001" placeholder="Max: '+remaining+'" max="'+remaining+'">'+
+    '<label class="flbl">JM Reference / Notes</label><input id="jm-ref" class="finp" placeholder="e.g. JM dated 10-Mar-2026">';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveJMBtn(this)" data-item="'+itemId+'" data-boqqty="'+boqQty+'" data-existjm="'+existingJMQty+'" data-jmnum="'+jmNum+'" data-unit="'+unit+'">✓ Add JM</button>';
+  openBOQSheet();
+}
+
+async function boqSaveJM(itemId, boqQty, existingJMQty, jmNum, unit){
+  var date = document.getElementById('jm-date').value;
+  var qty = parseFloat(document.getElementById('jm-qty').value)||0;
+  if(!date||!qty){ toast('Date and qty are required','warning'); return; }
+  if(existingJMQty + qty > boqQty){ toast('JM qty would exceed BOQ qty! Max allowed: '+(boqQty-existingJMQty)+' '+unit,'error'); return; }
+  var projId = document.getElementById('boq-proj-sel').value;
+  var data = { project_id:projId, boq_item_id:itemId, jm_number:jmNum, date:date, jm_qty:qty, reference:document.getElementById('jm-ref').value.trim()||null };
+  try{
+    toast('Saving JM...','info');
+    var res = await sbInsert('boq_jm',data);
+    if(res&&res[0]) BOQ_JMS.push(res[0]);
+    toast('JM-'+jmNum+' added!','success');
+    closeBOQSheet();
+    boqRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+// ADD EXECUTION ENTRY
+
+function boqSetExecTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var jmId = btn.getAttribute('data-jm');
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddExec(itemId, jmId, unit);
+}
+function boqOpenAddExec(itemId, jmId, unit){
+  var jm = BOQ_JMS.find(function(j){return j.id===jmId;});
+  var jmExecTotal = BOQ_EXECS.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+  document.getElementById('boq-sheet-title').textContent = 'Add Execution Entry';
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<div style="background:#E8F5E9;border-radius:12px;padding:12px;margin-bottom:14px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#2E7D32;">JM-'+jm.jm_number+' — Agreed: '+jm.jm_qty+' '+unit+'</div>'+
+      '<div style="font-size:12px;color:var(--text3);margin-top:2px;">Executed so far: '+jmExecTotal+' '+unit+'</div>'+
+    '</div>'+
+    '<label class="flbl">Date *</label><input id="ex-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">Execution Type *</label><select id="ex-type" class="fsel" onchange="boqExecTypeChange()">'+
+      '<option value="sc">🏗️ Subcontractor</option>'+
+      '<option value="labour">👷 Own Labour</option>'+
+      '<option value="material">📦 Material Purchase</option>'+
+    '</select>'+
+    '<label class="flbl">Party Name *</label><input id="ex-party" class="finp" placeholder="SC name / Labour type / Supplier name">'+
+    '<div class="g2"><div><label class="flbl">Qty ('+unit+') *</label><input id="ex-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="boqExecCalcAmt()"></div>'+
+    '<div><label class="flbl">Rate (₹/'+unit+')</label><input id="ex-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="boqExecCalcAmt()"></div></div>'+
+    '<label class="flbl">Amount (₹)</label><input id="ex-amt" class="finp" readonly placeholder="Auto" style="background:#F8FAFC;opacity:.8;">'+
+    '<label class="flbl">Remarks</label><input id="ex-remarks" class="finp" placeholder="Optional">';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#2E7D32;color:white;" onclick="boqSaveExecBtn(this)" data-item="'+itemId+'" data-jm="'+jmId+'">✓ Add Entry</button>';
+  openBOQSheet();
+}
+
+function boqExecCalcAmt(){
+  var q=parseFloat(document.getElementById('ex-qty')&&document.getElementById('ex-qty').value)||0;
+  var r=parseFloat(document.getElementById('ex-rate')&&document.getElementById('ex-rate').value)||0;
+  var el=document.getElementById('ex-amt');
+  if(el) el.value = q&&r ? fmtINR(q*r) : '';
+}
+
+async function boqSaveExec(itemId, jmId){
+  var date=document.getElementById('ex-date').value;
+  var type=document.getElementById('ex-type').value;
+  var party=document.getElementById('ex-party').value.trim();
+  var qty=parseFloat(document.getElementById('ex-qty').value)||0;
+  if(!date||!party||!qty){ toast('Date, party and qty are required','warning'); return; }
+  var projId = document.getElementById('boq-proj-sel').value;
+  var data={ project_id:projId, boq_item_id:itemId, jm_id:jmId, date:date, exec_type:type, party_name:party, qty:qty, rate:parseFloat(document.getElementById('ex-rate').value)||0, remarks:document.getElementById('ex-remarks').value.trim()||null };
+  try{
+    toast('Saving...','info');
+    var res=await sbInsert('boq_execution',data);
+    if(res&&res[0]) BOQ_EXECS.push(res[0]);
+    toast('Entry added!','success');
+    closeBOQSheet();
+    boqRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+function boqOpenItemDetail(id){
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;}); if(!item) return;
+  var jmQty = BOQ_JMS.filter(function(j){return j.boq_item_id===id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+  var execQty = BOQ_EXECS.filter(function(e){return e.boq_item_id===id;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+  var bq=parseFloat(item.boq_qty)||0, rate=parseFloat(item.rate)||0;
+  document.getElementById('boq-sheet-title').textContent = item.item_code;
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<div style="background:#EDE7F6;border-radius:14px;padding:14px;margin-bottom:14px;">'+
+      '<div style="font-size:18px;font-weight:900;margin-bottom:4px;">'+item.description+'</div>'+
+      '<div style="font-size:12px;color:#7B1FA2;">'+bq+' '+item.unit+' @ ₹'+rate+'/'+item.unit+'</div>'+
+      '<div style="font-size:22px;font-weight:900;color:#4A148C;margin-top:6px;">'+fmtINR(bq*rate)+'</div>'+
+    '</div>'+
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:12px;">'+
+      ir('BOQ Qty',bq+' '+item.unit,true)+
+      ir('JM Qty Assigned',jmQty+' '+item.unit)+
+      ir('BOQ Balance',(bq-jmQty)+' '+item.unit)+
+      ir('Executed Qty',execQty+' '+item.unit)+
+      ir('Rate','₹'+rate+' / '+item.unit)+
+      ir('BOQ Amount',fmtINR(bq*rate))+
+      (item.remarks?ir('Remarks',item.remarks):'')+
+    '</div>';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Close</button>'+
+    '<button class="btn btn-red" onclick="boqSetDeleteTarget(this)" data-id="'+id+'">🗑 Delete</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSetEditTarget(this)" data-id="'+id+'">✏️ Edit</button>';
+  openBOQSheet();
+}
+
+async function boqDeleteItem(id){
+  if(!confirm('Delete this BOQ item? All JMs and execution entries will also be deleted.')) return;
+  BOQ_ITEMS = BOQ_ITEMS.filter(function(i){return i.id!==id;});
+  BOQ_JMS = BOQ_JMS.filter(function(j){return j.boq_item_id!==id;});
+  BOQ_EXECS = BOQ_EXECS.filter(function(e){return e.boq_item_id!==id;});
+  closeBOQSheet();
+  boqRender();
+  try{ await sbDelete('boq_items',id); toast('Item deleted','success'); }
+  catch(e){ console.error(e); }
+}
+// ═══════════════════════════════════════════════════════════
+
+// ── SHEETS ───────────────────────────────────────────────────────────────────
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
+
+function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
+function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
+
+// ADD BOQ ITEM
 </script>
 
 <!-- PENDING APPROVALS SHEET -->
@@ -5820,6 +6560,10 @@ async function deleteProjConfirm(id){
   <div class="drawer-body">
     <div class="drawer-section">Modules</div>
 
+    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">BOQ &amp; Execution</div><div class="drawer-item-sub">Bill of Quantities &amp; Work Execution</div></div>
+    </div>
     <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
