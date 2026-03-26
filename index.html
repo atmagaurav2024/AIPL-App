@@ -6074,11 +6074,16 @@ var BOQ_SELECTED_ITEM = null;
 function boqUnitDropdown(selected){
   var units = CAT_DATA.uom ? CAT_DATA.uom.filter(function(u){return u.active;}) : [];
   if(!units.length){
-    // fallback defaults
-    units = [{name:'m³'},{name:'m²'},{name:'RMT'},{name:'nos'},{name:'MT'},{name:'kg'},{name:'Bags'},{name:'Litres'},{name:'Rolls'},{name:'LS'},{name:'Sets'}];
+    units = [
+      {name:'m³',icon:'📐'},{name:'m²',icon:'📐'},{name:'RMT',icon:'📏'},
+      {name:'nos',icon:'🔢'},{name:'MT',icon:'⚖️'},{name:'kg',icon:'⚖️'},
+      {name:'Bags',icon:'🛍️'},{name:'Litres',icon:'💧'},{name:'Rolls',icon:'🗞️'},
+      {name:'LS',icon:'📋'},{name:'Sets',icon:'📦'}
+    ];
   }
   var opts = units.map(function(u){
-    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+u.icon?u.icon+' ':''+(u.name)+(u.desc?' — '+u.desc.split(' — ')[0]:'')+'</option>';
+    var label = (u.icon ? u.icon+' ' : '') + u.name;
+    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+label+'</option>';
   }).join('');
   return '<select id="bi-unit" class="fsel">'+opts+'</select>';
 }
@@ -6086,6 +6091,10 @@ function boqUnitDropdown(selected){
 function initBOQ(){
   var btn = document.getElementById('boq-add-btn');
   if(btn){ btn.onclick = function(){ boqOpenAddItem(); }; }
+  // Ensure categories (UOM) are loaded before BOQ form is opened
+  if(!CAT_DATA.uom || !CAT_DATA.uom.length){
+    loadCategories();
+  }
   boqLoadProjects();
 }
 
