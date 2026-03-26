@@ -4636,19 +4636,7 @@ var CAT_DATA={
     {id:'d-5',icon:'&#128101;',name:'HR / Admin',desc:'Human resources, payroll, admin',color:'#880E4F',count:1,active:true},
     {id:'d-6',icon:'&#128065;',name:'External — Client',desc:'Client representatives, consultants',color:'#37474F',count:1,active:true},
   ],
-  uom:[
-    {id:'u-1',icon:'&#9883;',name:'MT',desc:'Metric Tonne — steel, bulk materials',color:'#C62828',count:0,active:true},
-    {id:'u-2',icon:'&#128230;',name:'Bags',desc:'50 kg bags — cement, microsilica',color:'#37474F',count:0,active:true},
-    {id:'u-3',icon:'&#128203;',name:'m³',desc:'Cubic metres — concrete, earthwork',color:'#1565C0',count:0,active:true},
-    {id:'u-4',icon:'&#128203;',name:'m²',desc:'Square metres — formwork, flooring',color:'#2E7D32',count:0,active:true},
-    {id:'u-5',icon:'&#128203;',name:'RMT',desc:'Running metres — pipes, kerbs, cable',color:'#6A1B9A',count:0,active:true},
-    {id:'u-6',icon:'&#128203;',name:'nos',desc:'Numbers — items counted individually',color:'#00838F',count:0,active:true},
-    {id:'u-7',icon:'&#128203;',name:'kg',desc:'Kilogram — binding wire, admixtures',color:'#795548',count:0,active:true},
-    {id:'u-8',icon:'&#128203;',name:'Litres',desc:'Liquid materials — admixtures, fuel',color:'#F57F17',count:0,active:true},
-    {id:'u-9',icon:'&#128203;',name:'Rolls',desc:'Rolls — waterproof membrane, mesh',color:'#E65100',count:0,active:true},
-    {id:'u-10',icon:'&#128203;',name:'LS',desc:'Lump Sum — contract items',color:'#37474F',count:0,active:true},
-    {id:'u-11',icon:'&#128203;',name:'Sets',desc:'Sets — door frames, fixtures',color:'#880E4F',count:0,active:true},
-  ]
+  uom:[]
 };
 
 function renderCatSection(type,containerId){
@@ -5195,12 +5183,10 @@ async function loadCategories(){
     var types=['vendor','material','sc','uom','role','dept'];
     types.forEach(function(type){
       var dbCats = data.filter(function(c){return c.type===type;});
-      if(dbCats.length){
-        // Replace with DB version
-        CAT_DATA[type] = dbCats.map(function(c){
-          return {id:c.id,icon:c.icon||'📦',name:c.name,desc:c.description||'',color:c.color||'#37474F',count:0,active:c.active};
-        });
-      }
+      // Always replace from DB (even if empty - so no hardcoded fallback shows)
+      CAT_DATA[type] = dbCats.map(function(c){
+        return {id:c.id,icon:c.icon||'📦',name:c.name,desc:c.description||'',color:c.color||'#37474F',count:0,active:c.active};
+      });
     });
     // Re-render all category sections
     Object.keys(catSectionMap).forEach(function(type){
