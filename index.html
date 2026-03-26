@@ -5910,7 +5910,6 @@ async function deleteProjConfirm(id){
 
 
 
-function boqOpenItemDetailBtn(btn){ boqOpenItemDetail(btn.getAttribute("data-id")); }
 function boqSetJMTarget(btn){
   var itemId = btn.getAttribute('data-item');
   var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
@@ -5932,43 +5931,6 @@ function boqSetEditTarget(btn){
 
 function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
 
-function boqOpenItemDetailBtn(btn){ boqOpenItemDetail(btn.getAttribute("data-id")); }
-function boqSetJMTarget(btn){
-  var itemId = btn.getAttribute('data-item');
-  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
-  var unit = btn.getAttribute('data-unit');
-  boqOpenAddJM(itemId, boqQty, unit);
-}
-
-function boqSetDeleteTarget(btn){
-  var id = btn.getAttribute('data-id');
-  boqDeleteItem(id);
-}
-
-function boqSetEditTarget(btn){
-  var id = btn.getAttribute('data-id');
-  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
-  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
-}
-
-
-
-function boqSaveJMBtn(btn){
-  boqSaveJM(
-    btn.getAttribute('data-item'),
-    parseFloat(btn.getAttribute('data-boqqty'))||0,
-    parseFloat(btn.getAttribute('data-existjm'))||0,
-    parseInt(btn.getAttribute('data-jmnum'))||1,
-    btn.getAttribute('data-unit')
-  );
-}
-
-function boqSaveExecBtn(btn){
-  boqSaveExec(btn.getAttribute('data-item'), btn.getAttribute('data-jm'));
-}
-function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
-
-function boqOpenItemDetailBtn(btn){ boqOpenItemDetail(btn.getAttribute("data-id")); }
 function boqSetJMTarget(btn){
   var itemId = btn.getAttribute('data-item');
   var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
@@ -6004,7 +5966,6 @@ function boqSaveExecBtn(btn){
 }
 function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
 
-function boqOpenItemDetailBtn(btn){ boqOpenItemDetail(btn.getAttribute("data-id")); }
 function boqSetJMTarget(btn){
   var itemId = btn.getAttribute('data-item');
   var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
@@ -6040,7 +6001,41 @@ function boqSaveExecBtn(btn){
 }
 function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
 
-function boqOpenItemDetailBtn(btn){ boqOpenItemDetail(btn.getAttribute("data-id")); }
+function boqSetJMTarget(btn){
+  var itemId = btn.getAttribute('data-item');
+  var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
+  var unit = btn.getAttribute('data-unit');
+  boqOpenAddJM(itemId, boqQty, unit);
+}
+
+function boqSetDeleteTarget(btn){
+  var id = btn.getAttribute('data-id');
+  boqDeleteItem(id);
+}
+
+function boqSetEditTarget(btn){
+  var id = btn.getAttribute('data-id');
+  var item = BOQ_ITEMS.find(function(i){return i.id===id;});
+  if(item){ closeBOQSheet(); setTimeout(function(){ boqOpenAddItem(item); }, 320); }
+}
+
+
+
+function boqSaveJMBtn(btn){
+  boqSaveJM(
+    btn.getAttribute('data-item'),
+    parseFloat(btn.getAttribute('data-boqqty'))||0,
+    parseFloat(btn.getAttribute('data-existjm'))||0,
+    parseInt(btn.getAttribute('data-jmnum'))||1,
+    btn.getAttribute('data-unit')
+  );
+}
+
+function boqSaveExecBtn(btn){
+  boqSaveExec(btn.getAttribute('data-item'), btn.getAttribute('data-jm'));
+}
+function boqSaveItemBtn(btn){ boqSaveItem(btn.getAttribute('data-id')||null); }
+
 function boqSetJMTarget(btn){
   var itemId = btn.getAttribute('data-item');
   var boqQty = parseFloat(btn.getAttribute('data-boqqty'))||0;
@@ -6132,129 +6127,164 @@ function boqRender(){
   else if(BOQ_TAB==='summary') boqRenderSummary();
 }
 
-function boqRenderItems(){ boqRenderAll(); }
-function boqRenderExec(){ boqRenderAll(); }
-function boqRenderSummary(){ boqRenderAll(); }
-
-function boqRenderAll(){
+function boqRenderItems(){
   var el = document.getElementById('boq-content');
   if(!el) return;
   if(!BOQ_ITEMS.length){
     el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;margin-bottom:10px;">📋</div><div style="font-weight:700;">No BOQ items yet</div><div style="font-size:12px;margin-top:6px;">Tap + Add to create BOQ items</div></div>';
     return;
   }
-
-  // ── SUMMARY STRIP ──────────────────────────────────────────
-  var totalBOQAmt=0, totalExecAmt=0, scAmt=0, labAmt=0, matAmt=0;
-  BOQ_ITEMS.forEach(function(item){
-    totalBOQAmt += (parseFloat(item.boq_qty)||0)*(parseFloat(item.rate)||0);
-    var execs = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
-    var ea = execs.reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-    totalExecAmt += ea;
-  });
-  scAmt  = BOQ_EXECS.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-  labAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-  matAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-
-  var summaryHtml =
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">'+
-      statCard('📋 BOQ Value',fmtINR(totalBOQAmt),'Total contract value','#4A148C')+
-      statCard('🔧 Execution Cost',fmtINR(totalExecAmt),'SC+Labour+Material','#1565C0')+
-    '</div>'+
-    '<div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px;">'+
-      ir('SC Work',fmtINR(scAmt),true)+ir('Own Labour',fmtINR(labAmt))+ir('Material',fmtINR(matAmt))+
-    '</div>';
-
-  // ── PER ITEM: BOQ info + JMs + Execution entries ────────────
-  var itemsHtml = BOQ_ITEMS.map(function(item){
+  el.innerHTML = BOQ_ITEMS.map(function(item){
+    // Calculate totals
+    var totalJMQty = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+    var totalExecQty = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
     var boqQty = parseFloat(item.boq_qty)||0;
-    var rate   = parseFloat(item.rate)||0;
-    var itemJMs    = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;});
-    var itemExecs  = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
-    var totalJMQty   = itemJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
-    var totalExecQty = itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
-    var pct     = boqQty>0?Math.min(100,Math.round(totalJMQty/boqQty*100)):0;
-    var execPct = boqQty>0?Math.min(100,Math.round(totalExecQty/boqQty*100)):0;
-    var balance = boqQty - totalJMQty;
+    var pct = boqQty>0 ? Math.min(100,Math.round(totalJMQty/boqQty*100)) : 0;
+    var execPct = boqQty>0 ? Math.min(100,Math.round(totalExecQty/boqQty*100)) : 0;
+    var amt = boqQty * (parseFloat(item.rate)||0);
+    return '<div class="boq-card" onclick="boqOpenItemDetail(\''+item.id+'\')">'+
+      '<div class="boq-card-head">'+
+        '<div>'+
+          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">'+
+            '<span class="boq-card-code">'+item.item_code+'</span>'+
+          '</div>'+
+          '<div class="boq-card-name">'+item.description+'</div>'+
+          (item.short_name?'<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+item.short_name+'</div>':'')+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;">'+
+          '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+fmtINR(amt)+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+boqQty+' '+item.unit+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:0 14px 2px;">'+
+        '<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:var(--text3);margin-bottom:2px;">'+
+          '<span style="color:#7B1FA2;">JM '+pct+'%</span>'+
+          '<span style="color:#2E7D32;">Exec '+execPct+'%</span>'+
+        '</div>'+
+        '<div style="height:6px;background:#E8EAF6;border-radius:99px;overflow:hidden;position:relative;">'+
+          '<div style="position:absolute;height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
+          '<div style="position:absolute;height:100%;width:'+execPct+'%;background:linear-gradient(90deg,#2E7D32,#66BB6A);border-radius:99px;opacity:.7;"></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="boq-card-foot">'+
+        '<div class="boq-stat"><div class="boq-stat-val">'+boqQty+' '+item.unit+'</div><div class="boq-stat-lbl">BOQ Qty</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val" style="color:#1565C0;">'+totalJMQty+' '+item.unit+'</div><div class="boq-stat-lbl">JM Qty</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val" style="color:#2E7D32;">'+totalExecQty+' '+item.unit+'</div><div class="boq-stat-lbl">Executed</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val" style="color:'+(boqQty-totalJMQty<0?'#C62828':'#37474F')+';">'+(boqQty-totalJMQty)+' '+item.unit+'</div><div class="boq-stat-lbl">Balance</div></div>'+
+        '<div class="boq-stat"><div class="boq-stat-val">'+pct+'%</div><div class="boq-stat-lbl">JM Done</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
 
-    // JMs + execution entries
+function fmtINR(n){
+  if(!n) return '₹0';
+  n = parseFloat(n);
+  return '₹'+n.toLocaleString('en-IN',{maximumFractionDigits:0});
+}
+
+function boqRenderExec(){
+  var el = document.getElementById('boq-content');
+  if(!el) return;
+  if(!BOQ_ITEMS.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Add BOQ items first</div>';
+    return;
+  }
+  // Show execution grouped by BOQ item
+  el.innerHTML = BOQ_ITEMS.map(function(item){
+    var itemJMs = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;});
+    var itemExecs = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
+    var totalExec = itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+    var boqQty = parseFloat(item.boq_qty)||0;
     var jmsHtml = itemJMs.length ? itemJMs.map(function(jm){
       var jmExecs = BOQ_EXECS.filter(function(e){return e.jm_id===jm.id;});
       var jmExecTotal = jmExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
       return '<div class="jm-card">'+
         '<div class="jm-card-head">'+
           '<span class="jm-badge">JM-'+jm.jm_number+'</span>'+
-          '<span style="font-size:12px;font-weight:700;color:#4A148C;">'+jm.jm_qty+' '+item.unit+'</span>'+
+          '<span style="font-size:12px;font-weight:700;color:#4A148C;">'+jm.jm_qty+' '+item.unit+' agreed</span>'+
           '<span style="font-size:11px;color:var(--text3);margin-left:auto;">'+jm.date+'</span>'+
           '<button onclick="event.stopPropagation();boqSetExecTarget(this)" data-item="'+item.id+'" data-jm="'+jm.id+'" data-unit="'+item.unit+'" style="background:#7B1FA2;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;margin-left:6px;">+ Entry</button>'+
         '</div>'+
         (jmExecs.length ? jmExecs.map(function(e){
-          var tc=e.exec_type==='sc'?'exec-sc':e.exec_type==='labour'?'exec-labour':'exec-material';
-          var tl=e.exec_type==='sc'?'SC':e.exec_type==='labour'?'Labour':'Material';
+          var typeClass = e.exec_type==='sc'?'exec-sc':e.exec_type==='labour'?'exec-labour':'exec-material';
+          var typeLbl = e.exec_type==='sc'?'SC':e.exec_type==='labour'?'Labour':'Material';
           return '<div class="exec-entry">'+
-            '<span class="exec-type-badge '+tc+'">'+tl+'</span>'+
-            '<div style="flex:1;"><div style="font-size:12px;font-weight:700;">'+e.party_name+'</div>'+
-            '<div style="font-size:11px;color:var(--text3);">'+e.date+' · '+e.qty+' '+item.unit+' @ ₹'+e.rate+'</div></div>'+
-            '<div style="font-size:13px;font-weight:900;color:#1565C0;">'+fmtINR((parseFloat(e.qty)||0)*(parseFloat(e.rate)||0))+'</div>'+
+            '<span class="exec-type-badge '+typeClass+'">'+typeLbl+'</span>'+
+            '<div style="flex:1;">'+
+              '<div style="font-size:12px;font-weight:700;">'+e.party_name+'</div>'+
+              '<div style="font-size:11px;color:var(--text3);">'+e.date+' · '+e.qty+' '+item.unit+' @ ₹'+e.rate+'</div>'+
+            '</div>'+
+            '<div style="font-size:13px;font-weight:900;color:#1565C0;">'+fmtINR(e.qty*e.rate)+'</div>'+
           '</div>';
         }).join(''):'<div style="font-size:12px;color:var(--text3);padding:4px 0;">No execution entries yet</div>')+
-        '<div style="font-size:11px;font-weight:700;color:#4A148C;margin-top:6px;padding-top:6px;border-top:1px solid #CE93D850;">Executed: '+jmExecTotal+' / '+jm.jm_qty+' '+item.unit+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:#4A148C;margin-top:6px;">Executed: '+jmExecTotal+' / '+jm.jm_qty+' '+item.unit+'</div>'+
       '</div>';
-    }).join('') :
-    '<div style="font-size:12px;color:var(--text3);padding:6px 0 2px;">No JMs yet.</div>';
-
+    }).join('') : '<div style="font-size:12px;color:var(--text3);padding:4px 0 8px;">No JMs yet. <button onclick="boqSetJMTarget(this)" data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" style="border:none;background:none;color:#7B1FA2;font-weight:700;cursor:pointer;font-size:12px;padding:0;">+ Add JM</button></div>';
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;">'+
-      // Item header
-      '<div style="padding:12px 14px;background:#F3E5F5;display:flex;align-items:flex-start;gap:8px;">'+
-        '<div style="flex:1;">'+
-          '<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">'+
-            '<span class="boq-card-code">'+item.item_code+'</span>'+
-            (item.short_name?'<span style="font-size:11px;color:#7B1FA2;font-weight:700;">'+item.short_name+'</span>':'')+
-          '</div>'+
-          '<div style="font-size:13px;font-weight:800;">'+item.description+'</div>'+
-        '</div>'+
-        '<div style="text-align:right;flex-shrink:0;">'+
-          '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+fmtINR(boqQty*rate)+'</div>'+
-          '<div style="font-size:10px;color:var(--text3);">'+boqQty+' '+item.unit+' @ ₹'+rate+'</div>'+
-        '</div>'+
+      '<div style="padding:10px 14px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);background:#F3E5F5;">'+
+        '<span class="boq-card-code">'+item.item_code+'</span>'+
+        '<span style="font-size:13px;font-weight:800;flex:1;">'+item.description+'</span>'+
+        '<span style="font-size:11px;color:#7B1FA2;font-weight:700;">'+totalExec+'/'+boqQty+' '+item.unit+'</span>'+
+        '<button onclick="boqSetJMTarget(this)" data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ JM</button>'+
       '</div>'+
-      // Progress bars
-      '<div style="padding:8px 14px 6px;">'+
-        '<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;margin-bottom:3px;">'+
-          '<span style="color:#7B1FA2;">🔵 JM '+pct+'%</span>'+
-          '<span style="color:#2E7D32;">🟢 Exec '+execPct+'%</span>'+
-          '<span style="color:'+(balance<0?'#C62828':'#37474F')+';">Balance: '+balance+' '+item.unit+'</span>'+
-        '</div>'+
-        '<div style="height:7px;background:#E8EAF6;border-radius:99px;overflow:hidden;position:relative;">'+
-          '<div style="position:absolute;height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
-          '<div style="position:absolute;height:100%;width:'+execPct+'%;background:linear-gradient(90deg,#2E7D32,#66BB6A);border-radius:99px;opacity:.75;"></div>'+
-        '</div>'+
-      '</div>'+
-      // Stats row
-      '<div style="display:flex;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">'+
-        '<div class="boq-stat" style="border-right:1px solid var(--border);padding:8px 0;"><div class="boq-stat-val">'+boqQty+'</div><div class="boq-stat-lbl">BOQ Qty</div></div>'+
-        '<div class="boq-stat" style="border-right:1px solid var(--border);padding:8px 0;"><div class="boq-stat-val" style="color:#1565C0;">'+totalJMQty+'</div><div class="boq-stat-lbl">JM Qty</div></div>'+
-        '<div class="boq-stat" style="border-right:1px solid var(--border);padding:8px 0;"><div class="boq-stat-val" style="color:#2E7D32;">'+totalExecQty+'</div><div class="boq-stat-lbl">Executed</div></div>'+
-        '<div class="boq-stat" style="padding:8px 0;"><div class="boq-stat-val" style="color:'+(balance<0?'#C62828':'#37474F')+';">'+balance+'</div><div class="boq-stat-lbl">Balance</div></div>'+
-      '</div>'+
-      // JMs + Entries
-      '<div style="padding:10px 14px;">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
-          '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;">Joint Measurements</div>'+
-          '<button onclick="boqSetJMTarget(this)" data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:8px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ JM</button>'+
-        '</div>'+
-        jmsHtml+
-      '</div>'+
-      // Edit item button
-      '<div style="padding:4px 14px 10px;display:flex;justify-content:flex-end;">'+
-        '<button onclick="boqOpenItemDetailBtn(this)" data-id="'+item.id+'" style="background:none;border:none;color:#7B1FA2;font-size:11px;font-weight:800;cursor:pointer;">📋 Item Details / Edit</button>'+
-      '</div>'+
+      '<div style="padding:10px 14px;">'+jmsHtml+'</div>'+
     '</div>';
   }).join('');
-
-  el.innerHTML = summaryHtml + itemsHtml;
 }
 
+function boqRenderSummary(){
+  var el = document.getElementById('boq-content');
+  if(!el) return;
+  var totalBOQ=0, totalJM=0, totalExec=0, totalBOQAmt=0, totalExecAmt=0;
+  BOQ_ITEMS.forEach(function(item){
+    var bq = parseFloat(item.boq_qty)||0;
+    var rate = parseFloat(item.rate)||0;
+    totalBOQ += bq;
+    totalBOQAmt += bq*rate;
+    var jmQty = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+    totalJM += jmQty;
+    var execs = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
+    var execQty = execs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+    totalExec += execQty;
+    totalExecAmt += execs.reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  });
+  var scAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  var labAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  var matAmt = BOQ_EXECS.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+  el.innerHTML =
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;">'+
+      statCard('📋 BOQ Value',fmtINR(totalBOQAmt),'Total contract value','#4A148C')+
+      statCard('🔧 Execution Cost',fmtINR(totalExecAmt),'Total cost incurred','#1565C0')+
+      statCard('📐 JM Qty',totalJM+' units','Agreed for execution','#F57F17')+
+      statCard('✅ Executed',totalExec+' units','Actually completed','#2E7D32')+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">Execution Breakup</div>'+
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px;">'+
+      ir('Subcontractor Work',fmtINR(scAmt),true)+
+      ir('Own Labour',fmtINR(labAmt))+
+      ir('Material Purchase',fmtINR(matAmt))+
+      ir('Total Execution Cost',fmtINR(totalExecAmt))+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:8px;">BOQ Items Progress</div>'+
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;">'+
+    BOQ_ITEMS.map(function(item){
+      var jmQty = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+      var bq = parseFloat(item.boq_qty)||0;
+      var pct = bq>0?Math.min(100,Math.round(jmQty/bq*100)):0;
+      return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">'+
+        '<div style="display:flex;justify-content:space-between;margin-bottom:4px;">'+
+          '<span style="font-size:12px;font-weight:700;">'+item.item_code+' — '+item.description+'</span>'+
+          '<span style="font-size:12px;font-weight:800;color:#4A148C;">'+pct+'%</span>'+
+        '</div>'+
+        '<div style="height:5px;background:#E8EAF6;border-radius:99px;overflow:hidden;">'+
+          '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
+        '</div>'+
+        '<div style="font-size:10px;color:var(--text3);margin-top:3px;">'+jmQty+' / '+bq+' '+item.unit+'</div>'+
+      '</div>';
+    }).join('')+
+    '</div>';
+}
 
 function statCard(title, val, sub, col){
   return '<div style="background:white;border-radius:14px;border:1px solid var(--border);padding:14px;">'+
