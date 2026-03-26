@@ -6071,6 +6071,18 @@ var BOQ_EXECS = [];
 var BOQ_TAB = 'boq';
 var BOQ_SELECTED_ITEM = null;
 
+function boqUnitDropdown(selected){
+  var units = CAT_DATA.uom ? CAT_DATA.uom.filter(function(u){return u.active;}) : [];
+  if(!units.length){
+    // fallback defaults
+    units = [{name:'m³'},{name:'m²'},{name:'RMT'},{name:'nos'},{name:'MT'},{name:'kg'},{name:'Bags'},{name:'Litres'},{name:'Rolls'},{name:'LS'},{name:'Sets'}];
+  }
+  var opts = units.map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+u.icon?u.icon+' ':''+(u.name)+(u.desc?' — '+u.desc.split(' — ')[0]:'')+'</option>';
+  }).join('');
+  return '<select id="bi-unit" class="fsel">'+opts+'</select>';
+}
+
 function initBOQ(){
   var btn = document.getElementById('boq-add-btn');
   if(btn){ btn.onclick = function(){ boqOpenAddItem(); }; }
@@ -6145,6 +6157,7 @@ function boqRenderItems(){
             '<span class="boq-card-code">'+item.item_code+'</span>'+
           '</div>'+
           '<div class="boq-card-name">'+item.description+'</div>'+
+          (item.short_name?'<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+item.short_name+'</div>':'')+
         '</div>'+
         '<div style="text-align:right;flex-shrink:0;">'+
           '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+fmtINR(amt)+'</div>'+
@@ -6289,9 +6302,10 @@ function boqOpenAddItem(editItem){
   var v = editItem||{};
   document.getElementById('boq-sheet-title').textContent = editItem ? 'Edit BOQ Item' : 'New BOQ Item';
   document.getElementById('boq-sheet-body').innerHTML =
-    '<label class="flbl">Item Code *</label><input id="bi-code" class="finp" placeholder="e.g. CIVIL-001" value="'+(v.item_code||'')+'">'+
+    '<label class="flbl">Item Code * (SSR Item No)</label><input id="bi-code" class="finp" placeholder="e.g. SSR-2024/C-001" value="'+(v.item_code||'')+'">'+
     '<label class="flbl">Description *</label><input id="bi-desc" class="finp" placeholder="e.g. Earthwork Excavation" value="'+(v.description||'')+'">'+
-    '<div class="g2"><div><label class="flbl">Unit</label><input id="bi-unit" class="finp" placeholder="m³, m², Rmt, Nos..." value="'+(v.unit||'')+'"></div>'+
+    '<label class="flbl">Short Name</label><input id="bi-shortname" class="finp" placeholder="e.g. Earthwork" value="'+(v.short_name||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Unit</label>'+boqUnitDropdown(v.unit||'')+'</div>'+
     '<div><label class="flbl">BOQ Qty *</label><input id="bi-qty" class="finp" type="number" step="0.001" placeholder="0" value="'+(v.boq_qty||'')+'"></div></div>'+
     '<label class="flbl">Rate (₹ per unit)</label><input id="bi-rate" class="finp" type="number" step="0.01" placeholder="0" value="'+(v.rate||'')+'" oninput="boqCalcAmt()">'+
     '<label class="flbl">Amount (₹)</label><input id="bi-amt" class="finp" readonly placeholder="Auto calculated" style="background:#F8FAFC;opacity:.8;" value="'+(v.boq_qty&&v.rate?fmtINR(v.boq_qty*v.rate):'')+'">'+
@@ -6319,7 +6333,8 @@ async function boqSaveItem(editId){
     project_id: projId,
     item_code: code,
     description: desc,
-    unit: document.getElementById('bi-unit').value.trim()||'Nos',
+    short_name: document.getElementById('bi-shortname').value.trim()||null,
+    unit: (document.getElementById('bi-unit')||{value:'Nos'}).value||'Nos',
     boq_qty: qty,
     rate: parseFloat(document.getElementById('bi-rate').value)||0,
     remarks: document.getElementById('bi-remarks').value.trim()||null
