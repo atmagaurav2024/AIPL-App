@@ -2190,6 +2190,7 @@ input,select,textarea{font-size:16px !important;}
   <div class="ni" id="nav-materials" onclick="switchPage('materials')"><div class="ni-ic">&#129521;</div><div class="ni-lb">Materials</div></div>
   <div class="ni" id="nav-subcontractors" onclick="switchPage('subcontractors')"><div class="ni-ic">&#128296;</div><div class="ni-lb">Subcontractors</div></div>
   <div class="ni" id="nav-users" onclick="switchPage('users')"><div class="ni-ic">&#128101;</div><div class="ni-lb">Employees</div></div>
+  <div class="ni" id="nav-labour" onclick="switchPage('labour')"><div class="ni-ic">👷</div><div class="ni-lb">Labour</div></div>
   <div class="ni" id="nav-settings" onclick="switchPage('settings')"><div class="ni-ic">&#9881;&#65039;</div><div class="ni-lb">Categories</div></div>
 </nav>
 <div class="scroll">
@@ -3515,18 +3516,20 @@ async function loadAllData(){
     var el=document.getElementById(id);if(el)el.innerHTML=loadHtml;
   });
   try{
-    var [vendors, materials, subcons, employees, projects] = await Promise.all([
+    var [vendors, materials, subcons, employees, projects, labours] = await Promise.all([
       sbFetch('vendors',{select:'*',order:'created_at.desc'}),
       sbFetch('materials',{select:'*',order:'created_at.desc'}),
       sbFetch('subcontractors',{select:'*',order:'created_at.desc'}),
       sbFetch('employees',{select:'*',order:'created_at.desc'}),
       sbFetch('projects',{select:'*',order:'name.asc'}),
+      sbFetch('labour',{select:'*',order:'name.asc'}),
     ]);
     VENDORS = Array.isArray(vendors)?vendors.map(mapVendor):[];
     MATERIALS = Array.isArray(materials)?materials.map(mapMaterial):[];
     SUBCONTRACTORS = Array.isArray(subcons)?subcons.map(mapSC):[];
     USERS = Array.isArray(employees)?employees.map(mapEmployee):[];
     PROJECTS = Array.isArray(projects)?projects:[];
+    LABOUR_DATA = Array.isArray(labours)?labours:[];
     renderVendors(); renderMaterials(); renderSC(); renderUsers();
     updateAllStats();
     toast('Data loaded','success');
@@ -4290,6 +4293,7 @@ function uomOptions(){
 // ── ADD FORMS ──
 var currentPage='vendors';
 function openAdd(){
+  if(currentPage==='labour'){ openLabourForm(null); return; }
   var html='';
   if(currentPage==='vendors'){
     html='<div class="section-title">&#127968; New Vendor Registration</div>'+
@@ -4562,6 +4566,7 @@ function openSheet(o,s){document.getElementById(o).classList.add('on');document.
 function closeSheet(o,s){document.getElementById(o).classList.remove('on');document.getElementById(s).classList.remove('on');}
 function switchPage(p){
   currentPage=p;
+  if(p==='labour'){ loadLabour(); return; }
   ['vendors','materials','subcontractors','users','settings'].forEach(function(t){
     var pg=document.getElementById('pg-'+t);
     var nv=document.getElementById('nav-'+t);
@@ -6135,6 +6140,7 @@ function boqRenderItems(){
     var totalExecQty = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
     var boqQty = parseFloat(item.boq_qty)||0;
     var pct = boqQty>0 ? Math.min(100,Math.round(totalJMQty/boqQty*100)) : 0;
+    var execPct = boqQty>0 ? Math.min(100,Math.round(totalExecQty/boqQty*100)) : 0;
     var amt = boqQty * (parseFloat(item.rate)||0);
     return '<div class="boq-card" onclick="boqOpenItemDetail(\''+item.id+'\')">'+
       '<div class="boq-card-head">'+
@@ -6150,7 +6156,16 @@ function boqRenderItems(){
           '<div style="font-size:10px;color:var(--text3);">'+boqQty+' '+item.unit+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="boq-progress-bar"><div class="boq-progress-fill" style="width:'+pct+'%"></div></div>'+
+      '<div style="padding:0 14px 2px;">'+
+        '<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:var(--text3);margin-bottom:2px;">'+
+          '<span style="color:#7B1FA2;">JM '+pct+'%</span>'+
+          '<span style="color:#2E7D32;">Exec '+execPct+'%</span>'+
+        '</div>'+
+        '<div style="height:6px;background:#E8EAF6;border-radius:99px;overflow:hidden;position:relative;">'+
+          '<div style="position:absolute;height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
+          '<div style="position:absolute;height:100%;width:'+execPct+'%;background:linear-gradient(90deg,#2E7D32,#66BB6A);border-radius:99px;opacity:.7;"></div>'+
+        '</div>'+
+      '</div>'+
       '<div class="boq-card-foot">'+
         '<div class="boq-stat"><div class="boq-stat-val">'+boqQty+' '+item.unit+'</div><div class="boq-stat-lbl">BOQ Qty</div></div>'+
         '<div class="boq-stat"><div class="boq-stat-val" style="color:#1565C0;">'+totalJMQty+' '+item.unit+'</div><div class="boq-stat-lbl">JM Qty</div></div>'+
@@ -6407,7 +6422,7 @@ function boqOpenAddExec(itemId, jmId, unit){
       '<option value="labour">👷 Own Labour</option>'+
       '<option value="material">📦 Material Purchase</option>'+
     '</select>'+
-    '<label class="flbl">Party Name *</label><input id="ex-party" class="finp" placeholder="SC name / Labour type / Supplier name">'+
+    '<div id="ex-party-wrap"><label class="flbl">Party Name *</label>'+boqPartyDropdown('sc')+'</div>'+
     '<div class="g2"><div><label class="flbl">Qty ('+unit+') *</label><input id="ex-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="boqExecCalcAmt()"></div>'+
     '<div><label class="flbl">Rate (₹/'+unit+')</label><input id="ex-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="boqExecCalcAmt()"></div></div>'+
     '<label class="flbl">Amount (₹)</label><input id="ex-amt" class="finp" readonly placeholder="Auto" style="background:#F8FAFC;opacity:.8;">'+
@@ -6416,6 +6431,30 @@ function boqOpenAddExec(itemId, jmId, unit){
     '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
     '<button class="btn" style="background:#2E7D32;color:white;" onclick="boqSaveExecBtn(this)" data-item="'+itemId+'" data-jm="'+jmId+'">✓ Add Entry</button>';
   openBOQSheet();
+}
+
+function boqExecTypeChange(){
+  var type = document.getElementById('ex-type').value;
+  var wrap = document.getElementById('ex-party-wrap');
+  if(wrap) wrap.innerHTML = '<label class="flbl">Party Name *</label>'+boqPartyDropdown(type);
+}
+
+function boqPartyDropdown(type){
+  var opts = '';
+  if(type==='sc'){
+    var list = SUBCONTRACTORS||[];
+    if(!list.length) return '<input id="ex-party" class="finp" placeholder="Subcontractor name">';
+    opts = list.map(function(s){ return '<option value="'+s.name+'">'+s.name+'</option>'; }).join('');
+  } else if(type==='labour'){
+    var labList = LABOUR_DATA||[];
+    if(!labList.length) return '<input id="ex-party" class="finp" placeholder="Labour type / contractor name">';
+    opts = labList.map(function(l){ return '<option value="'+l.name+'">'+l.name+(l.trade?' — '+l.trade:'')+'</option>'; }).join('');
+  } else if(type==='material'){
+    var vendList = VENDORS||[];
+    if(!vendList.length) return '<input id="ex-party" class="finp" placeholder="Vendor / supplier name">';
+    opts = vendList.map(function(v){ return '<option value="'+v.name+'">'+v.name+'</option>'; }).join('');
+  }
+  return '<select id="ex-party" class="fsel">'+opts+'</select>';
 }
 
 function boqExecCalcAmt(){
@@ -6518,6 +6557,140 @@ function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); 
 function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
 
 // ADD BOQ ITEM
+
+// ═══════════════════════════════════════════════════════════
+// LABOUR MODULE
+// ═══════════════════════════════════════════════════════════
+var LABOUR_DATA = [];
+
+async function loadLabour(){
+  try{
+    var data = await sbFetch('labour',{select:'*',order:'name.asc'});
+    LABOUR_DATA = Array.isArray(data)?data:[];
+  }catch(e){ LABOUR_DATA=[]; console.error(e); }
+  renderLabour();
+}
+
+function renderLabour(list){
+  list = list || LABOUR_DATA;
+  var el = document.getElementById('labour-list');
+  if(!el) return;
+  var stat = document.getElementById('stat-lab-total');
+  if(stat) stat.textContent = list.length+' Labour entries';
+  if(!list.length){
+    el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;margin-bottom:10px;">👷</div><div style="font-weight:700;">No labour added yet</div></div>';
+    return;
+  }
+  el.innerHTML = list.map(function(l){
+    return '<div class="reg-card" onclick="openLabourDetailBtn(this)" data-id="'+l.id+'">'+
+      '<div class="rc-accent" style="background:#2E7D32"></div>'+
+      '<div class="rc-body">'+
+        '<div class="avatar" style="background:#2E7D32;font-size:13px;font-weight:900;">'+(l.name||'L').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase()+'</div>'+
+        '<div class="rc-info">'+
+          '<div class="rc-name">'+l.name+'</div>'+
+          '<div class="rc-sub">'+(l.trade||'—')+' · '+(l.contractor||'—')+'</div>'+
+          '<div class="rc-tags"><span class="badge b-green">'+(l.type||'Labour')+'</span></div>'+
+        '</div>'+
+        '<div class="rc-right"><div class="rc-id" style="color:#2E7D32;">'+(l.daily_rate?'₹'+l.daily_rate+'/day':'—')+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function searchLabour(q){
+  if(!q.trim()){ renderLabour(); return; }
+  q = q.toLowerCase();
+  renderLabour(LABOUR_DATA.filter(function(l){
+    return (l.name||'').toLowerCase().includes(q)||(l.trade||'').toLowerCase().includes(q)||(l.contractor||'').toLowerCase().includes(q);
+  }));
+}
+
+function openLabourDetail(id){
+  var l = LABOUR_DATA.find(function(x){return x.id===id;}); if(!l) return;
+  document.getElementById('det-title').textContent = l.name;
+  document.getElementById('det-body').innerHTML =
+    '<div style="background:#E8F5E920;border:1px solid #2E7D3230;border-radius:14px;padding:14px;margin-bottom:14px;">'+
+      '<div style="font-size:18px;font-weight:900;">'+l.name+'</div>'+
+      '<div style="font-size:12px;color:var(--text2);margin-top:4px;">'+(l.trade||'—')+' · '+(l.type||'Labour')+'</div>'+
+    '</div>'+
+    '<div style="background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;">'+
+      ir('Trade / Skill',l.trade||'—',true)+
+      ir('Labour Type',l.type||'—')+
+      ir('Contractor Name',l.contractor||'—')+
+      ir('Mobile',l.mobile||'—')+
+      ir('Daily Rate (₹)',l.daily_rate?'₹'+l.daily_rate+' / day':'—')+
+      ir('Remarks',l.remarks||'—')+
+    '</div>';
+  document.getElementById('det-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeSheet(\'ov-det\',\'sh-det\')">Close</button>'+
+    '<button class="btn btn-red" onclick="deleteLabourBtn(this)" data-id="'+l.id+'">🗑 Delete</button>'+
+    '<button class="btn btn-navy" onclick="openLabourEditBtn(this)" data-id="'+l.id+'">✏️ Edit</button>';
+  openSheet('ov-det','sh-det');
+}
+
+function openLabourForm(edit){
+  var v = edit||{};
+  document.getElementById('add-title').textContent = edit ? 'Edit Labour' : 'Add Labour';
+  document.getElementById('add-body').innerHTML =
+    '<label class="flbl">Name *</label><input id="lab-name" class="finp" placeholder="e.g. Ramesh Kumar" value="'+(v.name||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Trade / Skill</label><input id="lab-trade" class="finp" placeholder="e.g. Mason, Carpenter" value="'+(v.trade||'')+'"></div>'+
+    '<div><label class="flbl">Labour Type</label><select id="lab-type" class="fsel">'+
+      ['Labour','Gang Leader','Mistri','Contractor','Supervisor'].map(function(t){return '<option'+(v.type===t?' selected':'')+'>'+t+'</option>';}).join('')+
+    '</select></div></div>'+
+    '<label class="flbl">Contractor / Agency Name</label><input id="lab-contractor" class="finp" placeholder="e.g. Sharma Labour Contractor" value="'+(v.contractor||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Mobile</label><input id="lab-mobile" class="finp" type="tel" placeholder="10-digit mobile" value="'+(v.mobile||'')+'"></div>'+
+    '<div><label class="flbl">Daily Rate (₹)</label><input id="lab-rate" class="finp" type="number" placeholder="0" value="'+(v.daily_rate||'')+'"></div></div>'+
+    '<label class="flbl">Remarks</label><textarea id="lab-remarks" class="ftxt" placeholder="Optional">'+(v.remarks||'')+'</textarea>';
+  document.getElementById('add-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeSheet(\'ov-add\',\'sh-add\')">Cancel</button>'+
+    '<button class="btn btn-green" onclick="saveLabourBtn(this)" data-id="'+(edit?edit.id:'')+'">✓ '+(edit?'Save':'Add Labour')+'</button>';
+  openSheet('ov-add','sh-add');
+}
+
+
+function openLabourDetailBtn(btn){ openLabourDetail(btn.getAttribute('data-id')); }
+function openLabourEditBtn(btn){ var id=btn.getAttribute('data-id'); openLabourForm(LABOUR_DATA.find(function(x){return x.id===id;})); }
+function deleteLabourBtn(btn){ deleteLabour(btn.getAttribute('data-id')); }
+function saveLabourBtn(btn){ saveLabour(btn.getAttribute('data-id')||null); }
+async function saveLabour(editId){
+  var name = document.getElementById('lab-name').value.trim();
+  if(!name){ toast('Name is required','warning'); return; }
+  var data = {
+    name:name,
+    trade:document.getElementById('lab-trade').value.trim()||null,
+    type:document.getElementById('lab-type').value||'Labour',
+    contractor:document.getElementById('lab-contractor').value.trim()||null,
+    mobile:document.getElementById('lab-mobile').value.trim()||null,
+    daily_rate:parseFloat(document.getElementById('lab-rate').value)||null,
+    remarks:document.getElementById('lab-remarks').value.trim()||null
+  };
+  try{
+    toast('Saving...','info');
+    if(editId){
+      await sbUpdate('labour',editId,data);
+      var idx=LABOUR_DATA.findIndex(function(l){return l.id===editId;});
+      if(idx>-1) LABOUR_DATA[idx]=Object.assign(LABOUR_DATA[idx],data);
+      toast(name+' updated!','success');
+    } else {
+      var res=await sbInsert('labour',data);
+      if(res&&res[0]) LABOUR_DATA.unshift(res[0]);
+      toast(name+' added!','success');
+    }
+    closeSheet('ov-add','sh-add');
+    closeSheet('ov-det','sh-det');
+    renderLabour();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+async function deleteLabour(id){
+  LABOUR_DATA = LABOUR_DATA.filter(function(l){return l.id!==id;});
+  closeSheet('ov-det','sh-det');
+  renderLabour();
+  toast('Labour deleted','success');
+  try{ await sbDelete('labour',id); }catch(e){ console.error(e); }
+}
+// ═══════════════════════════════════════════════════════════
+
 </script>
 
 <!-- PENDING APPROVALS SHEET -->
