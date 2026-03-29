@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>AIPL — Construction Management</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -6062,12 +6063,54 @@ function boqSetEditTarget(btn){
 }
 // ═══════════════════════════════════════════════════════════
 // BOQ & EXECUTION MODULE
+
+function initBOQ(){
+  var btn = document.getElementById('boq-add-btn');
+  if(btn){ btn.onclick = function(){ boqOpenAddItem(); }; }
+  boqLoadProjects();
+}
+
 // ═══════════════════════════════════════════════════════════
 var BOQ_ITEMS = [];
 var BOQ_JMS = [];
 var BOQ_EXECS = [];
 // collapse state per item
 var boqCollapsed = {};
+
+async function boqLoadProjects(){
+  var sel = document.getElementById('boq-proj-sel');
+  if(!sel) return;
+  try{
+    var data = await sbFetch('projects',{select:'id,name',order:'name.asc'});
+    var projs = Array.isArray(data)?data:[];
+    sel.innerHTML = '<option value="">— Select Project —</option>'+
+      projs.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+  }catch(e){ console.error(e); }
+}
+
+async function boqLoadItems(){
+  var sel = document.getElementById('boq-proj-sel');
+  var projId = sel ? sel.value : '';
+  var content = document.getElementById('boq-content');
+  if(!projId){
+    if(content) content.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>';
+    return;
+  }
+  if(content) content.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">⏳ Loading...</div>';
+  try{
+    var results = await Promise.all([
+      sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),
+      sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),
+      sbFetch('boq_execution',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'})
+    ]);
+    BOQ_ITEMS = Array.isArray(results[0])?results[0]:[];
+    BOQ_JMS   = Array.isArray(results[1])?results[1]:[];
+    BOQ_EXECS = Array.isArray(results[2])?results[2]:[];
+  }catch(e){ BOQ_ITEMS=[]; BOQ_JMS=[]; BOQ_EXECS=[]; console.error(e); }
+  boqRender();
+}
+
+
 
 function boqRender(){
   var projId = document.getElementById('boq-proj-sel')&&document.getElementById('boq-proj-sel').value;
