@@ -6312,6 +6312,17 @@ function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); 
 function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
 
 // ADD BOQ ITEM
+
+function boqUnitDropdown(selected){
+  var units = (CAT_DATA.uom || []).filter(function(u){return u.active;});
+  if(!units.length){
+    return '<select id="bi-unit" class="fsel"><option value="">— Add units in Registry —</option></select>';
+  }
+  var opts = units.map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+  return '<select id="bi-unit" class="fsel">'+opts+'</select>';
+}
 async function boqOpenAddItem(editItem){
   // Ensure categories loaded from DB first
   if(!(CAT_DATA.uom && CAT_DATA.uom.length)){
