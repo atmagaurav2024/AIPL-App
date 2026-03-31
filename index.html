@@ -6068,6 +6068,23 @@ function initBOQ(){
   var btn = document.getElementById('boq-add-btn');
   if(btn){ btn.onclick = function(){ boqOpenAddItem(); }; }
   boqLoadProjects();
+  // Pre-load SC, Labour, Vendor lists for execution dropdowns
+  if(!SUBCONTRACTORS.length || !LABOUR_DATA.length || !VENDORS.length){
+    boqPreloadPartyData();
+  }
+}
+
+async function boqPreloadPartyData(){
+  try{
+    var results = await Promise.all([
+      SUBCONTRACTORS.length ? null : sbFetch('subcontractors',{select:'*',order:'name.asc'}),
+      LABOUR_DATA.length   ? null : sbFetch('labour',{select:'*',order:'name.asc'}),
+      VENDORS.length       ? null : sbFetch('vendors',{select:'*',order:'name.asc'})
+    ]);
+    if(results[0]) SUBCONTRACTORS = results[0].map ? results[0].map(mapSC) : results[0];
+    if(results[1]) LABOUR_DATA = results[1];
+    if(results[2]) VENDORS = results[2].map ? results[2].map(mapVendor) : results[2];
+  } catch(e){ console.error('boqPreloadPartyData error:',e); }
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -6468,7 +6485,7 @@ function boqPartyDropdown(type){
   if(type==='sc'){
     var list = SUBCONTRACTORS||[];
     if(!list.length) return '<input id="ex-party" class="finp" placeholder="Subcontractor name">';
-    opts = list.map(function(s){ return '<option value="'+s.name+'">'+s.name+'</option>'; }).join('');
+    opts = list.map(function(s){ var n=s.name||s.companyName||s.company||''; return '<option value="'+n+'">'+n+'</option>'; }).join('');
   } else if(type==='labour'){
     var labList = LABOUR_DATA||[];
     if(!labList.length) return '<input id="ex-party" class="finp" placeholder="Labour type / contractor name">';
@@ -6476,7 +6493,10 @@ function boqPartyDropdown(type){
   } else if(type==='material'){
     var vendList = VENDORS||[];
     if(!vendList.length) return '<input id="ex-party" class="finp" placeholder="Vendor / supplier name">';
-    opts = vendList.map(function(v){ return '<option value="'+v.name+'">'+v.name+'</option>'; }).join('');
+    opts = vendList.map(function(v){
+      var n = v.name||'';
+      return '<option value="'+n+'">'+n+'</option>';
+    }).join('');
   }
   return '<select id="ex-party" class="fsel">'+opts+'</select>';
 }
@@ -6762,13 +6782,13 @@ async function deleteLabour(id){
   <div class="drawer-body">
     <div class="drawer-section">Modules</div>
 
-    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">BOQ &amp; Execution</div><div class="drawer-item-sub">Bill of Quantities &amp; Work Execution</div></div>
-    </div>
     <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">BOQ &amp; Execution</div><div class="drawer-item-sub">Bill of Quantities &amp; Work Execution</div></div>
     </div>
 
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
