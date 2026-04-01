@@ -3522,8 +3522,10 @@ async function loadAllData(silent){
     PROJECTS = Array.isArray(projects)?projects:[];
     LABOUR_DATA = Array.isArray(labours)?labours:[];
     // Only render registry lists if registry screen is active
+    console.log('loadAllData: currentApp='+currentApp+' silent='+silent+' vendors='+VENDORS.length);
     if(currentApp==='registry'){
-      try{ renderVendors(); }catch(e){ console.error('renderVendors:',e); }
+      console.log('Rendering registry lists...');
+      try{ renderVendors(); console.log('renderVendors OK'); }catch(e){ console.error('renderVendors:',e); }
       try{ renderMaterials(); }catch(e){ console.error('renderMaterials:',e); }
       try{ renderSC(); }catch(e){ console.error('renderSC:',e); }
       try{ renderUsers(); }catch(e){ console.error('renderUsers:',e); }
@@ -3531,6 +3533,8 @@ async function loadAllData(silent){
       try{ rebuildPills('material','mat-cat-pills','var(--green)',filterMaterials); }catch(e){}
       try{ rebuildPills('sc','sc-cat-pills','var(--purple)',filterSC); }catch(e){}
       try{ loadCategories(); }catch(e){}
+    } else {
+      console.log('NOT rendering - currentApp is: '+currentApp);
     }
     try{ updateAllStats(); }catch(e){ console.error('updateAllStats:',e); }
     if(!silent) toast('Data loaded','success');
@@ -3542,7 +3546,7 @@ async function loadAllData(silent){
 
 // ── DATA MAPPERS (DB → App format) ──
 function mapVendor(v){
-  return {id:v.id,vendorId:v.vendor_id,name:v.name,cat:v.category||'',status:v.status,rating:v.rating||0,
+  return {id:v.id,vendorId:v.vendor_id,name:v.name||'(No Name)',cat:v.category||'',status:v.status,rating:v.rating||0,
     gst:v.gst,contact:v.contact_person,phone:v.phone,email:v.email,address:v.address,
     brands:v.brands,payTerms:v.pay_terms,leadTime:v.lead_time,orders:v.total_orders||0,
     totalValue:v.total_value||0,materialRates:[],col:catColor(v.category)};
@@ -3594,10 +3598,10 @@ function renderVendors(list){
     return '<div class="reg-card" onclick="openDetail(\'vendor\',\''+v.id+'\')">'+
       '<div class="rc-accent" style="background:'+v.col+'"></div>'+
       '<div class="rc-body">'+
-        '<div class="avatar" style="background:'+v.col+'">'+v.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="background:'+v.col+'">'+(v.name||'?').split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
         '<div class="rc-info">'+
           '<div class="rc-name">'+v.name+'</div>'+
-          '<div class="rc-sub">'+v.brands.split(',')[0]+'</div>'+
+          '<div class="rc-sub">'+(v.brands||v.cat||'—').split(',')[0]+'</div>'+
           '<div class="rc-tags">'+
             '<span class="badge '+(stBadge[v.status]||'b-navy')+'">'+v.status+'</span>'+
             '<span class="badge b-navy">'+v.cat+'</span>'+
@@ -3840,8 +3844,8 @@ function openDetail(type,id){
     document.getElementById('det-title').textContent=v.name;
     document.getElementById('det-body').innerHTML=
       '<div style="background:'+v.col+'1A;border:1px solid '+v.col+'40;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">'+
-        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+v.col+'">'+v.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
-        '<div><div style="font-size:17px;font-weight:800;">'+v.name+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">'+v.brands+'</div><div style="margin-top:6px;display:flex;gap:6px;"><span class="badge b-green">'+v.status+'</span><span class="badge b-teal">&#9733; '+v.rating+'</span></div></div>'+
+        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+v.col+'">'+  (v.name||'V').split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div><div style="font-size:17px;font-weight:800;">'+v.name+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">'+(v.brands||'—')+'</div><div style="margin-top:6px;display:flex;gap:6px;"><span class="badge b-green">'+v.status+'</span><span class="badge b-teal">&#9733; '+v.rating+'</span></div></div>'+
       '</div>'+
       '<div style="background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px;">'+
         ir('Vendor ID',v.id,true)+ir('Category',v.cat)+ir('GST No.',v.gst,true)+
@@ -3850,7 +3854,7 @@ function openDetail(type,id){
         ir('Total Orders',v.orders+' orders')+ir('Total Value',fmtV(v.totalValue))+
       '</div>'+
       '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">Products / Brands</div>'+
-      '<div style="background:var(--bg);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);margin-bottom:14px;">'+v.brands+'</div>'+
+      '<div style="background:var(--bg);border-radius:10px;padding:12px;font-size:12px;color:var(--text2);margin-bottom:14px;">'+(v.brands||'—')+'</div>'+
       (v.materialRates&&v.materialRates.length?
         '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">&#129521; Material Rates</div>'+
         '<div style="background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px;">'+
