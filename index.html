@@ -3499,8 +3499,8 @@ var PROJECTS = [];
 
 // ── LOAD ALL DATA FROM SUPABASE ──
 async function loadAllData(silent){
-  // Show loading state only if registry is visible
-  if(!silent){
+  // Show loading state only when registry is active
+  if(!silent && currentApp==='registry'){
     var loadHtml='<div style="text-align:center;padding:30px;color:var(--text3);"><div style="font-size:24px;margin-bottom:8px;">⏳</div><div style="font-weight:700;">Loading...</div></div>';
     ['vendor-list','material-list','sc-list','user-list'].forEach(function(id){
       var el=document.getElementById(id);if(el)el.innerHTML=loadHtml;
