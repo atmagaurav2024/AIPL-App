@@ -6077,13 +6077,14 @@ function initBOQ(){
 async function boqPreloadPartyData(){
   try{
     var [scs, labs, vends] = await Promise.all([
-      sbFetch('subcontractors',{select:'id,name',order:'name.asc'}),
-      sbFetch('labour',{select:'id,name,trade',order:'name.asc'}),
-      sbFetch('vendors',{select:'id,name',order:'name.asc'})
+      sbFetch('subcontractors',{select:'*',order:'name.asc'}),
+      sbFetch('labour',{select:'*',order:'name.asc'}),
+      sbFetch('vendors',{select:'*',order:'name.asc'})
     ]);
-    if(Array.isArray(scs) && scs.length)  SUBCONTRACTORS = scs.map(mapSC);
-    if(Array.isArray(labs) && labs.length) LABOUR_DATA = labs;
+    if(Array.isArray(scs) && scs.length)   SUBCONTRACTORS = scs.map(mapSC);
+    if(Array.isArray(labs) && labs.length)  LABOUR_DATA = labs;
     if(Array.isArray(vends) && vends.length) VENDORS = vends.map(mapVendor);
+    console.log('BOQ preload: SC='+SUBCONTRACTORS.length+' Lab='+LABOUR_DATA.length+' Ven='+VENDORS.length);
   } catch(e){ console.error('boqPreloadPartyData error:',e); }
 }
 
@@ -6485,10 +6486,11 @@ function boqExecTypeChange(){
 }
 
 function boqPartyDropdown(type){
+  console.log('boqPartyDropdown type='+type+' SC='+SUBCONTRACTORS.length+' Ven='+VENDORS.length+' Lab='+LABOUR_DATA.length);
   var opts = '';
   if(type==='sc'){
     var list = SUBCONTRACTORS||[];
-    if(!list.length) return '<input id="ex-party" class="finp" placeholder="Subcontractor name">';
+    if(!list.length) return '<input id="ex-party" class="finp" placeholder="No subcontractors in registry">';
     opts = list.map(function(s){ var n=s.name||s.companyName||s.company||''; return '<option value="'+n+'">'+n+'</option>'; }).join('');
   } else if(type==='labour'){
     var labList = LABOUR_DATA||[];
