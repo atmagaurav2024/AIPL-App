@@ -3536,13 +3536,11 @@ async function loadAllData(silent){
     PROJECTS = Array.isArray(projects)?projects:[];
     LABOUR_DATA = Array.isArray(labours)?labours:[];
     // Only render registry lists if registry screen is active
-    if(document.getElementById('app-registry')&&document.getElementById('app-registry').classList.contains('on')){
+    if(currentApp==='registry'){
       renderVendors(); renderMaterials(); renderSC(); renderUsers();
-      updateAllStats();
-      if(!silent) toast('Data loaded','success');
-    } else {
-      updateAllStats();
     }
+    updateAllStats();
+    if(!silent) toast('Data loaded','success');
   } catch(e){
     if(!silent) toast('Failed to load data — check connection','error');
     console.error('loadAllData error:',e);
