@@ -3443,21 +3443,7 @@ function showToast(msg, type = 'success') {
 // ═══════════════════════════════════════════
 function initRegistry(){
   loadCategories();
-  if(!VENDORS.length && !SUBCONTRACTORS.length) loadAllData(false);
-  try{
-    rebuildPills('vendor','vendor-cat-pills','var(--teal)',filterVendors);
-    rebuildPills('material','mat-cat-pills','var(--green)',filterMaterials);
-    rebuildPills('sc','sc-cat-pills','var(--purple)',filterSC);
-    renderCatSection('vendor','vendor-cats');
-    renderCatSection('material','material-cats');
-    renderCatSection('sc','sc-cats');
-    renderCatSection('uom','uom-cats');
-renderCatSection('role','role-cats');
-renderCatSection('dept','dept-cats');
-    renderCatSection('role','role-cats');
-    renderCatSection('dept','dept-cats');
-    loadAllData();
-  }catch(e){console.log('reg init',e);}
+  loadAllData(false);
 }
 
 // ── DATA ──────────────────────────────────────────────────────────────
@@ -3537,13 +3523,20 @@ async function loadAllData(silent){
     LABOUR_DATA = Array.isArray(labours)?labours:[];
     // Only render registry lists if registry screen is active
     if(currentApp==='registry'){
-      renderVendors(); renderMaterials(); renderSC(); renderUsers();
+      try{ renderVendors(); }catch(e){ console.error('renderVendors:',e); }
+      try{ renderMaterials(); }catch(e){ console.error('renderMaterials:',e); }
+      try{ renderSC(); }catch(e){ console.error('renderSC:',e); }
+      try{ renderUsers(); }catch(e){ console.error('renderUsers:',e); }
+      try{ rebuildPills('vendor','vendor-cat-pills','var(--teal)',filterVendors); }catch(e){}
+      try{ rebuildPills('material','mat-cat-pills','var(--green)',filterMaterials); }catch(e){}
+      try{ rebuildPills('sc','sc-cat-pills','var(--purple)',filterSC); }catch(e){}
+      try{ loadCategories(); }catch(e){}
     }
-    updateAllStats();
+    try{ updateAllStats(); }catch(e){ console.error('updateAllStats:',e); }
     if(!silent) toast('Data loaded','success');
   } catch(e){
-    if(!silent) toast('Failed to load data — check connection','error');
-    console.error('loadAllData error:',e);
+    if(!silent) toast('Failed to load — check connection','error');
+    console.error('loadAllData fetch error:',e);
   }
 }
 
