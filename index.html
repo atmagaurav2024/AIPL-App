@@ -6076,14 +6076,14 @@ function initBOQ(){
 
 async function boqPreloadPartyData(){
   try{
-    var results = await Promise.all([
-      SUBCONTRACTORS.length ? null : sbFetch('subcontractors',{select:'*',order:'name.asc'}),
-      LABOUR_DATA.length   ? null : sbFetch('labour',{select:'*',order:'name.asc'}),
-      VENDORS.length       ? null : sbFetch('vendors',{select:'*',order:'name.asc'})
+    var [scs, labs, vends] = await Promise.all([
+      sbFetch('subcontractors',{select:'id,name',order:'name.asc'}),
+      sbFetch('labour',{select:'id,name,trade',order:'name.asc'}),
+      sbFetch('vendors',{select:'id,name',order:'name.asc'})
     ]);
-    if(results[0]) SUBCONTRACTORS = results[0].map ? results[0].map(mapSC) : results[0];
-    if(results[1]) LABOUR_DATA = results[1];
-    if(results[2]) VENDORS = results[2].map ? results[2].map(mapVendor) : results[2];
+    if(Array.isArray(scs) && scs.length)  SUBCONTRACTORS = scs.map(mapSC);
+    if(Array.isArray(labs) && labs.length) LABOUR_DATA = labs;
+    if(Array.isArray(vends) && vends.length) VENDORS = vends.map(mapVendor);
   } catch(e){ console.error('boqPreloadPartyData error:',e); }
 }
 
@@ -6448,7 +6448,11 @@ function boqSetExecTarget(btn){
   var unit = btn.getAttribute('data-unit');
   boqOpenAddExec(itemId, jmId, unit);
 }
-function boqOpenAddExec(itemId, jmId, unit){
+async function boqOpenAddExec(itemId, jmId, unit){
+  // Ensure party lists loaded
+  if(!SUBCONTRACTORS.length || !VENDORS.length || !LABOUR_DATA.length){
+    await boqPreloadPartyData();
+  }
   var jm = BOQ_JMS.find(function(j){return j.id===jmId;});
   var jmExecTotal = BOQ_EXECS.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
   document.getElementById('boq-sheet-title').textContent = 'Add Execution Entry';
