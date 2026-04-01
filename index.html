@@ -6075,17 +6075,8 @@ function initBOQ(){
 }
 
 async function boqPreloadPartyData(){
-  try{
-    var [scs, labs, vends] = await Promise.all([
-      sbFetch('subcontractors',{select:'*',order:'name.asc'}),
-      sbFetch('labour',{select:'*',order:'name.asc'}),
-      sbFetch('vendors',{select:'*',order:'name.asc'})
-    ]);
-    if(Array.isArray(scs) && scs.length)   SUBCONTRACTORS = scs.map(mapSC);
-    if(Array.isArray(labs) && labs.length)  LABOUR_DATA = labs;
-    if(Array.isArray(vends) && vends.length) VENDORS = vends.map(mapVendor);
-    console.log('BOQ preload: SC='+SUBCONTRACTORS.length+' Lab='+LABOUR_DATA.length+' Ven='+VENDORS.length);
-  } catch(e){ console.error('boqPreloadPartyData error:',e); }
+  // Re-use loadAllData which is known to work
+  await loadAllData();
 }
 
 // ═══════════════════════════════════════════════════════════
