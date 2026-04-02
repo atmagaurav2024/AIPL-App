@@ -6202,21 +6202,31 @@ function boqRenderAll(){
           '<div class="boq-stat" style="padding:8px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+totalExec+'</div><div class="boq-stat-lbl">Executed</div></div>'+
           '<div class="boq-stat" style="padding:8px 0;"><div class="boq-stat-val" style="color:'+(balance<0?'#C62828':'#37474F')+';">'+balance+'</div><div class="boq-stat-lbl">Balance</div></div>'+
         '</div>'+
-        // Financial row: BOQ Amt | Planned Amt | Billed Amt | Diff
+        // Financial rows
         (function(){
           var pctStr = BOQ_PROJ&&BOQ_PROJ.pct_below ? String(BOQ_PROJ.pct_below) : '';
           var pctNum = parseFloat(pctStr)||0;
           var isBelow = pctStr.toLowerCase().includes('below');
-          var rateMult = pctStr ? (isBelow ? (1 - pctNum/100) : (1 + pctNum/100)) : 1;
+          var rateMult = pctStr ? (isBelow ? (1-pctNum/100) : (1+pctNum/100)) : 1;
           var contractAmt = boqQty * rate * rateMult;
-          var plannedAmt = totalJMQty * rate * rateMult;
-          var billedAmt  = totalExec * rate * rateMult;
-          var diff       = plannedAmt - billedAmt;
+          var plannedAmt  = totalJMQty * rate * rateMult;
+          var billedAmt   = totalExec * rate * rateMult;
+          var diff        = plannedAmt - billedAmt;
+          var matAmt = itemExecs.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          var scAmt  = itemExecs.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          var labAmt = itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          var totAmt = matAmt + scAmt + labAmt;
           return '<div style="display:flex;border-bottom:1px solid var(--border);background:#F0EDF8;">'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(contractAmt)+'</div><div class="boq-stat-lbl">Contract</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
+          '</div>'+
+          '<div style="display:flex;border-bottom:1px solid var(--border);background:#EDF7ED;">'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#E65100;">'+fmtINR(matAmt)+'</div><div class="boq-stat-lbl">Material</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(scAmt)+'</div><div class="boq-stat-lbl">SC</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(labAmt)+'</div><div class="boq-stat-lbl">Labour</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(totAmt)+'</div><div class="boq-stat-lbl">Total</div></div>'+
           '</div>';
         })()+
         // JMs section
