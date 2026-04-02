@@ -6036,7 +6036,7 @@ var BOQ_ITEMS = [];
 var BOQ_JMS = [];
 var BOQ_EXECS = [];
 // collapse state per item
-var boqCollapsed = {};
+var boqOpen = {}; // stores which items are expanded
 
 async function boqLoadProjects(){
   var sel = document.getElementById('boq-proj-sel');
@@ -6065,6 +6065,7 @@ async function boqLoadItems(){
       sbFetch('boq_execution',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'})
     ]);
     BOQ_ITEMS = Array.isArray(results[0])?results[0]:[];
+    boqOpen = {}; // reset collapse state on new project load
     BOQ_JMS   = Array.isArray(results[1])?results[1]:[];
     BOQ_EXECS = Array.isArray(results[2])?results[2]:[];
   }catch(e){ BOQ_ITEMS=[]; BOQ_JMS=[]; BOQ_EXECS=[]; console.error(e); }
@@ -6080,7 +6081,7 @@ function boqRender(){
 }
 
 function boqToggle(id){
-  boqCollapsed[id] = !boqCollapsed[id];
+  boqOpen[id] = !boqOpen[id];
   boqRenderAll();
 }
 
@@ -6102,7 +6103,7 @@ function boqRenderAll(){
     var balance     = boqQty - totalJMQty;
     var pct         = boqQty>0?Math.min(100,Math.round(totalJMQty/boqQty*100)):0;
     var execPct     = boqQty>0?Math.min(100,Math.round(totalExec/boqQty*100)):0;
-    var isOpen      = !boqCollapsed[item.id];
+    var isOpen      = !!boqOpen[item.id];
     var amt         = fmtINR(boqQty*rate);
 
     // ── JMs with execution entries ────────────────────────────
