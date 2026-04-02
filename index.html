@@ -6037,6 +6037,7 @@ var BOQ_JMS = [];
 var BOQ_EXECS = [];
 // collapse state per item
 var boqOpen = {}; // stores which items are expanded
+var BOQ_PROJ = null; // current project for rate calcs
 
 async function boqLoadProjects(){
   var sel = document.getElementById('boq-proj-sel');
@@ -6068,6 +6069,8 @@ async function boqLoadItems(){
     boqOpen = {}; // reset collapse state on new project load
     BOQ_JMS   = Array.isArray(results[1])?results[1]:[];
     BOQ_EXECS = Array.isArray(results[2])?results[2]:[];
+    // Store current project for rate calculations
+    BOQ_PROJ = PROJECTS.find(function(p){return p.id===projId;})||null;
   }catch(e){ BOQ_ITEMS=[]; BOQ_JMS=[]; BOQ_EXECS=[]; console.error(e); }
   boqRender();
 }
@@ -6100,7 +6103,7 @@ function boqRenderAll(){
     var itemExecs   = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
     var totalJMQty  = itemJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
     var totalExec   = itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
-    var balance     = boqQty - totalJMQty;
+    var balance     = totalJMQty - totalExec;
     var pct         = boqQty>0?Math.min(100,Math.round(totalJMQty/boqQty*100)):0;
     var execPct     = boqQty>0?Math.min(100,Math.round(totalExec/boqQty*100)):0;
     var isOpen      = !!boqOpen[item.id];
@@ -6152,24 +6155,7 @@ function boqRenderAll(){
         var scTotal  = itemExecs.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
         var labTotal = itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
         var matTotal = itemExecs.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-        jmsHtml += '<div style="display:flex;gap:0;background:#EDE7F6;border-radius:0 0 8px 8px;overflow:hidden;border:1px solid #CE93D8;margin-top:8px;">'+
-            '<div style="flex:1;padding:8px 6px;text-align:center;border-right:1px solid #CE93D8;">'+
-              '<div style="font-size:11px;font-weight:900;color:#1565C0;">'+fmtINR(scTotal)+'</div>'+
-              '<div style="font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;">SC</div>'+
-            '</div>'+
-            '<div style="flex:1;padding:8px 6px;text-align:center;border-right:1px solid #CE93D8;">'+
-              '<div style="font-size:11px;font-weight:900;color:#2E7D32;">'+fmtINR(labTotal)+'</div>'+
-              '<div style="font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;">Labour</div>'+
-            '</div>'+
-            '<div style="flex:1;padding:8px 6px;text-align:center;border-right:1px solid #CE93D8;">'+
-              '<div style="font-size:11px;font-weight:900;color:#E65100;">'+fmtINR(matTotal)+'</div>'+
-              '<div style="font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;">Material</div>'+
-            '</div>'+
-            '<div style="flex:1;padding:8px 6px;text-align:center;">'+
-              '<div style="font-size:11px;font-weight:900;color:#4A148C;">'+fmtINR(totalJMCost)+'</div>'+
-              '<div style="font-size:8px;font-weight:700;color:var(--text3);text-transform:uppercase;">Total</div>'+
-            '</div>'+
-          '</div>';
+
       }
     } else {
       jmsHtml = '<div style="font-size:12px;color:var(--text3);padding:6px 0;">No JMs yet — add first JM to start execution</div>';
@@ -6216,15 +6202,24 @@ function boqRenderAll(){
           '<div class="boq-stat" style="padding:8px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+totalExec+'</div><div class="boq-stat-lbl">Executed</div></div>'+
           '<div class="boq-stat" style="padding:8px 0;"><div class="boq-stat-val" style="color:'+(balance<0?'#C62828':'#37474F')+';">'+balance+'</div><div class="boq-stat-lbl">Balance</div></div>'+
         '</div>'+
-        // Cost summary row (SC/Labour/Material/Total) — only when >1 JM
-        (itemJMs.length>1?
-          '<div style="display:flex;border-bottom:1px solid var(--border);background:#F8F5FF;">'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(itemExecs.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0))+'</div><div class="boq-stat-lbl">SC</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0))+'</div><div class="boq-stat-lbl">Labour</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#E65100;">'+fmtINR(itemExecs.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0))+'</div><div class="boq-stat-lbl">Material</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0))+'</div><div class="boq-stat-lbl">Total Cost</div></div>'+
-          '</div>'
-        :'')+
+        // Financial row: BOQ Amt | Planned Amt | Billed Amt | Diff
+        (function(){
+          var boqAmt = boqQty * rate;
+          // Parse pct_below from project — e.g. "12.50% Below" -> 0.875 multiplier
+          var pctStr = BOQ_PROJ&&BOQ_PROJ.pct_below ? String(BOQ_PROJ.pct_below) : '';
+          var pctNum = parseFloat(pctStr)||0;
+          var isBelow = pctStr.toLowerCase().includes('below');
+          var rateMult = isBelow ? (1 - pctNum/100) : (1 + pctNum/100);
+          var plannedAmt = totalJMQty * rate;
+          var billedAmt  = totalExec * rate * rateMult;
+          var diff       = plannedAmt - billedAmt;
+          return '<div style="display:flex;border-bottom:1px solid var(--border);background:#F0EDF8;">'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(boqAmt)+'</div><div class="boq-stat-lbl">BOQ Amt</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
+          '</div>';
+        })()+
         // JMs section
         '<div style="padding:10px 14px;">'+
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
