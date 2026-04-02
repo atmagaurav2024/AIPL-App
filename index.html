@@ -6204,17 +6204,17 @@ function boqRenderAll(){
         '</div>'+
         // Financial row: BOQ Amt | Planned Amt | Billed Amt | Diff
         (function(){
-          var boqAmt = boqQty * rate;
+          var contractAmt = boqQty * rate * rateMult;
           // Parse pct_below from project — e.g. "12.50% Below" -> 0.875 multiplier
           var pctStr = BOQ_PROJ&&BOQ_PROJ.pct_below ? String(BOQ_PROJ.pct_below) : '';
           var pctNum = parseFloat(pctStr)||0;
           var isBelow = pctStr.toLowerCase().includes('below');
           var rateMult = isBelow ? (1 - pctNum/100) : (1 + pctNum/100);
-          var plannedAmt = totalJMQty * rate;
+          var plannedAmt = totalJMQty * rate * rateMult;
           var billedAmt  = totalExec * rate * rateMult;
           var diff       = plannedAmt - billedAmt;
           return '<div style="display:flex;border-bottom:1px solid var(--border);background:#F0EDF8;">'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(boqAmt)+'</div><div class="boq-stat-lbl">BOQ Amt</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(contractAmt)+'</div><div class="boq-stat-lbl">Contract</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
