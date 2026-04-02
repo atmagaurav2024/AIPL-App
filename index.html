@@ -6204,12 +6204,11 @@ function boqRenderAll(){
         '</div>'+
         // Financial row: BOQ Amt | Planned Amt | Billed Amt | Diff
         (function(){
-          var contractAmt = boqQty * rate * rateMult;
-          // Parse pct_below from project — e.g. "12.50% Below" -> 0.875 multiplier
           var pctStr = BOQ_PROJ&&BOQ_PROJ.pct_below ? String(BOQ_PROJ.pct_below) : '';
           var pctNum = parseFloat(pctStr)||0;
           var isBelow = pctStr.toLowerCase().includes('below');
-          var rateMult = isBelow ? (1 - pctNum/100) : (1 + pctNum/100);
+          var rateMult = pctStr ? (isBelow ? (1 - pctNum/100) : (1 + pctNum/100)) : 1;
+          var contractAmt = boqQty * rate * rateMult;
           var plannedAmt = totalJMQty * rate * rateMult;
           var billedAmt  = totalExec * rate * rateMult;
           var diff       = plannedAmt - billedAmt;
