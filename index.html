@@ -6200,9 +6200,10 @@ function boqRenderAll(){
           '<div style="flex:1;min-width:0;">'+
             '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">'+
               '<span class="boq-card-code">'+item.item_code+'</span>'+
-              (item.short_name?'<span style="font-size:11px;color:#6A1B9A;font-weight:700;">'+item.short_name+'</span>':'')+
+
             '</div>'+
-            '<div style="font-size:13px;font-weight:800;color:#1E293B;">'+item.description+'</div>'+
+            '<div style="font-size:13px;font-weight:800;color:#1E293B;">'+(item.short_name||item.description)+'</div>'+
+            (item.short_name?'<div style="font-size:10px;color:var(--text3);margin-top:1px;">'+item.description+'</div>':'')+
           '</div>'+
           '<div style="text-align:right;flex-shrink:0;">'+
             '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+amt+'</div>'+
