@@ -1050,7 +1050,7 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .sh-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:12px auto 0;}
 .sh-head{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
 .sh-title{font-size:17px;font-weight:800;}.sh-close{font-size:22px;cursor:pointer;color:var(--text3);}
-.sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:12px 20px calc(12px + env(safe-area-inset-bottom, 0px));border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:601;position:relative;}
+.sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:12px 20px 80px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:701;position:relative;}
 .flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:5px;margin-top:2px;}
 .finp,.fsel,.ftxt{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s;box-sizing:border-box;}
 *{touch-action:pan-x pan-y;}
@@ -3928,8 +3928,8 @@ function openDetail(type,id){
     document.getElementById('det-title').textContent=s.name;
     document.getElementById('det-body').innerHTML=
       '<div style="background:'+s.col+'1A;border:1px solid '+s.col+'40;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">'+
-        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+s.col+'">'+s.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
-        '<div><div style="font-size:17px;font-weight:800;">'+s.name+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">'+s.speciality+'</div>'+
+        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+s.col+'">'+(s.name||'SC').split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div><div style="font-size:17px;font-weight:800;">'+(s.name||'—')+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">'+(s.speciality||'—')+'</div>'+
           '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><span class="badge b-purple">'+s.trade+'</span></div>'+
         '</div>'+
       '</div>'+
@@ -3943,7 +3943,7 @@ function openDetail(type,id){
         ir('SC ID',s.id,true)+ir('Trade',s.trade)+ir('GST No.',s.gst,true)+
         ir('Contact',s.contact)+ir('Phone',s.phone)+ir('Email',s.email)+
         ir('Address',s.address)+ir('Experience',s.exp)+ir('Annual Turnover',s.turnover)+
-        ir('Current Projects',s.projects.length?s.projects.join(', '):'None assigned')+
+        ir('Current Projects',(s.projects&&s.projects.length)?s.projects.join(', '):'None assigned')+
       '</div>';
     document.getElementById('det-foot').innerHTML=
       '<button class="btn btn-outline" onclick="closeSheet(\'ov-det\',\'sh-det\')">Close</button>'+
