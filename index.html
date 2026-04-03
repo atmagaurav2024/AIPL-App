@@ -6137,34 +6137,24 @@ async function boqEditJM(btn){
   var itemId = btn.getAttribute('data-item');
   var unit   = btn.getAttribute('data-unit');
   var jm = BOQ_JMS.find(function(j){return j.id===id;}); if(!jm) return;
-  // Ensure categories loaded
-  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
-  // Use same JM creation form but pre-filled
-  var boqQty  = parseFloat((BOQ_ITEMS.find(function(i){return i.id===itemId;})||{}).boq_qty)||0;
-  var existingJMQty = BOQ_JMS.filter(function(j){return j.boq_item_id===itemId && j.id!==id;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
-  var remaining = boqQty - existingJMQty;
-  var subs = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;});
   document.getElementById('boq-sheet-title').textContent = 'Edit JM-'+jm.jm_number;
-  // Build same form as boqBuildJMForm but with existing values
-  boqBuildJMForm(itemId, boqQty, existingJMQty, jm.jm_number, unit, remaining, subs);
-  // Pre-fill existing values
-  setTimeout(function(){
-    var dateEl = document.getElementById('jm-date');
-    var qtyEl  = document.getElementById('jm-qty');
-    var refEl  = document.getElementById('jm-ref');
-    if(dateEl) dateEl.value = jm.date||'';
-    if(qtyEl)  qtyEl.value  = jm.jm_qty||'';
-    if(refEl)  refEl.value  = jm.reference||'';
-    // Change save button to update mode
-    var foot = document.getElementById('boq-sheet-foot');
-    if(foot){
-      foot.innerHTML =
-        '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
-        '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveEditJMBtn(this)" data-id="'+id+'" data-item="'+itemId+'">✓ Save Changes</button>';
-    }
-  },50);
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<div style="background:#EDE7F6;border-radius:12px;padding:10px 14px;margin-bottom:12px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#4A148C;">JM-'+jm.jm_number+'</div>'+
+    '</div>'+
+    '<div class="g2"><div><label class="flbl">JM Date *</label>'+
+      '<input id="jm-date" class="finp" type="date" value="'+(jm.date||'')+'"></div>'+
+    '<div><label class="flbl">JM Qty ('+unit+') *</label>'+
+      '<input id="jm-qty" class="finp" type="number" step="0.001" value="'+(jm.jm_qty||'')+'"></div></div>'+
+    '<label class="flbl">Reference / Notes</label>'+
+    '<input id="jm-ref" class="finp" value="'+(jm.reference||'')+'" placeholder="e.g. JM dated 10-Mar-2026">';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveEditJMBtn(this)" '+
+      'data-id="'+id+'" data-item="'+itemId+'">✓ Save Changes</button>';
   openBOQSheet();
 }
+
 function boqSaveEditJMBtn(btn){
   boqSaveEditJM(btn.getAttribute('data-id'), btn.getAttribute('data-item'));
 }
@@ -6172,58 +6162,19 @@ function boqSaveEditJMBtn(btn){
 async function boqSaveEditJM(id, itemId){
   var date = document.getElementById('jm-date').value;
   var qty  = parseFloat(document.getElementById('jm-qty').value)||0;
-  if(!date||!qty){ toast('Date and qty required','warning'); return; }
   var ref  = document.getElementById('jm-ref').value.trim()||null;
-  var projId = document.getElementById('boq-proj-sel').value;
+  if(!date||!qty){ toast('Date and qty required','warning'); return; }
   try{
     toast('Saving...','info');
-    // 1. Update JM record
     await sbUpdate('boq_jm', id, {date:date, jm_qty:qty, reference:ref});
     var jm = BOQ_JMS.find(function(j){return j.id===id;});
     if(jm){ jm.date=date; jm.jm_qty=qty; jm.reference=ref; }
-    var totalRes = 0;
-    // 2. Save flat resources (if any added in this edit session)
-    if(jmResources.length){
-      var flatInserts = jmResources.map(function(r){
-        return sbInsert('boq_execution',{
-          project_id:projId, boq_item_id:itemId, jm_id:id,
-          date:date, exec_type:r.type, party_name:r.party,
-          qty:r.qty, rate:r.rate, remarks:(r.unit?'Unit: '+r.unit:null)
-        });
-      });
-      var flatRes = await Promise.all(flatInserts);
-      flatRes.forEach(function(er){ if(er&&er[0]) BOQ_EXECS.push(er[0]); });
-      totalRes += jmResources.length;
-    }
-    // 3. Save sub-item resources (if any added in this edit session)
-    var subInserts = [];
-    Object.keys(jmSubResources).forEach(function(subId){
-      (jmSubResources[subId]||[]).forEach(function(r){
-        subInserts.push(sbInsert('boq_exec_resources',{
-          project_id:projId, boq_item_id:itemId, jm_id:id, boq_subitem_id:subId,
-          date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate
-        }));
-        // Also save in boq_execution for summary calculations
-        subInserts.push(sbInsert('boq_execution',{
-          project_id:projId, boq_item_id:itemId, jm_id:id,
-          date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate,
-          remarks:'Sub: '+((BOQ_SUBITEMS.find(function(s){return s.id===subId;})||{}).name||subId)
-        }));
-      });
-      totalRes += (jmSubResources[subId]||[]).length;
-    });
-    if(subInserts.length){
-      var subRes = await Promise.all(subInserts);
-      subRes.forEach(function(sr){
-        if(sr&&sr[0]){ if(sr[0].boq_subitem_id) BOQ_EXECRES.push(sr[0]); else BOQ_EXECS.push(sr[0]); }
-      });
-    }
-    jmResources = []; jmSubResources = {};
-    toast('JM updated'+(totalRes?' + '+totalRes+' resources':'')+' !','success');
+    toast('JM updated!','success');
     closeBOQSheet();
     boqRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
 }
+
 
 async function boqEditExec(btn){
   var id     = btn.getAttribute('data-id');
