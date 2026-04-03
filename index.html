@@ -2378,6 +2378,18 @@ input,select,textarea{font-size:16px !important;}
       <div id="dept-cats"></div>
     </div>
 
+    <!-- Work Activity Categories -->
+    <div style="background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:12px;overflow:hidden;">
+      <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-size:14px;font-weight:800;">📋 Work Activity Categories</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">Used in BOQ sub-items (e.g. Materials, Labour, Plant &amp; Machinery)</div>
+        </div>
+        <button class="btn btn-navy btn-sm" onclick="addCategory('workcat')">+ Add</button>
+      </div>
+      <div id="workcat-cats"></div>
+    </div>
+
     <div style="height:10px"></div>
   </div>
 
@@ -4687,7 +4699,7 @@ async function deleteCat(type,i){
 }
 
 function addCategory(type){
-  var typeNames={vendor:'Vendor',material:'Material',sc:'Subcontractor Trade',uom:'Unit of Measure'};
+  var typeNames={vendor:'Vendor',material:'Material',sc:'Subcontractor Trade',uom:'Unit of Measure',workcat:'Work Activity Category',role:'Employee Role',dept:'Department'};
   document.getElementById('add-title').textContent='Add '+typeNames[type]+' Category';
   document.getElementById('add-body').innerHTML=
     '<label class="flbl">Category Name</label><input class="finp" id="new-cat-name" placeholder="e.g. Precast Concrete">'+
@@ -4748,6 +4760,7 @@ renderCatSection('sc','sc-cats');
 renderCatSection('uom','uom-cats');
 renderCatSection('role','role-cats');
 renderCatSection('dept','dept-cats');
+renderCatSection('workcat','workcat-cats');
 renderVendors();
 renderMaterials();
 renderSC();
@@ -5138,14 +5151,14 @@ async function getNextAIPLId(){
 
 
 // ── CATEGORY SYNC ──
-var catSectionMap={vendor:'vendor-cats',material:'material-cats',sc:'sc-cats',uom:'uom-cats',role:'role-cats',dept:'dept-cats'};
+var catSectionMap={vendor:'vendor-cats',material:'material-cats',sc:'sc-cats',uom:'uom-cats',role:'role-cats',dept:'dept-cats',workcat:'workcat-cats'};
 
 async function loadCategories(){
   try{
     var data = await sbFetch('categories',{select:'*',order:'created_at.asc'});
     if(!data||!data.length) return; // keep defaults if no DB cats yet
     // Merge DB categories into CAT_DATA
-    var types=['vendor','material','sc','uom','role','dept'];
+    var types=['vendor','material','sc','uom','role','dept','workcat'];
     types.forEach(function(type){
       var dbCats = data.filter(function(c){return c.type===type;});
       // Always replace from DB (even if empty - so no hardcoded fallback shows)
@@ -6364,6 +6377,7 @@ async function boqOpenAddItem(editItem){
   if(!(CAT_DATA.uom && CAT_DATA.uom.length)){
     await loadCategories();
   }
+  if(!editItem) newItemSubitems = []; // reset temp subitems for new item
   var v = editItem||{};
   document.getElementById('boq-sheet-title').textContent = editItem ? 'Edit BOQ Item' : 'New BOQ Item';
   document.getElementById('boq-sheet-body').innerHTML =
@@ -6380,13 +6394,16 @@ async function boqOpenAddItem(editItem){
       '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
         '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;">📋 Work Activities / Sub-items</div>'+
       '</div>'+
-      '<div id="bi-subitem-list">'+(editItem?boqRenderSubitemList(editItem.id):'<div style="font-size:11px;color:var(--text3);">Save item first to add sub-items</div>')+'</div>'+
-      (editItem?
-        '<div style="display:flex;gap:6px;margin-top:6px;">'+
-          '<input id="bi-new-subitem" class="finp" style="flex:1;" placeholder="e.g. Material Procurement, Formwork Installation...">'+
-          '<button onclick="boqAddSubitem(\''+editItem.id+'\')" style="background:#EDE7F6;color:#4A148C;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">+ Add</button>'+
-        '</div>'
-      :'<div style="font-size:11px;color:var(--text3);margin-top:4px;">Sub-items can be added after saving the item</div>')+
+      '<div id="bi-subitem-list">'+(editItem?boqRenderSubitemList(editItem.id):boqRenderNewSubitemList())+'</div>'+
+      '<div style="display:flex;gap:6px;margin-top:8px;">'+
+        '<select id="bi-sub-cat" class="fsel" style="width:140px;flex-shrink:0;">'+
+          '<option value="">— Category —</option>'+
+          (CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('')+
+        '</select>'+
+        '<input id="bi-new-subitem" class="finp" style="flex:1;" placeholder="Sub-item name...">'+
+        '<button onclick="boqAddSubitemInline(this)" data-itemid="'+(editItem?editItem.id:'')+'" style="background:#EDE7F6;color:#4A148C;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">+ Add</button>'+
+      '</div>'+
+      (!(CAT_DATA.workcat&&CAT_DATA.workcat.length)?'<div style="font-size:10px;color:#C62828;margin-top:4px;">⚠️ Add Work Activity Categories in Master Registry → Categories first</div>':'')+
     '</div>';
   document.getElementById('boq-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
@@ -6426,7 +6443,23 @@ async function boqSaveItem(editId){
       toast('Item updated!','success');
     } else {
       var res = await sbInsert('boq_items',data);
-      if(res&&res[0]) BOQ_ITEMS.push(res[0]);
+      if(res&&res[0]){
+        BOQ_ITEMS.push(res[0]);
+        // Save temp subitems now that we have the item ID
+        if(newItemSubitems.length){
+          var subInserts = newItemSubitems.map(function(s,i){
+            return sbInsert('boq_subitems',{
+              project_id:projId, boq_item_id:res[0].id,
+              name: typeof s==='string'?s:s.name,
+              category: typeof s==='string'?'General':s.cat,
+              sort_order:i+1
+            });
+          });
+          var subResults = await Promise.all(subInserts);
+          subResults.forEach(function(sr){ if(sr&&sr[0]) BOQ_SUBITEMS.push(sr[0]); });
+          newItemSubitems = [];
+        }
+      }
       toast('Item added!','success');
     }
     closeBOQSheet();
@@ -6441,14 +6474,70 @@ var jmResources = [];
 
 // ── SUBITEMS ─────────────────────────────────────────────────────────────────
 
+
+// Temp subitems for new item creation
+var newItemSubitems = [];
+
+function boqRenderNewSubitemList(){
+  if(!newItemSubitems.length) return '<div style="font-size:11px;color:var(--text3);">No sub-items yet</div>';
+  // Group by category
+  var cats = {};
+  newItemSubitems.forEach(function(s){ if(!cats[s.cat]) cats[s.cat]=[]; cats[s.cat].push(s); });
+  return Object.keys(cats).map(function(cat){
+    return '<div style="margin-bottom:8px;">'+
+      '<div style="font-size:10px;font-weight:800;color:#7B1FA2;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">'+cat+'</div>'+
+      cats[cat].map(function(s){
+        var idx = newItemSubitems.indexOf(s);
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#F3E5F5;border-radius:8px;margin-bottom:3px;">'+
+          '<div style="flex:1;font-size:12px;font-weight:700;">'+s.name+'</div>'+
+          '<button onclick="boqRemoveNewSubitem('+idx+')" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px;">×</button>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+}
+
+function boqRemoveNewSubitem(idx){
+  newItemSubitems.splice(idx,1);
+  var el = document.getElementById('bi-subitem-list');
+  if(el) el.innerHTML = boqRenderNewSubitemList();
+}
+
+function boqAddSubitemInline(btn){
+  var itemId = btn.getAttribute('data-itemid');
+  var catSel = document.getElementById('bi-sub-cat');
+  var input  = document.getElementById('bi-new-subitem');
+  var cat  = catSel ? catSel.value : '';
+  var name = input  ? input.value.trim() : '';
+  if(!cat){  toast('Select a category first','warning'); return; }
+  if(!name){ toast('Enter sub-item name','warning'); return; }
+  if(itemId){
+    // Editing existing item - save to DB
+    boqAddSubitem(itemId, cat);
+  } else {
+    // New item - store in temp array
+    newItemSubitems.push({cat:cat, name:name});
+    if(input) input.value='';
+    var el = document.getElementById('bi-subitem-list');
+    if(el) el.innerHTML = boqRenderNewSubitemList();
+  }
+}
+
 function boqRenderSubitemList(itemId){
   var subs = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;});
   if(!subs.length) return '<div style="font-size:11px;color:var(--text3);padding:4px 0;">No sub-items yet — add work activities below</div>';
-  return subs.map(function(s,i){
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:#F3E5F5;border-radius:8px;margin-bottom:4px;" data-subid="'+s.id+'">'+
-      '<div style="width:20px;height:20px;border-radius:6px;background:#7B1FA2;color:white;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;">'+(i+1)+'</div>'+
-      '<div style="flex:1;font-size:12px;font-weight:700;">'+s.name+'</div>'+
-      '<button class="boq-del-sub-btn" data-id="'+s.id+'" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px;">×</button>'+
+  // Group by category
+  var cats = {};
+  subs.forEach(function(s){ var c=s.category||'General'; if(!cats[c])cats[c]=[]; cats[c].push(s); });
+  return Object.keys(cats).map(function(cat){
+    return '<div style="margin-bottom:8px;">'+
+      '<div style="font-size:10px;font-weight:800;color:#7B1FA2;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">'+cat+'</div>'+
+      cats[cat].map(function(s){
+        return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#F3E5F5;border-radius:8px;margin-bottom:3px;" data-subid="'+s.id+'">'+
+          '<div style="flex:1;font-size:12px;font-weight:700;">'+s.name+'</div>'+
+          '<button class="boq-del-sub-btn" data-id="'+s.id+'" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0 4px;">×</button>'+
+        '</div>';
+      }).join('')+
     '</div>';
   }).join('');
 }
@@ -6467,15 +6556,18 @@ function boqDeleteSubitem(id){
   toast('Sub-item removed','info');
 }
 
-async function boqAddSubitem(itemId){
-  var input = document.getElementById('bi-new-subitem');
+async function boqAddSubitem(itemId, cat){
+  var input  = document.getElementById('bi-new-subitem');
+  var catSel = document.getElementById('bi-sub-cat');
   var name = input ? input.value.trim() : '';
+  var category = cat || (catSel ? catSel.value : '');
+  if(!category){ toast('Select a category first','warning'); return; }
   if(!name){ toast('Enter sub-item name','warning'); return; }
   var projId = document.getElementById('boq-proj-sel').value;
   var sortOrder = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;}).length + 1;
   try{
     var res = await sbInsert('boq_subitems',{
-      project_id:projId, boq_item_id:itemId, name:name, sort_order:sortOrder
+      project_id:projId, boq_item_id:itemId, name:name, category:category, sort_order:sortOrder
     });
     if(res&&res[0]) BOQ_SUBITEMS.push(res[0]);
     if(input) input.value='';
@@ -6523,7 +6615,13 @@ function boqBuildJMForm(itemId, boqQty, existingJMQty, jmNum, unit, remaining, s
 
   if(subs.length){
     // Sub-item based
-    subs.forEach(function(sub){
+    // Group subs by category
+    var subCats = {};
+    subs.forEach(function(sub){ var c=sub.category||'General'; if(!subCats[c])subCats[c]=[]; subCats[c].push(sub); });
+    Object.keys(subCats).forEach(function(catName){
+      html += '<div style="margin-bottom:10px;">'+
+        '<div style="font-size:10px;font-weight:800;color:#7B1FA2;text-transform:uppercase;letter-spacing:.5px;padding:4px 0 6px;">'+catName+'</div>';
+      subCats[catName].forEach(function(sub){
       html += '<div id="sub-section-'+sub.id+'" style="border:1px solid #CE93D840;border-radius:12px;margin-bottom:8px;overflow:hidden;">'+
         '<div style="background:#F3E5F5;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">'+
           '<div style="font-size:12px;font-weight:800;color:#4A148C;">'+sub.name+'</div>'+
@@ -6546,6 +6644,8 @@ function boqBuildJMForm(itemId, boqQty, existingJMQty, jmNum, unit, remaining, s
         '</div>'+
       '</div>';
     });
+      html += '</div>'; // end catName div
+    }); // end Object.keys(subCats).forEach
   } else {
     // Flat resources (no subitems)
     html += '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">No sub-items defined — add resources directly:</div>'+
