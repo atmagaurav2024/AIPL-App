@@ -1304,7 +1304,7 @@ input,select,textarea{font-size:16px !important;}
 .boq-card-name{font-size:14px;font-weight:800;color:var(--text);flex:1;}
 .boq-card-foot{padding:8px 14px 10px;display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--border);background:#FAFAFA;}
 .boq-stat{font-size:11px;color:var(--text2);display:flex;flex-direction:column;align-items:center;flex:1;}
-.boq-stat-val{font-size:13px;font-weight:900;color:#4A148C;}
+.boq-stat-val{font-size:11px;font-weight:900;color:#4A148C;}
 .boq-stat-lbl{font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;}
 .boq-progress-bar{height:6px;background:#E8EAF6;border-radius:99px;overflow:hidden;margin:6px 14px 10px;}
 .boq-progress-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#7B1FA2,#AB47BC);transition:width .4s;}
@@ -6217,16 +6217,16 @@ function boqRenderAll(){
           var labAmt = itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
           var totAmt = matAmt + scAmt + labAmt;
           return '<div style="display:flex;border-bottom:1px solid var(--border);background:#F0EDF8;">'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(contractAmt)+'</div><div class="boq-stat-lbl">Contract</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#4A148C;">'+fmtINR(contractAmt)+'</div><div class="boq-stat-lbl">Contract</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
           '</div>'+
           '<div style="display:flex;border-bottom:1px solid var(--border);background:#EDF7ED;">'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#E65100;">'+fmtINR(matAmt)+'</div><div class="boq-stat-lbl">Material</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#1565C0;">'+fmtINR(scAmt)+'</div><div class="boq-stat-lbl">SC</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="font-size:10px;color:#2E7D32;">'+fmtINR(labAmt)+'</div><div class="boq-stat-lbl">Labour</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="font-size:10px;color:#4A148C;">'+fmtINR(totAmt)+'</div><div class="boq-stat-lbl">Total</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#E65100;">'+fmtINR(matAmt)+'</div><div class="boq-stat-lbl">Material</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+fmtINR(scAmt)+'</div><div class="boq-stat-lbl">SC</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+fmtINR(labAmt)+'</div><div class="boq-stat-lbl">Labour</div></div>'+
+            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="color:#4A148C;">'+fmtINR(totAmt)+'</div><div class="boq-stat-lbl">Total</div></div>'+
           '</div>';
         })()+
         // JMs section
