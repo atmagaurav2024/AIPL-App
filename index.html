@@ -6173,12 +6173,52 @@ async function boqSaveEditJM(id, itemId){
   var qty  = parseFloat(document.getElementById('jm-qty').value)||0;
   if(!date||!qty){ toast('Date and qty required','warning'); return; }
   var ref  = document.getElementById('jm-ref').value.trim()||null;
+  var projId = document.getElementById('boq-proj-sel').value;
   try{
     toast('Saving...','info');
+    // 1. Update JM record
     await sbUpdate('boq_jm', id, {date:date, jm_qty:qty, reference:ref});
     var jm = BOQ_JMS.find(function(j){return j.id===id;});
     if(jm){ jm.date=date; jm.jm_qty=qty; jm.reference=ref; }
-    toast('JM updated!','success');
+    var totalRes = 0;
+    // 2. Save flat resources (if any added in this edit session)
+    if(jmResources.length){
+      var flatInserts = jmResources.map(function(r){
+        return sbInsert('boq_execution',{
+          project_id:projId, boq_item_id:itemId, jm_id:id,
+          date:date, exec_type:r.type, party_name:r.party,
+          qty:r.qty, rate:r.rate, remarks:(r.unit?'Unit: '+r.unit:null)
+        });
+      });
+      var flatRes = await Promise.all(flatInserts);
+      flatRes.forEach(function(er){ if(er&&er[0]) BOQ_EXECS.push(er[0]); });
+      totalRes += jmResources.length;
+    }
+    // 3. Save sub-item resources (if any added in this edit session)
+    var subInserts = [];
+    Object.keys(jmSubResources).forEach(function(subId){
+      (jmSubResources[subId]||[]).forEach(function(r){
+        subInserts.push(sbInsert('boq_exec_resources',{
+          project_id:projId, boq_item_id:itemId, jm_id:id, boq_subitem_id:subId,
+          date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate
+        }));
+        // Also save in boq_execution for summary calculations
+        subInserts.push(sbInsert('boq_execution',{
+          project_id:projId, boq_item_id:itemId, jm_id:id,
+          date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate,
+          remarks:'Sub: '+((BOQ_SUBITEMS.find(function(s){return s.id===subId;})||{}).name||subId)
+        }));
+      });
+      totalRes += (jmSubResources[subId]||[]).length;
+    });
+    if(subInserts.length){
+      var subRes = await Promise.all(subInserts);
+      subRes.forEach(function(sr){
+        if(sr&&sr[0]){ if(sr[0].boq_subitem_id) BOQ_EXECRES.push(sr[0]); else BOQ_EXECS.push(sr[0]); }
+      });
+    }
+    jmResources = []; jmSubResources = {};
+    toast('JM updated'+(totalRes?' + '+totalRes+' resources':'')+' !','success');
     closeBOQSheet();
     boqRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
