@@ -6131,8 +6131,14 @@ async function boqDeleteJM(btn){
   }catch(e){ toast('Error deleting JM','error'); console.error(e); }
 }
 function boqRender(){
-  var projId = document.getElementById('boq-proj-sel')&&document.getElementById('boq-proj-sel').value;
-  if(!projId) return;
+  var sel = document.getElementById('boq-proj-sel');
+  var projId = sel ? sel.value : '';
+  if(!projId){
+    var el = document.getElementById('boq-content');
+    if(el) el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>';
+    BOQ_ITEMS=[]; BOQ_JMS=[]; BOQ_EXECS=[]; BOQ_SUBITEMS=[]; BOQ_EXECRES=[]; BOQ_PROJ=null;
+    return;
+  }
   boqRenderAll();
 }
 
@@ -6523,6 +6529,14 @@ function boqAddSubitemInline(btn){
   }
 }
 
+
+function boqSubUOMOpts(selectedUnit){
+  var units = (CAT_DATA.uom||[]).filter(function(u){return u.active;});
+  if(!units.length) return '<option value="">—</option>';
+  return units.map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===selectedUnit?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+}
 function boqRenderSubitemList(itemId){
   var subs = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;});
   if(!subs.length) return '<div style="font-size:11px;color:var(--text3);padding:4px 0;">No sub-items yet — add work activities below</div>';
@@ -6634,9 +6648,11 @@ function boqBuildJMForm(itemId, boqQty, existingJMQty, jmNum, unit, remaining, s
             '<div class="sub-party-wrap" data-sub="'+sub.id+'"><label class="flbl">Party</label>'+jmBuildPartySelect('sc','sub-party-'+sub.id)+'</div>'+
           '</div>'+
           '<div class="g2" style="margin-bottom:6px;">'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">'+
             '<div><label class="flbl">Qty</label><input class="finp sub-qty" data-sub="'+sub.id+'" type="number" step="0.001" placeholder="0"></div>'+
-            '<div><label class="flbl">Rate (₹)</label><input class="finp sub-rate" data-sub="'+sub.id+'" type="number" step="0.01" placeholder="0"></div>'+
+            '<div><label class="flbl">Unit</label><select class="fsel sub-unit" data-sub="'+sub.id+'"><option value="">— Unit —</option>'+boqSubUOMOpts('')+'</select></div>'+
           '</div>'+
+          '<div><label class="flbl">Rate (₹ / unit)</label><input class="finp sub-rate" data-sub="'+sub.id+'" type="number" step="0.01" placeholder="0"></div>'+
           '<div style="display:flex;gap:6px;">'+
             '<button class="sub-add-res-btn btn" style="flex:1;background:#EDE7F6;color:#4A148C;" data-sub="'+sub.id+'" data-unit="'+unit+'">+ Add</button>'+
             '<button class="sub-cancel-btn" data-sub="'+sub.id+'" style="background:none;border:1px solid var(--border);border-radius:8px;padding:7px 12px;font-size:12px;cursor:pointer;">✕</button>'+
@@ -6656,8 +6672,10 @@ function boqBuildJMForm(itemId, boqQty, existingJMQty, jmNum, unit, remaining, s
           '<div id="flat-party-wrap"><label class="flbl">Party</label>'+jmBuildPartySelect('sc','flat-party')+'</div>'+
         '</div>'+
         '<div class="g2" style="margin-bottom:6px;">'+
-          '<div><label class="flbl">Qty ('+unit+')</label><input id="flat-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
-          '<div><label class="flbl">Rate (₹)</label><input id="flat-rate" class="finp" type="number" step="0.01" placeholder="0"></div>'+
+          '<div><label class="flbl">Qty</label><input id="flat-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
+          '<div><label class="flbl">Unit</label><select id="flat-unit" class="fsel"><option value="">— Unit —</option>'+boqSubUOMOpts('')+'</select></div>'+
+        '</div>'+
+        '<div><label class="flbl">Rate (₹ / unit)</label><input id="flat-rate" class="finp" type="number" step="0.01" placeholder="0"></div>'+
         '</div>'+
         '<button id="flat-add-btn" class="btn" style="width:100%;background:#EDE7F6;color:#4A148C;" data-unit="'+unit+'">+ Add Resource</button>'+
       '</div>';
@@ -6688,7 +6706,7 @@ function boqBindJMFormEvents(unit){
     return '<div class="jm-res-row" style="display:flex;align-items:center;gap:6px;background:white;border-radius:8px;padding:6px 8px;margin-bottom:4px;border:1px solid var(--border);" data-sub="'+(subId||'')+'" data-idx="'+idx+'">'+
       '<span class="exec-type-badge '+(tcMap[r.type]||'exec-other')+'">'+(tlMap[r.type]||r.type)+'</span>'+
       '<div style="flex:1;min-width:0;"><div style="font-size:11px;font-weight:700;">'+r.party+'</div>'+
-      '<div style="font-size:10px;color:var(--text3);">'+r.qty+' '+unit+' @ ₹'+r.rate+' = '+fmtINR((r.qty||0)*(r.rate||0))+'</div></div>'+
+      '<div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||unit)+' @ ₹'+r.rate+' = '+fmtINR((r.qty||0)*(r.rate||0))+'</div></div>'+
       '<button class="jm-res-del" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;">×</button>'+
     '</div>';
   }
@@ -6745,16 +6763,20 @@ function boqBindJMFormEvents(unit){
       var type  = document.querySelector('.sub-type-sel[data-sub="'+subId+'"]').value;
       var party = (document.getElementById('sub-party-'+subId)||{value:''}).value.trim();
       var qty   = parseFloat((document.querySelector('.sub-qty[data-sub="'+subId+'"]')||{value:0}).value)||0;
+      var unitEl= document.querySelector('.sub-unit[data-sub="'+subId+'"]');
+      var resUnit = unitEl ? unitEl.value : unit;
       var rate  = parseFloat((document.querySelector('.sub-rate[data-sub="'+subId+'"]')||{value:0}).value)||0;
       if(!party){ toast('Party name required','warning'); return; }
+      if(!resUnit){ toast('Select a unit','warning'); return; }
       if(!jmSubResources[subId]) jmSubResources[subId]=[];
-      jmSubResources[subId].push({type:type,party:party,qty:qty,rate:rate});
+      jmSubResources[subId].push({type:type,party:party,qty:qty,unit:resUnit,rate:rate});
       refreshSubList(subId);
       // Clear inputs
       var qEl = document.querySelector('.sub-qty[data-sub="'+subId+'"]');
+      var uEl = document.querySelector('.sub-unit[data-sub="'+subId+'"]');
       var rEl = document.querySelector('.sub-rate[data-sub="'+subId+'"]');
       var pEl = document.getElementById('sub-party-'+subId);
-      if(qEl) qEl.value=''; if(rEl) rEl.value=''; if(pEl) pEl.value='';
+      if(qEl) qEl.value=''; if(uEl) uEl.value=''; if(rEl) rEl.value=''; if(pEl) pEl.value='';
       var form = document.getElementById('sub-add-form-'+subId);
       if(form) form.style.display='none';
       toast('Resource added','success');
@@ -6774,15 +6796,18 @@ function boqBindJMFormEvents(unit){
   var flatBtn = document.getElementById('flat-add-btn');
   if(flatBtn){
     flatBtn.onclick = function(){
-      var type  = (document.getElementById('flat-type')||{value:'other'}).value;
-      var party = (document.getElementById('flat-party')||{value:''}).value.trim();
-      var qty   = parseFloat((document.getElementById('flat-qty')||{value:0}).value)||0;
-      var rate  = parseFloat((document.getElementById('flat-rate')||{value:0}).value)||0;
+      var type    = (document.getElementById('flat-type')||{value:'other'}).value;
+      var party   = (document.getElementById('flat-party')||{value:''}).value.trim();
+      var qty     = parseFloat((document.getElementById('flat-qty')||{value:0}).value)||0;
+      var resUnit = (document.getElementById('flat-unit')||{value:unit}).value||unit;
+      var rate    = parseFloat((document.getElementById('flat-rate')||{value:0}).value)||0;
       if(!party){ toast('Party name required','warning'); return; }
-      jmResources.push({type:type,party:party,qty:qty,rate:rate});
+      if(!resUnit){ toast('Select a unit','warning'); return; }
+      jmResources.push({type:type,party:party,qty:qty,unit:resUnit,rate:rate});
       refreshFlatList();
-      var qEl=document.getElementById('flat-qty'); var rEl=document.getElementById('flat-rate'); var pEl=document.getElementById('flat-party');
-      if(qEl)qEl.value=''; if(rEl)rEl.value=''; if(pEl)pEl.value='';
+      var qEl=document.getElementById('flat-qty'); var uEl=document.getElementById('flat-unit');
+      var rEl=document.getElementById('flat-rate'); var pEl=document.getElementById('flat-party');
+      if(qEl)qEl.value=''; if(uEl)uEl.value=''; if(rEl)rEl.value=''; if(pEl)pEl.value='';
       toast('Resource added','success');
     };
   }
@@ -6808,7 +6833,7 @@ async function boqSaveJM(itemId, boqQty, existingJMQty, jmNum, unit){
         var flatInserts = jmResources.map(function(r){
           return sbInsert('boq_execution',{
             project_id:projId, boq_item_id:itemId, jm_id:jmRow.id,
-            date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate
+            date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate, remarks:(r.unit&&r.unit!==unit?'Unit: '+r.unit:null)
           });
         });
         var flatRes = await Promise.all(flatInserts);
