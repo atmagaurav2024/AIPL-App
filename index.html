@@ -6054,6 +6054,7 @@ var BOQ_JMS = [];
 var BOQ_EXECS = [];
 var BOQ_SUBITEMS = []; // sub-items per BOQ item
 var BOQ_EXECRES = [];  // execution resources per JM per sub-item
+var boqReturnToJM = null; // track return-to-JM-edit after adding exec entry
 // collapse state per item
 var boqOpen = {}; // stores which items are expanded
 var BOQ_PROJ = null; // current project for rate calcs
