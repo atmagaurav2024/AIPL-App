@@ -6116,7 +6116,39 @@ function boqRenderAll(){
         var jmExecs     = BOQ_EXECS.filter(function(e){return e.jm_id===jm.id;});
         var jmExecTotal = jmExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
         var jmBalance   = (parseFloat(jm.jm_qty)||0) - jmExecTotal;
+        // Build party totals grouped by type then party
+        var partyTotals = {};
+        jmExecs.forEach(function(e){
+          var key = e.exec_type+'|'+(e.party_name||'—');
+          if(!partyTotals[key]) partyTotals[key]={type:e.exec_type,party:e.party_name||'—',amt:0,qty:0};
+          partyTotals[key].amt += (parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
+          partyTotals[key].qty += (parseFloat(e.qty)||0);
+        });
+        var summaryHtml = '';
+        if(jmExecs.length > 1){
+          var typeOrder = ['sc','material','labour'];
+          var typeLabel = {sc:'SC',material:'Material',labour:'Labour'};
+          var typeColor = {sc:'#1565C0',material:'#E65100',labour:'#2E7D32'};
+          var typeBg    = {sc:'#E3F2FD',material:'#FFF3E0',labour:'#E8F5E9'};
+          summaryHtml = '<div style="margin-bottom:8px;">';
+          typeOrder.forEach(function(type){
+            var parties = Object.values(partyTotals).filter(function(p){return p.type===type;});
+            if(!parties.length) return;
+            summaryHtml += '<div style="margin-bottom:4px;">'+
+              '<div style="font-size:9px;font-weight:800;color:'+typeColor[type]+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">'+typeLabel[type]+'</div>'+
+              '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+            parties.forEach(function(p){
+              summaryHtml += '<div style="background:'+typeBg[type]+';border:1px solid '+typeColor[type]+'30;border-radius:8px;padding:4px 8px;display:flex;gap:8px;align-items:center;">'+
+                '<span style="font-size:11px;font-weight:700;color:'+typeColor[type]+';">'+p.party+'</span>'+
+                '<span style="font-size:11px;font-weight:900;color:'+typeColor[type]+';">'+fmtINR(p.amt)+'</span>'+
+              '</div>';
+            });
+            summaryHtml += '</div></div>';
+          });
+          summaryHtml += '</div>';
+        }
         var execEntries = jmExecs.length ?
+          summaryHtml +
           jmExecs.map(function(e){
             var tc = e.exec_type==='sc'?'exec-sc':e.exec_type==='labour'?'exec-labour':'exec-material';
             var tl = e.exec_type==='sc'?'SC':e.exec_type==='labour'?'Labour':'Material';
