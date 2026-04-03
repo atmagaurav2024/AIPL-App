@@ -1315,6 +1315,10 @@ input,select,textarea{font-size:16px !important;}
 .exec-type-badge{font-size:10px;font-weight:800;padding:3px 8px;border-radius:6px;}
 .exec-sc{background:#E3F2FD;color:#1565C0;}
 .exec-labour{background:#E8F5E9;color:#2E7D32;}
+.exec-transport{background:#FFF8E1;color:#F57F17;}
+.exec-fuel{background:#FCE4EC;color:#C62828;}
+.exec-hire{background:#F3E5F5;color:#6A1B9A;}
+.exec-other{background:#ECEFF1;color:#455A64;}
 .exec-material{background:#FFF3E0;color:#E65100;}
 </style>
 </head>
@@ -6126,10 +6130,10 @@ function boqRenderAll(){
         });
         var summaryHtml = '';
         if(jmExecs.length > 1){
-          var typeOrder = ['sc','material','labour'];
-          var typeLabel = {sc:'SC',material:'Material',labour:'Labour'};
-          var typeColor = {sc:'#1565C0',material:'#E65100',labour:'#2E7D32'};
-          var typeBg    = {sc:'#E3F2FD',material:'#FFF3E0',labour:'#E8F5E9'};
+          var typeOrder = ['sc','material','labour','transport','fuel','hire','other'];
+          var typeLabel = {sc:'SC',material:'Material',labour:'Labour',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
+          var typeColor = {sc:'#1565C0',material:'#E65100',labour:'#2E7D32',transport:'#F57F17',fuel:'#C62828',hire:'#6A1B9A',other:'#455A64'};
+          var typeBg    = {sc:'#E3F2FD',material:'#FFF3E0',labour:'#E8F5E9',transport:'#FFF8E1',fuel:'#FCE4EC',hire:'#F3E5F5',other:'#ECEFF1'};
           summaryHtml = '<div style="margin-bottom:8px;">';
           typeOrder.forEach(function(type){
             var parties = Object.values(partyTotals).filter(function(p){return p.type===type;});
@@ -6150,8 +6154,10 @@ function boqRenderAll(){
         var execEntries = jmExecs.length ?
           summaryHtml +
           jmExecs.map(function(e){
-            var tc = e.exec_type==='sc'?'exec-sc':e.exec_type==='labour'?'exec-labour':'exec-material';
-            var tl = e.exec_type==='sc'?'SC':e.exec_type==='labour'?'Labour':'Material';
+            var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
+            var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
+            var tc=tcMap[e.exec_type]||'exec-other';
+            var tl=tlMap[e.exec_type]||e.exec_type;
             var eAmt = (parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
             return '<div class="exec-entry">'+
               '<span class="exec-type-badge '+tc+'">'+tl+'</span>'+
@@ -6440,6 +6446,10 @@ async function boqOpenAddExec(itemId, jmId, unit){
       '<option value="sc">🏗️ Subcontractor</option>'+
       '<option value="labour">👷 Own Labour</option>'+
       '<option value="material">📦 Material Purchase</option>'+
+      '<option value="transport">🚛 Transportation</option>'+
+      '<option value="fuel">⛽ Fuel / POL</option>'+
+      '<option value="hire">🏗️ Plant & Machinery Hire</option>'+
+      '<option value="other">📝 Other</option>'+
     '</select>'+
     '<div id="ex-party-wrap"><label class="flbl">Party Name *</label>'+boqPartyDropdown('sc')+'</div>'+
     '<div class="g2"><div><label class="flbl">Qty ('+unit+') *</label><input id="ex-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="boqExecCalcAmt()"></div>'+
@@ -6476,6 +6486,14 @@ function boqPartyDropdown(type){
       var n = v.name||'';
       return '<option value="'+n+'">'+n+'</option>';
     }).join('');
+  } else if(type==='transport'){
+    return '<input id="ex-party" class="finp" placeholder="Transporter name / vehicle no.">';
+  } else if(type==='fuel'){
+    return '<input id="ex-party" class="finp" placeholder="Fuel supplier / pump name">';
+  } else if(type==='hire'){
+    return '<input id="ex-party" class="finp" placeholder="Plant hire agency / owner name">';
+  } else {
+    return '<input id="ex-party" class="finp" placeholder="Party name / details">';
   }
   return '<select id="ex-party" class="fsel">'+opts+'</select>';
 }
