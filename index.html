@@ -6136,17 +6136,86 @@ async function boqEditJM(btn){
   var itemId = btn.getAttribute('data-item');
   var unit   = btn.getAttribute('data-unit');
   var jm = BOQ_JMS.find(function(j){return j.id===id;}); if(!jm) return;
+  // Load categories and party data
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await boqPreloadPartyData();
+
+  var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
+  var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
+
+  // Flat exec entries for this JM
+  var flatExecs = BOQ_EXECS.filter(function(e){return e.jm_id===id;});
+  // Sub-item exec resources for this JM
+  var subExecs  = BOQ_EXECRES.filter(function(e){return e.jm_id===id;});
+  // Subitems for this item
+  var subs = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;});
+
+  function execRow(e, source){
+    var tc = tcMap[e.exec_type]||'exec-other';
+    var tl = tlMap[e.exec_type]||e.exec_type;
+    var eAmt = (parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
+    return '<div class="exec-entry" style="flex-wrap:wrap;gap:6px;">'+
+      '<span class="exec-type-badge '+tc+'">'+tl+'</span>'+
+      '<div style="flex:1;min-width:120px;">'+
+        '<div style="font-size:12px;font-weight:700;">'+e.party_name+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">'+e.date+' · '+e.qty+' '+unit+' @ ₹'+e.rate+'</div>'+
+      '</div>'+
+      '<div style="font-size:12px;font-weight:900;color:#1565C0;">'+fmtINR(eAmt)+'</div>'+
+      '<button onclick="event.stopPropagation();boqEditExec(this)" '+
+        'data-id="'+e.id+'" data-jm="'+id+'" data-item="'+itemId+'" data-unit="'+unit+'" '+
+        'style="background:none;border:none;color:#7B1FA2;font-size:13px;cursor:pointer;padding:0;">✏️</button>'+
+      '<button onclick="event.stopPropagation();boqDeleteExec(this)" data-id="'+e.id+'" '+
+        'style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0;">×</button>'+
+    '</div>';
+  }
+
+  // Build sub-item sections
+  var subsHtml = '';
+  if(subs.length){
+    subsHtml = subs.map(function(sub){
+      var subRes = subExecs.filter(function(e){return e.boq_subitem_id===sub.id;});
+      var rows = subRes.length ? subRes.map(function(e){ return execRow(e,'sub'); }).join('') :
+        '<div style="font-size:11px;color:var(--text3);padding:4px 0;">No resources yet</div>';
+      return '<div style="border:1px solid #CE93D840;border-radius:12px;margin-bottom:8px;overflow:hidden;">'+
+        '<div style="background:#F3E5F5;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">'+
+          '<div style="font-size:12px;font-weight:800;color:#4A148C;">'+(sub.category?'<span style="font-size:10px;color:#7B1FA2;margin-right:6px;">['+sub.category+']</span>':'')+sub.name+'</div>'+
+          '<button onclick="event.stopPropagation();boqSetExecTarget(this)" '+
+            'data-item="'+itemId+'" data-jm="'+id+'" data-unit="'+unit+'" '+
+            'style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:6px;padding:3px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ Add</button>'+
+        '</div>'+
+        '<div style="padding:8px 10px;">'+rows+'</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  // Flat resources
+  var flatHtml = flatExecs.length ?
+    flatExecs.map(function(e){ return execRow(e,'flat'); }).join('') :
+    '<div style="font-size:11px;color:var(--text3);">No flat entries</div>';
+
   document.getElementById('boq-sheet-title').textContent = 'Edit JM-'+jm.jm_number;
   document.getElementById('boq-sheet-body').innerHTML =
+    // JM fields
     '<div style="background:#EDE7F6;border-radius:12px;padding:10px 14px;margin-bottom:10px;">'+
-      '<div style="font-size:11px;font-weight:800;color:#4A148C;">Editing JM-'+jm.jm_number+'</div>'+
+      '<div style="font-size:11px;font-weight:800;color:#4A148C;margin-bottom:8px;">JM-'+jm.jm_number+' Details</div>'+
+      '<div class="g2"><div><label class="flbl">JM Date *</label><input id="jm-date" class="finp" type="date" value="'+jm.date+'"></div>'+
+      '<div><label class="flbl">JM Qty ('+unit+') *</label><input id="jm-qty" class="finp" type="number" step="0.001" value="'+(jm.jm_qty||'')+'"></div></div>'+
+      '<label class="flbl">Reference / Notes</label><input id="jm-ref" class="finp" value="'+(jm.reference||'')+'" placeholder="e.g. JM dated 10-Mar-2026">'+
     '</div>'+
-    '<div class="g2"><div><label class="flbl">JM Date *</label><input id="jm-date" class="finp" type="date" value="'+jm.date+'"></div>'+
-    '<div><label class="flbl">JM Qty ('+unit+') *</label><input id="jm-qty" class="finp" type="number" step="0.001" value="'+(jm.jm_qty||'')+'"></div></div>'+
-    '<label class="flbl">Reference / Notes</label><input id="jm-ref" class="finp" value="'+(jm.reference||'')+'" placeholder="e.g. JM dated 10-Mar-2026">';
+    // Sub-item resources
+    (subs.length ?
+      '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📦 Sub-item Resources</div>'+
+      subsHtml
+    : '') +
+    // Flat resources
+    '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;margin:8px 0;">📋 Direct Resources</div>'+
+    '<div id="jm-flat-list">'+flatHtml+'</div>'+
+    '<button onclick="boqSetExecTarget(this)" data-item="'+itemId+'" data-jm="'+id+'" data-unit="'+unit+'" '+
+      'style="width:100%;margin-top:8px;background:#E8F5E9;color:#2E7D32;border:none;border-radius:10px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;">+ Add Entry</button>';
+
   document.getElementById('boq-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveEditJMBtn(this)" data-id="'+id+'" data-item="'+itemId+'">✓ Save Changes</button>';
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveEditJMBtn(this)" data-id="'+id+'" data-item="'+itemId+'">✓ Save JM</button>';
   openBOQSheet();
 }
 
