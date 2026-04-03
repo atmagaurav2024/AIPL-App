@@ -6087,6 +6087,36 @@ async function boqLoadItems(){
 
 
 
+
+async function boqDeleteExec(btn){
+  if(!confirm('Delete this execution entry?')) return;
+  var id = btn.getAttribute('data-id');
+  BOQ_EXECS = BOQ_EXECS.filter(function(e){return e.id!==id;});
+  boqRender();
+  try{
+    await sbDelete('boq_execution',id);
+    toast('Entry deleted','success');
+  }catch(e){ toast('Error deleting entry','error'); console.error(e); }
+}
+
+async function boqDeleteJM(btn){
+  var id = btn.getAttribute('data-id');
+  var itemId = btn.getAttribute('data-item');
+  var execCount = BOQ_EXECS.filter(function(e){return e.jm_id===id;}).length;
+  var msg = execCount>0 ? 'Delete JM and its '+execCount+' execution entries?' : 'Delete this JM?';
+  if(!confirm(msg)) return;
+  BOQ_JMS = BOQ_JMS.filter(function(j){return j.id!==id;});
+  BOQ_EXECS = BOQ_EXECS.filter(function(e){return e.jm_id!==id;});
+  boqRender();
+  try{
+    // Delete execution entries first then JM
+    await sbFetch('boq_execution',{filter:'jm_id=eq.'+id,select:'id'}).then(function(rows){
+      return Promise.all((rows||[]).map(function(r){ return sbDelete('boq_execution',r.id); }));
+    });
+    await sbDelete('boq_jm',id);
+    toast('JM deleted','success');
+  }catch(e){ toast('Error deleting JM','error'); console.error(e); }
+}
 function boqRender(){
   var projId = document.getElementById('boq-proj-sel')&&document.getElementById('boq-proj-sel').value;
   if(!projId) return;
@@ -6171,7 +6201,8 @@ function boqRenderAll(){
                 '<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.party_name+'</div>'+
                 '<div style="font-size:10px;color:var(--text3);">'+e.date+' · '+e.qty+' '+item.unit+' @ ₹'+e.rate+'</div>'+
               '</div>'+
-              '<div style="font-size:12px;font-weight:900;color:#1565C0;flex-shrink:0;">'+fmtINR(eAmt)+'</div>'+
+              '<div style="font-size:12px;font-weight:900;color:#1565C0;flex-shrink:0;margin-right:4px;">'+fmtINR(eAmt)+'</div>'+
+              '<button onclick="event.stopPropagation();boqDeleteExec(this)" data-id="'+e.id+'" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0;flex-shrink:0;line-height:1;">×</button>'+
             '</div>';
           }).join('')
           : '<div style="font-size:11px;color:var(--text3);padding:4px 0 2px;">No execution entries yet</div>';
@@ -6185,6 +6216,8 @@ function boqRenderAll(){
             '<button onclick="event.stopPropagation();boqSetExecTarget(this)" '+
               'data-item="'+item.id+'" data-jm="'+jm.id+'" data-unit="'+item.unit+'" '+
               'style="background:#7B1FA2;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ Entry</button>'+
+            '<button onclick="event.stopPropagation();boqDeleteJM(this)" data-id="'+jm.id+'" data-item="'+item.id+'" '+
+              'style="background:#FFEBEE;color:#C62828;border:none;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer;margin-left:4px;">🗑</button>'+
           '</div>'+
           execEntries+
           '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #CE93D840;">'+
