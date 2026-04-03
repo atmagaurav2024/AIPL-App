@@ -6596,9 +6596,16 @@ async function boqAddSubitem(itemId, cat){
 var jmResources = [];
 var jmSubResources = {}; // subitemId -> [{type,party,qty,rate}]
 
-function boqOpenAddJM(itemId, boqQty, unit){
+async function boqOpenAddJM(itemId, boqQty, unit){
   jmResources = [];
   jmSubResources = {};
+  // Load categories (UOM) and party data if not yet loaded
+  if(!(CAT_DATA.uom && CAT_DATA.uom.length)){
+    await loadCategories();
+  }
+  if(!SUBCONTRACTORS.length || !VENDORS.length || !LABOUR_DATA.length){
+    await boqPreloadPartyData();
+  }
   var existingJMQty = BOQ_JMS.filter(function(j){return j.boq_item_id===itemId;}).reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
   var remaining = boqQty - existingJMQty;
   var jmNum = BOQ_JMS.filter(function(j){return j.boq_item_id===itemId;}).length + 1;
