@@ -6035,6 +6035,206 @@ function boqSetEditTarget(btn){
 // ═══════════════════════════════════════════════════════════
 // BOQ & EXECUTION MODULE
 
+
+function boqUnitDropdown(selected){
+  var units = (CAT_DATA.uom||[]).filter(function(u){return u.active;});
+  if(!units.length) return '<select id="bi-unit" class="fsel"><option value="">— Add units in Registry —</option></select>';
+  var opts = units.map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+  return '<select id="bi-unit" class="fsel">'+opts+'</select>';
+}
+
+async function boqOpenAddItem(editItem){
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  if(!editItem) newItemSubitems = [];
+  var v = editItem||{};
+  document.getElementById('boq-sheet-title').textContent = editItem ? 'Edit BOQ Item' : 'New BOQ Item';
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<label class="flbl">Item Code * (SSR Item No)</label><input id="bi-code" class="finp" placeholder="e.g. SSR-2024/C-001" value="'+(v.item_code||'')+'">'+
+    '<label class="flbl">Description *</label><input id="bi-desc" class="finp" placeholder="e.g. Earthwork Excavation" value="'+(v.description||'')+'">'+
+    '<label class="flbl">Short Name</label><input id="bi-shortname" class="finp" placeholder="e.g. Earthwork" value="'+(v.short_name||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Unit</label>'+boqUnitDropdown(v.unit||'')+'</div>'+
+    '<div><label class="flbl">BOQ Qty *</label><input id="bi-qty" class="finp" type="number" step="0.001" placeholder="0" value="'+(v.boq_qty||'')+'"></div></div>'+
+    '<label class="flbl">Rate (₹ per unit)</label><input id="bi-rate" class="finp" type="number" step="0.01" placeholder="0" value="'+(v.rate||'')+'" oninput="boqCalcAmt()">'+
+    '<label class="flbl">Amount (₹)</label><input id="bi-amt" class="finp" readonly placeholder="Auto calculated" style="background:#F8FAFC;opacity:.8;" value="'+(v.boq_qty&&v.rate?fmtINR(v.boq_qty*v.rate):'')+'">'+
+    '<label class="flbl">Remarks</label><textarea id="bi-remarks" class="ftxt" placeholder="Optional remarks">'+(v.remarks||'')+'</textarea>'+
+    '<div style="margin-top:14px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;">📋 Work Activities / Sub-items</div>'+
+      '</div>'+
+      '<div id="bi-subitem-list">'+(editItem?boqRenderSubitemList(editItem.id):boqRenderNewSubitemList())+'</div>'+
+      '<div style="display:flex;gap:6px;margin-top:8px;">'+
+        '<select id="bi-sub-cat" class="fsel" style="width:140px;flex-shrink:0;">'+
+          '<option value="">— Category —</option>'+
+          (CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('')+
+        '</select>'+
+        '<input id="bi-new-subitem" class="finp" style="flex:1;" placeholder="Sub-item name...">'+
+        '<button onclick="boqAddSubitemInline(this)" data-itemid="'+(editItem?editItem.id:'')+'" style="background:#EDE7F6;color:#4A148C;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">+ Add</button>'+
+      '</div>'+
+      (!(CAT_DATA.workcat&&CAT_DATA.workcat.length)?'<div style="font-size:10px;color:#C62828;margin-top:4px;">⚠️ Add Work Activity Categories in Registry → Categories first</div>':'')+
+    '</div>';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveItemBtn(this)" data-id="'+(editItem?editItem.id:'')+'">✓ '+(editItem?'Save Changes':'Add Item')+'</button>';
+  openBOQSheet();
+}
+
+function boqCalcAmt(){
+  var qty = parseFloat(document.getElementById('bi-qty')&&document.getElementById('bi-qty').value)||0;
+  var rate = parseFloat(document.getElementById('bi-rate')&&document.getElementById('bi-rate').value)||0;
+  var amtEl = document.getElementById('bi-amt');
+  if(amtEl) amtEl.value = qty&&rate ? fmtINR(qty*rate) : '';
+}
+
+async function boqSaveItem(editId){
+  var code = document.getElementById('bi-code').value.trim();
+  var desc = document.getElementById('bi-desc').value.trim();
+  var qty  = parseFloat(document.getElementById('bi-qty').value)||0;
+  if(!code||!desc||!qty){ toast('Code, description and qty are required','warning'); return; }
+  var projId = document.getElementById('boq-proj-sel').value;
+  var data = {
+    project_id: projId,
+    item_code:  code,
+    description:desc,
+    short_name: document.getElementById('bi-shortname').value.trim()||null,
+    unit:       (document.getElementById('bi-unit')||{value:'Nos'}).value||'Nos',
+    boq_qty:    qty,
+    rate:       parseFloat(document.getElementById('bi-rate').value)||0,
+    remarks:    document.getElementById('bi-remarks').value.trim()||null
+  };
+  try{
+    toast('Saving...','info');
+    if(editId){
+      await sbUpdate('boq_items',editId,data);
+      var idx=BOQ_ITEMS.findIndex(function(i){return i.id===editId;});
+      if(idx>-1) BOQ_ITEMS[idx]=Object.assign(BOQ_ITEMS[idx],data);
+      toast('Item updated!','success');
+    } else {
+      var res = await sbInsert('boq_items',data);
+      if(res&&res[0]){
+        BOQ_ITEMS.push(res[0]);
+        if(newItemSubitems.length){
+          var subInserts = newItemSubitems.map(function(s,i){
+            return sbInsert('boq_subitems',{
+              project_id:projId, boq_item_id:res[0].id,
+              name:typeof s==='string'?s:s.name,
+              category:typeof s==='string'?'General':s.cat,
+              sort_order:i+1
+            });
+          });
+          var subRes = await Promise.all(subInserts);
+          subRes.forEach(function(sr){ if(sr&&sr[0]) BOQ_SUBITEMS.push(sr[0]); });
+          newItemSubitems = [];
+        }
+      }
+      toast('Item added!','success');
+    }
+    closeBOQSheet();
+    boqRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+
+function boqUnitDropdown(selected){
+  var units = (CAT_DATA.uom||[]).filter(function(u){return u.active;});
+  if(!units.length) return '<select id="bi-unit" class="fsel"><option value="">— Add units in Registry —</option></select>';
+  var opts = units.map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+  return '<select id="bi-unit" class="fsel">'+opts+'</select>';
+}
+
+function boqCalcAmt(){
+  var qty = parseFloat(document.getElementById('bi-qty')&&document.getElementById('bi-qty').value)||0;
+  var rate = parseFloat(document.getElementById('bi-rate')&&document.getElementById('bi-rate').value)||0;
+  var el = document.getElementById('bi-amt');
+  if(el) el.value = qty&&rate ? fmtINR(qty*rate) : '';
+}
+
+async function boqOpenAddItem(editItem){
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  if(!editItem) newItemSubitems = [];
+  var v = editItem||{};
+  document.getElementById('boq-sheet-title').textContent = editItem ? 'Edit BOQ Item' : 'New BOQ Item';
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<label class="flbl">Item Code * (SSR Item No)</label><input id="bi-code" class="finp" placeholder="e.g. SSR-2024/C-001" value="'+(v.item_code||'')+'">'+
+    '<label class="flbl">Description *</label><input id="bi-desc" class="finp" placeholder="e.g. Earthwork Excavation" value="'+(v.description||'')+'">'+
+    '<label class="flbl">Short Name</label><input id="bi-shortname" class="finp" placeholder="e.g. Earthwork" value="'+(v.short_name||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Unit</label>'+boqUnitDropdown(v.unit||'')+'</div>'+
+    '<div><label class="flbl">BOQ Qty *</label><input id="bi-qty" class="finp" type="number" step="0.001" placeholder="0" value="'+(v.boq_qty||'')+'"></div></div>'+
+    '<label class="flbl">Rate (₹ per unit)</label><input id="bi-rate" class="finp" type="number" step="0.01" placeholder="0" value="'+(v.rate||'')+'" oninput="boqCalcAmt()">'+
+    '<label class="flbl">Amount (₹)</label><input id="bi-amt" class="finp" readonly placeholder="Auto calculated" style="background:#F8FAFC;opacity:.8;" value="'+(v.boq_qty&&v.rate?fmtINR(v.boq_qty*v.rate):'')+'">'+
+    '<label class="flbl">Remarks</label><textarea id="bi-remarks" class="ftxt" placeholder="Optional remarks">'+(v.remarks||'')+'</textarea>'+
+    '<div style="margin-top:14px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;">📋 Work Activities / Sub-items</div>'+
+      '</div>'+
+      '<div id="bi-subitem-list">'+(editItem?boqRenderSubitemList(editItem.id):boqRenderNewSubitemList())+'</div>'+
+      '<div style="display:flex;gap:6px;margin-top:8px;">'+
+        '<select id="bi-sub-cat" class="fsel" style="width:140px;flex-shrink:0;">'+
+          '<option value="">— Category —</option>'+
+          (CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('')+
+        '</select>'+
+        '<input id="bi-new-subitem" class="finp" style="flex:1;" placeholder="Sub-item name...">'+
+        '<button onclick="boqAddSubitemInline(this)" data-itemid="'+(editItem?editItem.id:'')+'" style="background:#EDE7F6;color:#4A148C;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">+ Add</button>'+
+      '</div>'+
+      (!(CAT_DATA.workcat&&CAT_DATA.workcat.length)?'<div style="font-size:10px;color:#C62828;margin-top:4px;">⚠️ Add Work Activity Categories in Master Registry → Categories first</div>':'')+
+    '</div>';
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveItemBtn(this)" data-id="'+(editItem?editItem.id:'')+'">'+(editItem?'✓ Save Changes':'✓ Add Item')+'</button>';
+  openBOQSheet();
+}
+
+async function boqSaveItem(editId){
+  var code = document.getElementById('bi-code').value.trim();
+  var desc = document.getElementById('bi-desc').value.trim();
+  var qty  = parseFloat(document.getElementById('bi-qty').value)||0;
+  if(!code||!desc||!qty){ toast('Code, description and qty are required','warning'); return; }
+  var projId = document.getElementById('boq-proj-sel').value;
+  var data = {
+    project_id: projId,
+    item_code:  code,
+    description:desc,
+    short_name: document.getElementById('bi-shortname').value.trim()||null,
+    unit: (document.getElementById('bi-unit')||{value:'Nos'}).value||'Nos',
+    boq_qty: qty,
+    rate: parseFloat(document.getElementById('bi-rate').value)||0,
+    remarks: document.getElementById('bi-remarks').value.trim()||null
+  };
+  try{
+    toast('Saving...','info');
+    if(editId){
+      await sbUpdate('boq_items',editId,data);
+      var idx=BOQ_ITEMS.findIndex(function(i){return i.id===editId;});
+      if(idx>-1) BOQ_ITEMS[idx]=Object.assign(BOQ_ITEMS[idx],data);
+      toast('Item updated!','success');
+    } else {
+      var res = await sbInsert('boq_items',data);
+      if(res&&res[0]){
+        BOQ_ITEMS.push(res[0]);
+        if(newItemSubitems.length){
+          var subInserts = newItemSubitems.map(function(s,i){
+            return sbInsert('boq_subitems',{
+              project_id:projId, boq_item_id:res[0].id,
+              name:typeof s==='string'?s:s.name,
+              category:typeof s==='string'?'General':s.cat,
+              sort_order:i+1
+            });
+          });
+          var subResults = await Promise.all(subInserts);
+          subResults.forEach(function(sr){ if(sr&&sr[0]) BOQ_SUBITEMS.push(sr[0]); });
+          newItemSubitems = [];
+        }
+      }
+      toast('Item added!','success');
+    }
+    closeBOQSheet();
+    boqRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
 function initBOQ(){
   var btn = document.getElementById('boq-add-btn');
   if(btn){ btn.onclick = function(){ boqOpenAddItem(); }; }
@@ -6527,13 +6727,14 @@ async function boqOpenAddPlanned(btn){
     '<label class="flbl">Work Activity (Sub-item) *</label>'+
     '<select id="plan-sub" class="fsel"><option value="">— Select Sub-item —</option>'+subOpts+'</select>'+
     '<label class="flbl">Resource Type *</label>'+
-    '<select id="plan-type" class="fsel" onchange="boqPlanTypeChange()">'+typeOpts+'</select>'+
-    '<div id="plan-party-wrap"><label class="flbl">Party / Resource Name *</label>'+boqPartyDropdown('sc').replace('id="ex-party"','id="plan-party"')+'</div>'+
+    '<select id="plan-type" class="fsel">'+typeOpts+'</select>'+
+    '<label class="flbl">Resource Name *</label>'+
+    '<input id="plan-party" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour, Transit Mixer...">'+
     '<div class="g2"><div><label class="flbl">Planned Qty</label>'+
       '<input id="plan-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="boqPlanCalcAmt()"></div>'+
     '<div><label class="flbl">Unit</label>'+
       '<select id="plan-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div></div>'+
-    '<label class="flbl">Rate (₹ / unit)</label>'+
+    '<label class="flbl">Planned Rate (₹ / unit)</label>'+
     '<input id="plan-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="boqPlanCalcAmt()">'+
     '<label class="flbl">Planned Amount (₹)</label>'+
     '<input id="plan-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto">'+
@@ -6546,11 +6747,7 @@ async function boqOpenAddPlanned(btn){
   openBOQSheet();
 }
 
-function boqPlanTypeChange(){
-  var type = document.getElementById('plan-type').value;
-  var wrap = document.getElementById('plan-party-wrap');
-  if(wrap) wrap.innerHTML = '<label class="flbl">Party / Resource Name *</label>'+boqPartyDropdown(type).replace('id="ex-party"','id="plan-party"');
-}
+// boqPlanTypeChange removed — no party dropdown in planned form
 function boqPlanCalcAmt(){
   var q=parseFloat(document.getElementById('plan-qty').value)||0;
   var r=parseFloat(document.getElementById('plan-rate').value)||0;
@@ -6568,7 +6765,7 @@ async function boqSavePlanned(itemId, jmId, unit){
   var resUnit = document.getElementById('plan-unit').value||unit;
   var rate    = parseFloat(document.getElementById('plan-rate').value)||0;
   var remarks = document.getElementById('plan-remarks').value.trim()||null;
-  if(!party){ toast('Party / resource name required','warning'); return; }
+  if(!party){ toast('Resource name required','warning'); return; }
   var projId = document.getElementById('boq-proj-sel').value;
   try{
     toast('Saving plan...','info');
@@ -6607,14 +6804,14 @@ async function boqEditPlanned(btn){
   document.getElementById('boq-sheet-title').textContent = '📋 Edit Planned Resource';
   document.getElementById('boq-sheet-body').innerHTML =
     '<label class="flbl">Work Activity *</label><select id="plan-sub" class="fsel"><option value="">— Sub-item —</option>'+subOpts+'</select>'+
-    '<label class="flbl">Type *</label><select id="plan-type" class="fsel" onchange="boqPlanTypeChange()">'+typeOpts+'</select>'+
-    '<div id="plan-party-wrap"><label class="flbl">Party *</label>'+boqPartyDropdown(r.exec_type||'sc').replace('id="ex-party"','id="plan-party"')+'</div>'+
+    '<label class="flbl">Type *</label><select id="plan-type" class="fsel">'+typeOpts+'</select>'+
+    '<label class="flbl">Resource Name *</label><input id="plan-party" class="finp" value="'+(r.party_name||'')+'" placeholder="e.g. Cement OPC 53, Labour...">'+
     '<div class="g2"><div><label class="flbl">Qty</label><input id="plan-qty" class="finp" type="number" value="'+(r.qty||'')+'" oninput="boqPlanCalcAmt()"></div>'+
     '<div><label class="flbl">Unit</label><select id="plan-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div></div>'+
     '<label class="flbl">Rate (₹)</label><input id="plan-rate" class="finp" type="number" value="'+(r.rate||'')+'" oninput="boqPlanCalcAmt()">'+
     '<label class="flbl">Amount (₹)</label><input id="plan-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" value="'+((r.qty&&r.rate)?fmtINR(r.qty*r.rate):'')+'">'+
     '<label class="flbl">Remarks</label><input id="plan-remarks" class="finp" value="'+(r.remarks||'')+'">';
-  setTimeout(function(){ var p=document.getElementById('plan-party'); if(p) p.value=r.party_name||''; },50);
+
   document.getElementById('boq-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
     '<button class="btn" style="background:#1565C0;color:white;" onclick="boqUpdatePlannedBtn(this)" data-id="'+id+'">📋 Update Plan</button>';
