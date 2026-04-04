@@ -7224,29 +7224,24 @@ async function boqSaveExec(itemId, jmId, unit){
   var date=document.getElementById('ex-date').value;
   var qty=parseFloat(document.getElementById('ex-qty').value)||0;
   if(!date||!qty){ toast('Date and qty are required','warning'); return; }
+  if(!execUtilizedRes.length){ toast('Add at least one resource utilized','warning'); return; }
   var projId = document.getElementById('boq-proj-sel').value;
-  var resTotal = execUtilizedRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
-  var data={ project_id:projId, boq_item_id:itemId, jm_id:jmId, date:date, exec_type:'actual', party_name:'(see resources)', qty:qty, rate:resTotal>0&&qty>0?Math.round(resTotal/qty*100)/100:0, remarks:document.getElementById('ex-remarks').value.trim()||null };
+  var remarks = document.getElementById('ex-remarks').value.trim()||null;
   try{
     toast('Saving...','info');
-    var res=await sbInsert('boq_execution',data);
-    if(res&&res[0]) BOQ_EXECS.push(res[0]);
-    // Save utilized resources to boq_exec_resources (marked as actual with remarks)
-    if(execUtilizedRes.length && res&&res[0]){
-      var resInserts = execUtilizedRes.map(function(r){
-        return sbInsert('boq_exec_resources',{
-          project_id:projId, boq_item_id:itemId, jm_id:jmId,
-          boq_subitem_id:null,
-          date:date, exec_type:r.type, party_name:r.party,
-          qty:r.qty, rate:r.rate,
-          remarks:'ACTUAL|exec_id:'+res[0].id+(r.unit&&r.unit!==unit?'|unit:'+r.unit:'')
-        });
+    // Save each resource as an individual execution entry in boq_execution
+    var execInserts = execUtilizedRes.map(function(r){
+      return sbInsert('boq_execution',{
+        project_id:projId, boq_item_id:itemId, jm_id:jmId,
+        date:date, exec_type:r.type, party_name:r.party,
+        qty:r.qty, rate:r.rate,
+        remarks:remarks
       });
-      var resResults = await Promise.all(resInserts);
-      resResults.forEach(function(rr){ if(rr&&rr[0]) BOQ_EXECRES.push(rr[0]); });
-    }
+    });
+    var execResults = await Promise.all(execInserts);
+    execResults.forEach(function(er){ if(er&&er[0]) BOQ_EXECS.push(er[0]); });
     execUtilizedRes = [];
-    toast('Entry'+(execUtilizedRes.length?' + resources':'')+' saved!','success');
+    toast(execResults.length+' execution entries saved!','success');
     if(boqReturnToJM){
       var r = boqReturnToJM; boqReturnToJM = null;
       var fakebtn = {getAttribute:function(k){return k==='data-id'?r.jmId:k==='data-item'?r.itemId:k==='data-unit'?r.unit:'';},getAttribute:function(k){return k==='data-id'?r.jmId:k==='data-item'?r.itemId:k==='data-unit'?r.unit:'';} };
