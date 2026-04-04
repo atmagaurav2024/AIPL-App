@@ -6250,6 +6250,10 @@ function boqToggle(id){
   boqRenderAll();
 }
 
+// ═══════════════════════════════════════════════════════════
+// BOQ RENDER — COLLAPSIBLE ITEMS WITH PLANNED + ACTUAL
+// ═══════════════════════════════════════════════════════════
+
 function boqRenderAll(){
   var el = document.getElementById('boq-content');
   if(!el) return;
@@ -6258,206 +6262,85 @@ function boqRenderAll(){
     return;
   }
 
-  var html = BOQ_ITEMS.map(function(item){
-    var boqQty      = parseFloat(item.boq_qty)||0;
-    var rate        = parseFloat(item.rate)||0;
-    var itemJMs     = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;});
-    var itemExecs   = BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
-    var totalJMQty  = itemJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
-    var totalExec   = itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
-    var balance     = totalJMQty - totalExec;
-    var pct         = boqQty>0?Math.min(100,Math.round(totalJMQty/boqQty*100)):0;
-    var execPct     = boqQty>0?Math.min(100,Math.round(totalExec/boqQty*100)):0;
-    var isOpen      = !!boqOpen[item.id];
-    var amt         = fmtINR(boqQty*rate);
+  el.innerHTML = BOQ_ITEMS.map(function(item){
+    var boqQty   = parseFloat(item.boq_qty)||0;
+    var rate     = parseFloat(item.rate)||0;
+    var itemJMs  = BOQ_JMS.filter(function(j){return j.boq_item_id===item.id;});
+    var itemExecs= BOQ_EXECS.filter(function(e){return e.boq_item_id===item.id;});
+    var totalJM  = itemJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+    var totalExec= itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+    var jmPct    = boqQty>0?Math.min(100,Math.round(totalJM/boqQty*100)):0;
+    var execPct  = boqQty>0?Math.min(100,Math.round(totalExec/boqQty*100)):0;
+    var balance  = totalJM - totalExec;
+    var isOpen   = !!boqOpen[item.id];
 
-    // ── JMs with execution entries ────────────────────────────
-    var jmsHtml = '';
-    if(itemJMs.length){
-      jmsHtml = itemJMs.map(function(jm){
-        var jmExecs     = BOQ_EXECS.filter(function(e){return e.jm_id===jm.id;});
-        var jmExecTotal = jmExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
-        var jmBalance   = (parseFloat(jm.jm_qty)||0) - jmExecTotal;
-        // Build party totals grouped by type then party
-        var partyTotals = {};
-        jmExecs.forEach(function(e){
-          var key = e.exec_type+'|'+(e.party_name||'—');
-          if(!partyTotals[key]) partyTotals[key]={type:e.exec_type,party:e.party_name||'—',amt:0,qty:0};
-          partyTotals[key].amt += (parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
-          partyTotals[key].qty += (parseFloat(e.qty)||0);
-        });
-        var summaryHtml = '';
-        if(jmExecs.length > 1){
-          var typeOrder = ['sc','material','labour','transport','fuel','hire','other'];
-          var typeLabel = {sc:'SC',material:'Material',labour:'Labour',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
-          var typeColor = {sc:'#1565C0',material:'#E65100',labour:'#2E7D32',transport:'#F57F17',fuel:'#C62828',hire:'#6A1B9A',other:'#455A64'};
-          var typeBg    = {sc:'#E3F2FD',material:'#FFF3E0',labour:'#E8F5E9',transport:'#FFF8E1',fuel:'#FCE4EC',hire:'#F3E5F5',other:'#ECEFF1'};
-          summaryHtml = '<div style="margin-bottom:8px;">';
-          typeOrder.forEach(function(type){
-            var parties = Object.values(partyTotals).filter(function(p){return p.type===type;});
-            if(!parties.length) return;
-            summaryHtml += '<div style="margin-bottom:4px;">'+
-              '<div style="font-size:9px;font-weight:800;color:'+typeColor[type]+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;">'+typeLabel[type]+'</div>'+
-              '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
-            parties.forEach(function(p){
-              summaryHtml += '<div style="background:'+typeBg[type]+';border:1px solid '+typeColor[type]+'30;border-radius:8px;padding:4px 8px;display:flex;gap:8px;align-items:center;">'+
-                '<span style="font-size:11px;font-weight:700;color:'+typeColor[type]+';">'+p.party+'</span>'+
-                '<span style="font-size:11px;font-weight:900;color:'+typeColor[type]+';">'+fmtINR(p.amt)+'</span>'+
-              '</div>';
-            });
-            summaryHtml += '</div></div>';
-          });
-          summaryHtml += '</div>';
-        }
-        // Planned resources for this JM
-        var jmPlanned = BOQ_EXECRES.filter(function(r){return r.jm_id===jm.id;});
-        var plannedHtml = '';
-        if(jmPlanned.length){
-          var subNames = {};
-          BOQ_SUBITEMS.forEach(function(s){ subNames[s.id]=s.name+(s.category?' ['+s.category+']':''); });
-          var grouped = {};
-          jmPlanned.forEach(function(r){
-            var key = subNames[r.boq_subitem_id]||'General';
-            if(!grouped[key]) grouped[key]=[];
-            grouped[key].push(r);
-          });
-          plannedHtml = '<div style="background:#E3F2FD;border-radius:10px;padding:8px 10px;margin-bottom:8px;border:1px solid #90CAF9;">'+
-            '<div style="font-size:10px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">📋 Planned Resources</div>'+
-            Object.keys(grouped).map(function(cat){
-              return '<div style="margin-bottom:4px;">'+
-                '<div style="font-size:9px;font-weight:800;color:#1565C0;margin-bottom:2px;">'+cat+'</div>'+
-                grouped[cat].map(function(r){
-                  var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
-                  var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
-                  return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">'+
-                    '<span class="exec-type-badge '+(tcMap[r.exec_type]||'exec-other')+'" style="font-size:9px;padding:1px 5px;">'+(tlMap[r.exec_type]||r.exec_type)+'</span>'+
-                    '<span style="font-size:11px;font-weight:600;flex:1;">'+r.party_name+'</span>'+
-                    '<span style="font-size:10px;color:var(--text3);">'+r.qty+' @ ₹'+r.rate+'</span>'+
-                    '<span style="font-size:11px;font-weight:700;color:#1565C0;">'+fmtINR((parseFloat(r.qty)||0)*(parseFloat(r.rate)||0))+'</span>'+
-                  '</div>';
-                }).join('')+
-              '</div>';
-            }).join('')+
-          '</div>';
-        }
+    // ── Financial row ──────────────────────────────────────
+    var pctStr   = BOQ_PROJ&&BOQ_PROJ.pct_below?String(BOQ_PROJ.pct_below):'';
+    var pctNum   = parseFloat(pctStr)||0;
+    var isBelow  = pctStr.toLowerCase().includes('below');
+    var rateMult = pctStr?(isBelow?(1-pctNum/100):(1+pctNum/100)):1;
+    var contractAmt = boqQty*rate*rateMult;
+    var plannedAmt  = totalJM*rate*rateMult;
+    var billedAmt   = totalExec*rate*rateMult;
+    var diff        = plannedAmt - billedAmt;
 
-        var execEntries = jmExecs.length ?
-          plannedHtml + summaryHtml +
-          jmExecs.map(function(e){
-            var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
-            var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
-            var tc=tcMap[e.exec_type]||'exec-other';
-            var tl=tlMap[e.exec_type]||e.exec_type;
-            var eAmt = (parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
-            return '<div class="exec-entry">'+
-              '<span class="exec-type-badge '+tc+'">'+tl+'</span>'+
-              '<div style="flex:1;min-width:0;">'+
-                '<div style="font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">'+e.party_name+'</div>'+
-                '<div style="font-size:10px;color:var(--text3);">'+e.date+' · '+e.qty+' '+item.unit+' @ ₹'+e.rate+'</div>'+
-              '</div>'+
-              '<div style="font-size:12px;font-weight:900;color:#1565C0;flex-shrink:0;margin-right:4px;">'+fmtINR(eAmt)+'</div>'+
-              '<button onclick="event.stopPropagation();boqEditExec(this)" data-id="'+e.id+'" data-jm="'+jm.id+'" data-item="'+item.id+'" data-unit="'+item.unit+'" style="background:none;border:none;color:#7B1FA2;font-size:13px;cursor:pointer;padding:0 4px;flex-shrink:0;">✏️</button>'+
-              '<button onclick="event.stopPropagation();boqDeleteExec(this)" data-id="'+e.id+'" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0;flex-shrink:0;line-height:1;">×</button>'+
-            '</div>';
-          }).join('')
-          : '<div style="font-size:11px;color:var(--text3);padding:4px 0 2px;">No execution entries yet</div>';
-        return '<div class="jm-card">'+
-          '<div class="jm-card-head">'+
-            '<span class="jm-badge">JM-'+jm.jm_number+'</span>'+
-            '<div style="flex:1;">'+
-              '<span style="font-size:12px;font-weight:700;color:#4A148C;">'+jm.jm_qty+' '+item.unit+' agreed</span>'+
-              '<span style="font-size:10px;color:var(--text3);margin-left:8px;">'+jm.date+'</span>'+
-            '</div>'+
-            '<button onclick="event.stopPropagation();boqSetExecTarget(this)" '+
-              'data-item="'+item.id+'" data-jm="'+jm.id+'" data-unit="'+item.unit+'" '+
-              'style="background:#2E7D32;color:white;border:none;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;cursor:pointer;">✅ Actual</button>'+
-            '<button onclick="event.stopPropagation();boqEditJM(this)" data-id="'+jm.id+'" data-item="'+item.id+'" data-unit="'+item.unit+'" '+
-              'style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer;margin-left:4px;">✏️</button>'+
-            '<button onclick="event.stopPropagation();boqDeleteJM(this)" data-id="'+jm.id+'" data-item="'+item.id+'" '+
-              'style="background:#FFEBEE;color:#C62828;border:none;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer;margin-left:4px;">🗑</button>'+
-          '</div>'+
-          execEntries+
-          '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #CE93D840;">'+
-            '<span style="color:#2E7D32;">Executed: '+jmExecTotal+' '+item.unit+'</span>'+
-            '<span style="color:'+(jmBalance<0?'#C62828':'#4A148C')+';">Balance: '+jmBalance+' '+item.unit+'</span>'+
-          '</div>'+
-        '</div>';
-      }).join('');
-      // Add totals row if more than 1 JM
-      if(itemJMs.length > 1){
-        var totalJMCost = itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-        var scTotal  = itemExecs.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-        var labTotal = itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-        var matTotal = itemExecs.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-
-      }
-    } else {
-      jmsHtml = '<div style="font-size:12px;color:var(--text3);padding:6px 0;">No JMs yet — add first JM to start execution</div>';
-    }
+    // ── JMs HTML ───────────────────────────────────────────
+    var jmsHtml = itemJMs.length ? itemJMs.map(function(jm){
+      return boqRenderJMCard(jm, item);
+    }).join('') : '<div style="font-size:12px;color:var(--text3);padding:6px 0;">No JMs yet — tap + Add JM to start</div>';
 
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
-
-      // ── ITEM HEADER (always visible, tap to expand/collapse) ──
+      // ── Item header (tap to expand) ──
       '<div onclick="boqToggle(\''+item.id+'\')" style="padding:12px 14px;background:#F3E5F5;cursor:pointer;user-select:none;">'+
         '<div style="display:flex;align-items:flex-start;gap:8px;">'+
           '<div style="flex:1;min-width:0;">'+
             '<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:3px;">'+
               '<span class="boq-card-code">'+item.item_code+'</span>'+
-
+              (item.short_name?'<span style="font-size:11px;color:#6A1B9A;font-weight:700;">'+item.short_name+'</span>':'')+
             '</div>'+
             '<div style="font-size:13px;font-weight:800;color:#1E293B;">'+(item.short_name||item.description)+'</div>'+
             (item.short_name?'<div style="font-size:10px;color:var(--text3);margin-top:1px;">'+item.description+'</div>':'')+
           '</div>'+
           '<div style="text-align:right;flex-shrink:0;">'+
-            '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+amt+'</div>'+
+            '<div style="font-size:13px;font-weight:900;color:#4A148C;">'+fmtINR(contractAmt)+'</div>'+
             '<div style="font-size:10px;color:var(--text3);">'+boqQty+' '+item.unit+'</div>'+
           '</div>'+
           '<div style="font-size:18px;color:#7B1FA2;margin-left:4px;transition:.2s;transform:rotate('+(isOpen?'90':'0')+'deg);">›</div>'+
         '</div>'+
-        // Progress bar (always visible)
+        // Dual progress bars
         '<div style="margin-top:8px;">'+
           '<div style="display:flex;justify-content:space-between;font-size:9px;font-weight:700;margin-bottom:3px;">'+
-            '<span style="color:#7B1FA2;">🔵 JM '+pct+'% ('+totalJMQty+' '+item.unit+')</span>'+
+            '<span style="color:#7B1FA2;">🔵 JM '+jmPct+'% ('+totalJM+' '+item.unit+')</span>'+
             '<span style="color:#2E7D32;">🟢 Exec '+execPct+'% ('+totalExec+' '+item.unit+')</span>'+
           '</div>'+
           '<div style="height:7px;background:#E8EAF6;border-radius:99px;overflow:hidden;position:relative;">'+
-            '<div style="position:absolute;height:100%;width:'+pct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
+            '<div style="position:absolute;height:100%;width:'+jmPct+'%;background:linear-gradient(90deg,#7B1FA2,#AB47BC);border-radius:99px;"></div>'+
             '<div style="position:absolute;height:100%;width:'+execPct+'%;background:linear-gradient(90deg,#2E7D32,#66BB6A);border-radius:99px;opacity:.75;"></div>'+
           '</div>'+
         '</div>'+
       '</div>'+
-
-      // ── EXPANDED CONTENT ──────────────────────────────────────
+      // ── Expanded content ──
       (isOpen ?
-        // Stats row
+        // Stat rows
         '<div style="display:flex;border-bottom:1px solid var(--border);">'+
           '<div class="boq-stat" style="padding:8px 0;border-right:1px solid var(--border);"><div class="boq-stat-val">'+boqQty+'</div><div class="boq-stat-lbl">BOQ</div></div>'+
-          '<div class="boq-stat" style="padding:8px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+totalJMQty+'</div><div class="boq-stat-lbl">JM Total</div></div>'+
+          '<div class="boq-stat" style="padding:8px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+totalJM+'</div><div class="boq-stat-lbl">JM Total</div></div>'+
           '<div class="boq-stat" style="padding:8px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+totalExec+'</div><div class="boq-stat-lbl">Executed</div></div>'+
-          '<div class="boq-stat" style="padding:8px 0;"><div class="boq-stat-val" style="color:'+(balance<0?'#C62828':'#37474F')+';">'+balance+'</div><div class="boq-stat-lbl">Balance</div></div>'+
+          '<div class="boq-stat" style="padding:8px 0;"><div class="boq-stat-val" style="color:'+(balance<0?'#C62828':'#37474F')+';">'+balance+'</div><div class="boq-stat-lbl">JM Bal</div></div>'+
         '</div>'+
-        // Financial rows
+        '<div style="display:flex;border-bottom:1px solid var(--border);background:#F0EDF8;">'+
+          '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val">'+fmtINR(contractAmt)+'</div><div class="boq-stat-lbl">Contract</div></div>'+
+          '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
+          '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
+          '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
+        '</div>'+
         (function(){
-          var pctStr = BOQ_PROJ&&BOQ_PROJ.pct_below ? String(BOQ_PROJ.pct_below) : '';
-          var pctNum = parseFloat(pctStr)||0;
-          var isBelow = pctStr.toLowerCase().includes('below');
-          var rateMult = pctStr ? (isBelow ? (1-pctNum/100) : (1+pctNum/100)) : 1;
-          var contractAmt = boqQty * rate * rateMult;
-          var plannedAmt  = totalJMQty * rate * rateMult;
-          var billedAmt   = totalExec * rate * rateMult;
-          var diff        = plannedAmt - billedAmt;
-          var matAmt = itemExecs.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-          var scAmt  = itemExecs.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-          var labAmt = itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
-          var totAmt = matAmt + scAmt + labAmt;
-          return '<div style="display:flex;border-bottom:1px solid var(--border);background:#F0EDF8;">'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#4A148C;">'+fmtINR(contractAmt)+'</div><div class="boq-stat-lbl">Contract</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+fmtINR(plannedAmt)+'</div><div class="boq-stat-lbl">Planned</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+fmtINR(billedAmt)+'</div><div class="boq-stat-lbl">Billed</div></div>'+
-            '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="color:'+(diff<0?'#C62828':'#37474F')+';">'+fmtINR(diff)+'</div><div class="boq-stat-lbl">Diff</div></div>'+
-          '</div>'+
-          '<div style="display:flex;border-bottom:1px solid var(--border);background:#EDF7ED;">'+
-            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#E65100;">'+fmtINR(matAmt)+'</div><div class="boq-stat-lbl">Material</div></div>'+
+          var matAmt=itemExecs.filter(function(e){return e.exec_type==='material';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          var scAmt=itemExecs.filter(function(e){return e.exec_type==='sc';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          var labAmt=itemExecs.filter(function(e){return e.exec_type==='labour';}).reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          var totAmt=itemExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);},0);
+          return '<div style="display:flex;border-bottom:1px solid var(--border);background:#EDF7ED;">'+
+            '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val">'+fmtINR(matAmt)+'</div><div class="boq-stat-lbl">Material</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#1565C0;">'+fmtINR(scAmt)+'</div><div class="boq-stat-lbl">SC</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;border-right:1px solid var(--border);"><div class="boq-stat-val" style="color:#2E7D32;">'+fmtINR(labAmt)+'</div><div class="boq-stat-lbl">Labour</div></div>'+
             '<div class="boq-stat" style="padding:6px 0;"><div class="boq-stat-val" style="color:#4A148C;">'+fmtINR(totAmt)+'</div><div class="boq-stat-lbl">Total</div></div>'+
@@ -6467,152 +6350,288 @@ function boqRenderAll(){
         '<div style="padding:10px 14px;">'+
           '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
             '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;">📐 Joint Measurements</div>'+
-            '<button onclick="boqSetJMTarget(this)" '+
-              'data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" '+
+            '<button onclick="boqSetJMTarget(this)" data-item="'+item.id+'" data-boqqty="'+boqQty+'" data-unit="'+item.unit+'" '+
               'style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:8px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ Add JM</button>'+
           '</div>'+
           jmsHtml+
         '</div>'+
-        // Edit item footer
-        '<div style="padding:4px 14px 10px;display:flex;justify-content:flex-end;gap:8px;">'+
-          '<button onclick="boqOpenItemDetailBtn(this)" data-id="'+item.id+'" '+
-            'style="background:none;border:1px solid var(--border);border-radius:8px;color:#7B1FA2;font-size:11px;font-weight:800;cursor:pointer;padding:4px 12px;">📋 Details / Edit</button>'+
+        '<div style="padding:4px 14px 10px;display:flex;justify-content:flex-end;">'+
+          '<button onclick="boqOpenItemDetailBtn(this)" data-id="'+item.id+'" style="background:none;border:1px solid var(--border);border-radius:8px;color:#7B1FA2;font-size:11px;font-weight:800;cursor:pointer;padding:4px 12px;">📋 Item Details / Edit</button>'+
         '</div>'
-      : '') +
-
+      :'')+
     '</div>';
   }).join('');
-
-  el.innerHTML = html;
 }
 
-function fmtINR(n){
-  if(!n) return '₹0';
-  return '₹'+parseFloat(n).toLocaleString('en-IN',{maximumFractionDigits:0});
-}
+function boqRenderJMCard(jm, item){
+  var jmExecs   = BOQ_EXECS.filter(function(e){return e.jm_id===jm.id;});
+  var jmPlanned = BOQ_EXECRES.filter(function(r){return r.jm_id===jm.id;});
+  var jmExecQty = jmExecs.reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+  var jmBalance = (parseFloat(jm.jm_qty)||0) - jmExecQty;
 
-function statCard(title, val, sub, col){
-  return '<div style="background:white;border-radius:14px;border:1px solid var(--border);padding:14px;">'+
-    '<div style="font-size:11px;color:var(--text3);font-weight:700;margin-bottom:4px;">'+title+'</div>'+
-    '<div style="font-size:18px;font-weight:900;color:'+col+';">'+val+'</div>'+
-    '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+sub+'</div>'+
+  var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
+  var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
+
+  // ── PLANNED section (grouped by subitem) ──────────────────
+  var plannedHtml = '';
+  if(jmPlanned.length){
+    var subNames = {};
+    BOQ_SUBITEMS.forEach(function(s){ subNames[s.id]={name:s.name,cat:s.category||''}; });
+    var grouped = {};
+    var groupOrder = [];
+    jmPlanned.forEach(function(r){
+      var sub = subNames[r.boq_subitem_id]||{name:'General',cat:''};
+      var key = r.boq_subitem_id||'general';
+      if(!grouped[key]){ grouped[key]={label:sub.name,cat:sub.cat,items:[]}; groupOrder.push(key); }
+      grouped[key].items.push(r);
+    });
+    plannedHtml = '<div style="background:#E3F2FD;border-radius:10px;padding:8px 10px;margin-bottom:8px;border:1px solid #90CAF940;">'+
+      '<div style="font-size:10px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">📋 Planned Resources</div>'+
+      groupOrder.map(function(key){
+        var g = grouped[key];
+        return '<div style="margin-bottom:6px;">'+
+          '<div style="font-size:10px;font-weight:800;color:#1565C0;margin-bottom:3px;">'+
+            (g.cat?'<span style="opacity:.6;">['+g.cat+']</span> ':'')+g.label+
+          '</div>'+
+          g.items.map(function(r){
+            var amt=(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);
+            return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #90CAF920;">'+
+              '<span class="exec-type-badge '+(tcMap[r.exec_type]||'exec-other')+'" style="font-size:9px;padding:1px 6px;">'+(tlMap[r.exec_type]||r.exec_type)+'</span>'+
+              '<span style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+'</span>'+
+              '<span style="font-size:10px;color:var(--text3);">'+r.qty+' @ ₹'+r.rate+'</span>'+
+              '<span style="font-size:11px;font-weight:800;color:#1565C0;margin-left:4px;">'+fmtINR(amt)+'</span>'+
+              '<button onclick="event.stopPropagation();boqEditPlanned(this)" data-id="'+r.id+'" data-jm="'+jm.id+'" data-item="'+item.id+'" data-unit="'+item.unit+'" style="background:none;border:none;color:#7B1FA2;font-size:12px;cursor:pointer;padding:0 2px;">✏️</button>'+
+              '<button onclick="event.stopPropagation();boqDeletePlanned(this)" data-id="'+r.id+'" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;padding:0;">×</button>'+
+            '</div>';
+          }).join('')+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }
+
+  // ── ACTUAL section ─────────────────────────────────────────
+  var actualHtml = '';
+  if(jmExecs.length){
+    // Party totals summary
+    var partyTotals = {};
+    jmExecs.forEach(function(e){
+      var key=e.exec_type+'|'+(e.party_name||'—');
+      if(!partyTotals[key]) partyTotals[key]={type:e.exec_type,party:e.party_name||'—',amt:0,qty:0};
+      partyTotals[key].amt+=(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
+      partyTotals[key].qty+=(parseFloat(e.qty)||0);
+    });
+    var tOrder=['sc','material','labour','transport','fuel','hire','other'];
+    var tColor={sc:'#1565C0',material:'#E65100',labour:'#2E7D32',transport:'#F57F17',fuel:'#C62828',hire:'#6A1B9A',other:'#455A64'};
+    var tBg   ={sc:'#E3F2FD',material:'#FFF3E0',labour:'#E8F5E9',transport:'#FFF8E1',fuel:'#FCE4EC',hire:'#F3E5F5',other:'#ECEFF1'};
+    var summaryStrip = '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">';
+    tOrder.forEach(function(type){
+      var parties=Object.values(partyTotals).filter(function(p){return p.type===type;});
+      parties.forEach(function(p){
+        summaryStrip+='<div style="background:'+tBg[type]+';border:1px solid '+tColor[type]+'30;border-radius:8px;padding:3px 8px;font-size:11px;font-weight:700;color:'+tColor[type]+';">'+p.party+' '+fmtINR(p.amt)+'</div>';
+      });
+    });
+    summaryStrip += '</div>';
+
+    actualHtml = '<div style="background:#E8F5E9;border-radius:10px;padding:8px 10px;margin-bottom:8px;border:1px solid #A5D6A740;">'+
+      '<div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">✅ Actual Execution</div>'+
+      summaryStrip+
+      jmExecs.map(function(e){
+        var tc=tcMap[e.exec_type]||'exec-other';
+        var tl=tlMap[e.exec_type]||e.exec_type;
+        var eAmt=(parseFloat(e.qty)||0)*(parseFloat(e.rate)||0);
+        return '<div class="exec-entry" style="margin-bottom:4px;">'+
+          '<span class="exec-type-badge '+tc+'">'+tl+'</span>'+
+          '<div style="flex:1;min-width:0;">'+
+            '<div style="font-size:12px;font-weight:700;">'+e.party_name+'</div>'+
+            '<div style="font-size:10px;color:var(--text3);">'+e.date+' · '+e.qty+' '+item.unit+' @ ₹'+e.rate+'</div>'+
+          '</div>'+
+          '<div style="font-size:12px;font-weight:900;color:#2E7D32;margin-right:4px;">'+fmtINR(eAmt)+'</div>'+
+          '<button onclick="event.stopPropagation();boqEditExec(this)" data-id="'+e.id+'" data-jm="'+jm.id+'" data-item="'+item.id+'" data-unit="'+item.unit+'" style="background:none;border:none;color:#7B1FA2;font-size:13px;cursor:pointer;padding:0 3px;">✏️</button>'+
+          '<button onclick="event.stopPropagation();boqDeleteExec(this)" data-id="'+e.id+'" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;padding:0;">×</button>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }
+
+  return '<div class="jm-card">'+
+    // JM header
+    '<div class="jm-card-head">'+
+      '<span class="jm-badge">JM-'+jm.jm_number+'</span>'+
+      '<div style="flex:1;">'+
+        '<span style="font-size:12px;font-weight:700;color:#4A148C;">'+jm.jm_qty+' '+item.unit+' agreed</span>'+
+        '<span style="font-size:10px;color:var(--text3);margin-left:8px;">'+jm.date+'</span>'+
+      '</div>'+
+      // Planned + Actual buttons
+      '<button onclick="event.stopPropagation();boqOpenAddPlanned(this)" '+
+        'data-item="'+item.id+'" data-jm="'+jm.id+'" data-unit="'+item.unit+'" '+
+        'style="background:#E3F2FD;color:#1565C0;border:none;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer;">📋 Plan</button>'+
+      '<button onclick="event.stopPropagation();boqSetExecTarget(this)" '+
+        'data-item="'+item.id+'" data-jm="'+jm.id+'" data-unit="'+item.unit+'" '+
+        'style="background:#E8F5E9;color:#2E7D32;border:none;border-radius:8px;padding:4px 8px;font-size:11px;font-weight:800;cursor:pointer;margin-left:4px;">✅ Actual</button>'+
+      '<button onclick="event.stopPropagation();boqEditJM(this)" data-id="'+jm.id+'" data-item="'+item.id+'" data-unit="'+item.unit+'" '+
+        'style="background:#EDE7F6;color:#7B1FA2;border:none;border-radius:8px;padding:4px 6px;font-size:11px;cursor:pointer;margin-left:4px;">✏️</button>'+
+      '<button onclick="event.stopPropagation();boqDeleteJM(this)" data-id="'+jm.id+'" data-item="'+item.id+'" '+
+        'style="background:#FFEBEE;color:#C62828;border:none;border-radius:8px;padding:4px 6px;font-size:11px;cursor:pointer;margin-left:4px;">🗑</button>'+
+    '</div>'+
+    // Planned + Actual content
+    (plannedHtml || actualHtml ? plannedHtml + actualHtml :
+      '<div style="font-size:11px;color:var(--text3);padding:4px 0 2px;">No planned resources or actual entries yet</div>')+
+    // JM footer
+    '<div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-top:6px;padding-top:6px;border-top:1px solid #CE93D840;">'+
+      '<span style="color:#2E7D32;">Executed: '+jmExecQty+' / '+jm.jm_qty+' '+item.unit+'</span>'+
+      '<span style="color:'+(jmBalance<0?'#C62828':'#4A148C')+';">Balance: '+jmBalance+' '+item.unit+'</span>'+
+    '</div>'+
   '</div>';
 }
 
-
-// ── SHEETS ───────────────────────────────────────────────────────────────────
-function openBOQSheet(){ document.getElementById('ov-boq').classList.add('on'); document.getElementById('sh-boq').classList.add('on'); }
-function closeBOQSheet(){ document.getElementById('ov-boq').classList.remove('on'); document.getElementById('sh-boq').classList.remove('on'); }
-
-// ADD BOQ ITEM
-
-function boqUnitDropdown(selected){
-  var units = (CAT_DATA.uom || []).filter(function(u){return u.active;});
-  if(!units.length){
-    return '<select id="bi-unit" class="fsel"><option value="">— Add units in Registry —</option></select>';
-  }
-  var opts = units.map(function(u){
-    return '<option value="'+u.name+'"'+(u.name===selected?' selected':'')+'>'+u.name+'</option>';
+// ── ADD PLANNED RESOURCE ──────────────────────────────────────────────────────
+async function boqOpenAddPlanned(btn){
+  var itemId = btn.getAttribute('data-item');
+  var jmId   = btn.getAttribute('data-jm');
+  var unit   = btn.getAttribute('data-unit');
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await boqPreloadPartyData();
+  var jm   = BOQ_JMS.find(function(j){return j.id===jmId;})||{};
+  var subs = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;});
+  var subOpts = subs.length ?
+    subs.map(function(s){ return '<option value="'+s.id+'">'+(s.category?'['+s.category+'] ':'')+s.name+'</option>'; }).join('') :
+    '<option value="">No sub-items (add in BOQ item edit)</option>';
+  var typeOpts = [
+    ['sc','🏗️ Subcontractor'],['labour','👷 Labour'],['material','📦 Material'],
+    ['transport','🚛 Transport'],['fuel','⛽ Fuel / POL'],['hire','🏗️ Plant Hire'],['other','📝 Other']
+  ].map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('');
+  var uomOpts = (CAT_DATA.uom||[]).filter(function(u){return u.active;}).map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
   }).join('');
-  return '<select id="bi-unit" class="fsel">'+opts+'</select>';
-}
-async function boqOpenAddItem(editItem){
-  // Ensure categories loaded from DB first
-  if(!(CAT_DATA.uom && CAT_DATA.uom.length)){
-    await loadCategories();
-  }
-  if(!editItem) newItemSubitems = []; // reset temp subitems for new item
-  var v = editItem||{};
-  document.getElementById('boq-sheet-title').textContent = editItem ? 'Edit BOQ Item' : 'New BOQ Item';
+
+  document.getElementById('boq-sheet-title').textContent = '📋 Add Planned Resource';
   document.getElementById('boq-sheet-body').innerHTML =
-    '<label class="flbl">Item Code * (SSR Item No)</label><input id="bi-code" class="finp" placeholder="e.g. SSR-2024/C-001" value="'+(v.item_code||'')+'">'+
-    '<label class="flbl">Description *</label><input id="bi-desc" class="finp" placeholder="e.g. Earthwork Excavation" value="'+(v.description||'')+'">'+
-    '<label class="flbl">Short Name</label><input id="bi-shortname" class="finp" placeholder="e.g. Earthwork" value="'+(v.short_name||'')+'">'+
-    '<div class="g2"><div><label class="flbl">Unit</label>'+boqUnitDropdown(v.unit||'')+'</div>'+
-    '<div><label class="flbl">BOQ Qty *</label><input id="bi-qty" class="finp" type="number" step="0.001" placeholder="0" value="'+(v.boq_qty||'')+'"></div></div>'+
-    '<label class="flbl">Rate (₹ per unit)</label><input id="bi-rate" class="finp" type="number" step="0.01" placeholder="0" value="'+(v.rate||'')+'" oninput="boqCalcAmt()">'+
-    '<label class="flbl">Amount (₹)</label><input id="bi-amt" class="finp" readonly placeholder="Auto calculated" style="background:#F8FAFC;opacity:.8;" value="'+(v.boq_qty&&v.rate?fmtINR(v.boq_qty*v.rate):'')+'">'+
-    '<label class="flbl">Remarks</label><textarea id="bi-remarks" class="ftxt" placeholder="Optional remarks">'+(v.remarks||'')+'</textarea>'+
-    // Sub-items section
-    '<div style="margin-top:14px;">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
-        '<div style="font-size:11px;font-weight:800;color:#4A148C;text-transform:uppercase;letter-spacing:.5px;">📋 Work Activities / Sub-items</div>'+
-      '</div>'+
-      '<div id="bi-subitem-list">'+(editItem?boqRenderSubitemList(editItem.id):boqRenderNewSubitemList())+'</div>'+
-      '<div style="display:flex;gap:6px;margin-top:8px;">'+
-        '<select id="bi-sub-cat" class="fsel" style="width:140px;flex-shrink:0;">'+
-          '<option value="">— Category —</option>'+
-          (CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('')+
-        '</select>'+
-        '<input id="bi-new-subitem" class="finp" style="flex:1;" placeholder="Sub-item name...">'+
-        '<button onclick="boqAddSubitemInline(this)" data-itemid="'+(editItem?editItem.id:'')+'" style="background:#EDE7F6;color:#4A148C;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;">+ Add</button>'+
-      '</div>'+
-      (!(CAT_DATA.workcat&&CAT_DATA.workcat.length)?'<div style="font-size:10px;color:#C62828;margin-top:4px;">⚠️ Add Work Activity Categories in Master Registry → Categories first</div>':'')+
-    '</div>';
+    '<div style="background:#E3F2FD;border-radius:12px;padding:10px 14px;margin-bottom:12px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#1565C0;">JM-'+jm.jm_number+' — Planning resources for '+jm.jm_qty+' '+unit+'</div>'+
+    '</div>'+
+    '<label class="flbl">Work Activity (Sub-item) *</label>'+
+    '<select id="plan-sub" class="fsel"><option value="">— Select Sub-item —</option>'+subOpts+'</select>'+
+    '<label class="flbl">Resource Type *</label>'+
+    '<select id="plan-type" class="fsel" onchange="boqPlanTypeChange()">'+typeOpts+'</select>'+
+    '<div id="plan-party-wrap"><label class="flbl">Party / Resource Name *</label>'+boqPartyDropdown('sc').replace('id="ex-party"','id="plan-party"')+'</div>'+
+    '<div class="g2"><div><label class="flbl">Planned Qty</label>'+
+      '<input id="plan-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="boqPlanCalcAmt()"></div>'+
+    '<div><label class="flbl">Unit</label>'+
+      '<select id="plan-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div></div>'+
+    '<label class="flbl">Rate (₹ / unit)</label>'+
+    '<input id="plan-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="boqPlanCalcAmt()">'+
+    '<label class="flbl">Planned Amount (₹)</label>'+
+    '<input id="plan-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto">'+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="plan-remarks" class="finp" placeholder="Optional">';
   document.getElementById('boq-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveItemBtn(this)" data-id="'+(editItem?editItem.id:'')+'">✓ '+(editItem?'Save Changes':'Add Item')+'</button>';
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="boqSavePlannedBtn(this)" '+
+      'data-item="'+itemId+'" data-jm="'+jmId+'" data-unit="'+unit+'">📋 Save Plan</button>';
   openBOQSheet();
 }
 
-function boqCalcAmt(){
-  var qty = parseFloat(document.getElementById('bi-qty')&&document.getElementById('bi-qty').value)||0;
-  var rate = parseFloat(document.getElementById('bi-rate')&&document.getElementById('bi-rate').value)||0;
-  var amtEl = document.getElementById('bi-amt');
-  if(amtEl) amtEl.value = qty&&rate ? fmtINR(qty*rate) : '';
+function boqPlanTypeChange(){
+  var type = document.getElementById('plan-type').value;
+  var wrap = document.getElementById('plan-party-wrap');
+  if(wrap) wrap.innerHTML = '<label class="flbl">Party / Resource Name *</label>'+boqPartyDropdown(type).replace('id="ex-party"','id="plan-party"');
 }
-
-async function boqSaveItem(editId){
-  var code = document.getElementById('bi-code').value.trim();
-  var desc = document.getElementById('bi-desc').value.trim();
-  var qty = parseFloat(document.getElementById('bi-qty').value)||0;
-  if(!code||!desc||!qty){ toast('Code, description and qty are required','warning'); return; }
+function boqPlanCalcAmt(){
+  var q=parseFloat(document.getElementById('plan-qty').value)||0;
+  var r=parseFloat(document.getElementById('plan-rate').value)||0;
+  var el=document.getElementById('plan-amt');
+  if(el) el.value=q&&r?fmtINR(q*r):'';
+}
+function boqSavePlannedBtn(btn){
+  boqSavePlanned(btn.getAttribute('data-item'),btn.getAttribute('data-jm'),btn.getAttribute('data-unit'));
+}
+async function boqSavePlanned(itemId, jmId, unit){
+  var subId   = document.getElementById('plan-sub').value;
+  var type    = document.getElementById('plan-type').value;
+  var party   = document.getElementById('plan-party').value.trim();
+  var qty     = parseFloat(document.getElementById('plan-qty').value)||0;
+  var resUnit = document.getElementById('plan-unit').value||unit;
+  var rate    = parseFloat(document.getElementById('plan-rate').value)||0;
+  var remarks = document.getElementById('plan-remarks').value.trim()||null;
+  if(!party){ toast('Party / resource name required','warning'); return; }
   var projId = document.getElementById('boq-proj-sel').value;
-  var data = {
-    project_id: projId,
-    item_code: code,
-    description: desc,
-    short_name: document.getElementById('bi-shortname').value.trim()||null,
-    unit: (document.getElementById('bi-unit')||{value:'Nos'}).value||'Nos',
-    boq_qty: qty,
-    rate: parseFloat(document.getElementById('bi-rate').value)||0,
-    remarks: document.getElementById('bi-remarks').value.trim()||null
-  };
   try{
-    toast('Saving...','info');
-    if(editId){
-      await sbUpdate('boq_items',editId,data);
-      var idx=BOQ_ITEMS.findIndex(function(i){return i.id===editId;});
-      if(idx>-1) BOQ_ITEMS[idx]=Object.assign(BOQ_ITEMS[idx],data);
-      toast('Item updated!','success');
-    } else {
-      var res = await sbInsert('boq_items',data);
-      if(res&&res[0]){
-        BOQ_ITEMS.push(res[0]);
-        // Save temp subitems now that we have the item ID
-        if(newItemSubitems.length){
-          var subInserts = newItemSubitems.map(function(s,i){
-            return sbInsert('boq_subitems',{
-              project_id:projId, boq_item_id:res[0].id,
-              name: typeof s==='string'?s:s.name,
-              category: typeof s==='string'?'General':s.cat,
-              sort_order:i+1
-            });
-          });
-          var subResults = await Promise.all(subInserts);
-          subResults.forEach(function(sr){ if(sr&&sr[0]) BOQ_SUBITEMS.push(sr[0]); });
-          newItemSubitems = [];
-        }
-      }
-      toast('Item added!','success');
-    }
+    toast('Saving plan...','info');
+    var res = await sbInsert('boq_exec_resources',{
+      project_id:projId, boq_item_id:itemId, jm_id:jmId,
+      boq_subitem_id:subId||null,
+      date:new Date().toISOString().slice(0,10),
+      exec_type:type, party_name:party, qty:qty, rate:rate, remarks:remarks
+    });
+    if(res&&res[0]) BOQ_EXECRES.push(res[0]);
+    toast('Planned resource saved!','success');
     closeBOQSheet();
     boqRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
 }
 
-// ADD JM
-var jmResources = [];
+async function boqEditPlanned(btn){
+  var id     = btn.getAttribute('data-id');
+  var jmId   = btn.getAttribute('data-jm');
+  var itemId = btn.getAttribute('data-item');
+  var unit   = btn.getAttribute('data-unit');
+  var r = BOQ_EXECRES.find(function(x){return x.id===id;}); if(!r) return;
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await boqPreloadPartyData();
+  var subs = BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===itemId;});
+  var subOpts = subs.map(function(s){
+    return '<option value="'+s.id+'"'+(s.id===r.boq_subitem_id?' selected':'')+'>'+
+      (s.category?'['+s.category+'] ':'')+s.name+'</option>';
+  }).join('');
+  var typeOpts=[['sc','🏗️ Subcontractor'],['labour','👷 Labour'],['material','📦 Material'],
+    ['transport','🚛 Transport'],['fuel','⛽ Fuel / POL'],['hire','🏗️ Plant Hire'],['other','📝 Other']
+  ].map(function(t){return '<option value="'+t[0]+'"'+(r.exec_type===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('');
+  var uomOpts=(CAT_DATA.uom||[]).filter(function(u){return u.active;}).map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+  document.getElementById('boq-sheet-title').textContent = '📋 Edit Planned Resource';
+  document.getElementById('boq-sheet-body').innerHTML =
+    '<label class="flbl">Work Activity *</label><select id="plan-sub" class="fsel"><option value="">— Sub-item —</option>'+subOpts+'</select>'+
+    '<label class="flbl">Type *</label><select id="plan-type" class="fsel" onchange="boqPlanTypeChange()">'+typeOpts+'</select>'+
+    '<div id="plan-party-wrap"><label class="flbl">Party *</label>'+boqPartyDropdown(r.exec_type||'sc').replace('id="ex-party"','id="plan-party"')+'</div>'+
+    '<div class="g2"><div><label class="flbl">Qty</label><input id="plan-qty" class="finp" type="number" value="'+(r.qty||'')+'" oninput="boqPlanCalcAmt()"></div>'+
+    '<div><label class="flbl">Unit</label><select id="plan-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div></div>'+
+    '<label class="flbl">Rate (₹)</label><input id="plan-rate" class="finp" type="number" value="'+(r.rate||'')+'" oninput="boqPlanCalcAmt()">'+
+    '<label class="flbl">Amount (₹)</label><input id="plan-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" value="'+((r.qty&&r.rate)?fmtINR(r.qty*r.rate):'')+'">'+
+    '<label class="flbl">Remarks</label><input id="plan-remarks" class="finp" value="'+(r.remarks||'')+'">';
+  setTimeout(function(){ var p=document.getElementById('plan-party'); if(p) p.value=r.party_name||''; },50);
+  document.getElementById('boq-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="boqUpdatePlannedBtn(this)" data-id="'+id+'">📋 Update Plan</button>';
+  openBOQSheet();
+}
+function boqUpdatePlannedBtn(btn){ boqUpdatePlanned(btn.getAttribute('data-id')); }
+async function boqUpdatePlanned(id){
+  var subId   = document.getElementById('plan-sub').value;
+  var type    = document.getElementById('plan-type').value;
+  var party   = document.getElementById('plan-party').value.trim();
+  var qty     = parseFloat(document.getElementById('plan-qty').value)||0;
+  var rate    = parseFloat(document.getElementById('plan-rate').value)||0;
+  var remarks = document.getElementById('plan-remarks').value.trim()||null;
+  if(!party){ toast('Party required','warning'); return; }
+  try{
+    toast('Updating...','info');
+    await sbUpdate('boq_exec_resources', id, {boq_subitem_id:subId||null, exec_type:type, party_name:party, qty:qty, rate:rate, remarks:remarks});
+    var r = BOQ_EXECRES.find(function(x){return x.id===id;});
+    if(r){ r.boq_subitem_id=subId||null; r.exec_type=type; r.party_name=party; r.qty=qty; r.rate=rate; r.remarks=remarks; }
+    toast('Plan updated!','success');
+    closeBOQSheet();
+    boqRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+async function boqDeletePlanned(btn){
+  if(!confirm('Delete this planned resource?')) return;
+  var id = btn.getAttribute('data-id');
+  BOQ_EXECRES = BOQ_EXECRES.filter(function(r){return r.id!==id;});
+  boqRender();
+  try{ await sbDelete('boq_exec_resources',id); toast('Planned resource deleted','info'); }
+  catch(e){ console.error(e); }
+}
 
 // ── SUBITEMS ─────────────────────────────────────────────────────────────────
 
