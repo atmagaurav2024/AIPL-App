@@ -7071,14 +7071,11 @@ async function boqOpenAddExec(itemId, jmId, unit){
       '<div style="font-size:11px;font-weight:800;color:#2E7D32;">JM-'+jm.jm_number+' — Agreed: '+jm.jm_qty+' '+unit+'</div>'+
       '<div style="font-size:11px;color:var(--text3);margin-top:2px;">Executed so far: '+jmExecTotal+' '+unit+'</div>'+
     '</div>'+
-    // Main execution entry
+    // Main execution entry — simplified (party/type in resources section)
     '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">✅ Execution Record</div>'+
     '<label class="flbl">Date *</label><input id="ex-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
-    '<label class="flbl">Execution Type *</label><select id="ex-type" class="fsel" onchange="boqExecTypeChange()">'+typeOpts+'</select>'+
-    '<div id="ex-party-wrap"><label class="flbl">Party Name *</label>'+boqPartyDropdown('sc')+'</div>'+
-    '<div class="g2"><div><label class="flbl">Qty ('+unit+') *</label><input id="ex-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="boqExecCalcAmt()"></div>'+
-    '<div><label class="flbl">Rate (₹/'+unit+')</label><input id="ex-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="boqExecCalcAmt()"></div></div>'+
-    '<label class="flbl">Amount (₹)</label><input id="ex-amt" class="finp" readonly placeholder="Auto" style="background:#F8FAFC;opacity:.8;">'+
+    '<label class="flbl">Qty ('+unit+') *</label><input id="ex-qty" class="finp" type="number" step="0.001" placeholder="0">'+
+    '<label class="flbl">Total Amount (₹)</label><input id="ex-amt" class="finp" readonly placeholder="Auto — sum of resources utilized" style="background:#F8FAFC;opacity:.8;">'+
     '<label class="flbl">Remarks</label><input id="ex-remarks" class="finp" placeholder="Optional">'+
     // Resources utilized section
     '<div style="margin-top:14px;border-top:2px solid #E8F5E9;padding-top:12px;">'+
@@ -7130,6 +7127,10 @@ function boqExecAddResource(unit){
 }
 
 function boqExecRefreshResList(unit){
+  // Update total amount display
+  var total = execUtilizedRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
+  var amtEl = document.getElementById('ex-amt');
+  if(amtEl) amtEl.value = total>0 ? fmtINR(total) : '';
   var el = document.getElementById('ex-res-list');
   if(!el) return;
   if(!execUtilizedRes.length){
@@ -7199,12 +7200,11 @@ function boqExecCalcAmt(){
 
 async function boqSaveExec(itemId, jmId, unit){
   var date=document.getElementById('ex-date').value;
-  var type=document.getElementById('ex-type').value;
-  var party=document.getElementById('ex-party').value.trim();
   var qty=parseFloat(document.getElementById('ex-qty').value)||0;
-  if(!date||!party||!qty){ toast('Date, party and qty are required','warning'); return; }
+  if(!date||!qty){ toast('Date and qty are required','warning'); return; }
   var projId = document.getElementById('boq-proj-sel').value;
-  var data={ project_id:projId, boq_item_id:itemId, jm_id:jmId, date:date, exec_type:type, party_name:party, qty:qty, rate:parseFloat(document.getElementById('ex-rate').value)||0, remarks:document.getElementById('ex-remarks').value.trim()||null };
+  var resTotal = execUtilizedRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
+  var data={ project_id:projId, boq_item_id:itemId, jm_id:jmId, date:date, exec_type:'actual', party_name:'(see resources)', qty:qty, rate:resTotal>0&&qty>0?Math.round(resTotal/qty*100)/100:0, remarks:document.getElementById('ex-remarks').value.trim()||null };
   try{
     toast('Saving...','info');
     var res=await sbInsert('boq_execution',data);
