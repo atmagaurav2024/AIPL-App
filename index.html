@@ -7005,19 +7005,20 @@ async function boqSaveJM(itemId, boqQty, existingJMQty, jmNum, unit){
     if(jmRow) BOQ_JMS.push(jmRow);
     var totalRes = 0;
     if(jmRow){
-      // Save flat resources (no subitems)
+      // Save flat resources → PLANNED (boq_exec_resources, no subitem)
       if(jmResources.length){
         var flatInserts = jmResources.map(function(r){
-          return sbInsert('boq_execution',{
+          return sbInsert('boq_exec_resources',{
             project_id:projId, boq_item_id:itemId, jm_id:jmRow.id,
-            date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate, remarks:(r.unit&&r.unit!==unit?'Unit: '+r.unit:null)
+            boq_subitem_id:null,
+            date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate
           });
         });
         var flatRes = await Promise.all(flatInserts);
-        flatRes.forEach(function(er){ if(er&&er[0]) BOQ_EXECS.push(er[0]); });
+        flatRes.forEach(function(er){ if(er&&er[0]) BOQ_EXECRES.push(er[0]); });
         totalRes += jmResources.length;
       }
-      // Save sub-item resources
+      // Save sub-item resources → PLANNED only (boq_exec_resources, NOT boq_execution)
       var subInserts = [];
       Object.keys(jmSubResources).forEach(function(subId){
         (jmSubResources[subId]||[]).forEach(function(r){
@@ -7025,18 +7026,12 @@ async function boqSaveJM(itemId, boqQty, existingJMQty, jmNum, unit){
             project_id:projId, boq_item_id:itemId, jm_id:jmRow.id, boq_subitem_id:subId,
             date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate
           }));
-          // Also save as exec entry for summary calculations
-          subInserts.push(sbInsert('boq_execution',{
-            project_id:projId, boq_item_id:itemId, jm_id:jmRow.id,
-            date:date, exec_type:r.type, party_name:r.party, qty:r.qty, rate:r.rate,
-            remarks:'Sub: '+((BOQ_SUBITEMS.find(function(s){return s.id===subId;})||{}).name||subId)
-          }));
         });
         totalRes += (jmSubResources[subId]||[]).length;
       });
       if(subInserts.length){
         var subRes = await Promise.all(subInserts);
-        subRes.forEach(function(sr){ if(sr&&sr[0]){ if(sr[0].boq_subitem_id) BOQ_EXECRES.push(sr[0]); else BOQ_EXECS.push(sr[0]); } });
+        subRes.forEach(function(sr){ if(sr&&sr[0]) BOQ_EXECRES.push(sr[0]); });
       }
     }
     toast('JM-'+jmNum+(totalRes?' + '+totalRes+' resources':'')+' saved!','success');
