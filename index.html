@@ -7065,6 +7065,18 @@ async function boqOpenAddExec(itemId, jmId, unit){
     ['transport','🚛 Transport'],['fuel','⛽ Fuel / POL'],['hire','🏗️ Plant Hire'],['other','📝 Other']
   ].map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('');
 
+  // Build planned resources dropdown from BOQ_EXECRES for this JM
+  var tcMap2={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
+  var jmPlanned = BOQ_EXECRES.filter(function(r){return r.jm_id===jmId;});
+  var subNames2 = {}; BOQ_SUBITEMS.forEach(function(s){ subNames2[s.id]=s.name; });
+  var jmPlannedOpts = jmPlanned.map(function(r){
+    var subLabel = r.boq_subitem_id ? (subNames2[r.boq_subitem_id]||'') : '';
+    var label = (subLabel?'['+subLabel+'] ':'')+r.party_name+' ('+( tcMap2[r.exec_type]||r.exec_type)+')';
+    // Store unit in data attr — extract from remarks or use jm unit
+    var resUnit = (r.remarks&&r.remarks.includes('unit:')?r.remarks.split('unit:')[1].split('|')[0].trim():unit);
+    return '<option value="'+r.id+'" data-unit="'+resUnit+'" data-type="'+r.exec_type+'" data-party="'+r.party_name+'" data-rate="'+(r.rate||0)+'">'+label+'</option>';
+  }).join('');
+
   document.getElementById('boq-sheet-title').textContent = '✅ Add Actual Execution Entry';
   document.getElementById('boq-sheet-body').innerHTML =
     '<div style="background:#E8F5E9;border-radius:12px;padding:10px 14px;margin-bottom:12px;">'+
@@ -7081,18 +7093,21 @@ async function boqOpenAddExec(itemId, jmId, unit){
     '<div style="margin-top:14px;border-top:2px solid #E8F5E9;padding-top:12px;">'+
       '<div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">📦 Resources Utilized</div>'+
       '<div id="ex-res-list"><div style="font-size:11px;color:var(--text3);padding:4px 0 8px;">No resources added yet</div></div>'+
-      '<div style="background:#F8F9FF;border-radius:12px;padding:10px;border:1px dashed #90CAF9;">'+
-        '<div class="g2" style="margin-bottom:6px;">'+
-          '<div><label class="flbl">Type</label><select id="ex-res-type" class="fsel">'+typeOpts+'</select></div>'+
-          '<div id="ex-res-party-wrap"><label class="flbl">Party / Resource</label>'+boqPartyDropdown('sc').replace(/id="ex-party"/g,'id="ex-res-party"')+'</div>'+
-        '</div>'+
-        '<div class="g2" style="margin-bottom:6px;">'+
-          '<div><label class="flbl">Qty</label><input id="ex-res-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
-          '<div><label class="flbl">Unit</label><select id="ex-res-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div>'+
-        '</div>'+
-        '<label class="flbl">Rate (₹)</label><input id="ex-res-rate" class="finp" type="number" step="0.01" placeholder="0">'+
-        '<button id="ex-res-add-btn" style="width:100%;margin-top:6px;background:#E3F2FD;color:#1565C0;border:none;border-radius:8px;padding:7px;font-size:12px;font-weight:800;cursor:pointer;">+ Add Resource</button>'+
-      '</div>'+
+      (jmPlannedOpts ?
+        '<div style="background:#F8F9FF;border-radius:12px;padding:10px;border:1px dashed #90CAF9;">'+
+          '<label class="flbl">Select Planned Resource</label>'+
+          '<select id="ex-res-pick" class="fsel" onchange="boqExecResPickChange(this)">'+
+            '<option value="">— Select from planned resources —</option>'+
+            jmPlannedOpts+
+          '</select>'+
+          '<div class="g2" style="margin-top:8px;">'+
+            '<div><label class="flbl">Qty Used</label><input id="ex-res-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
+            '<div><label class="flbl">Unit</label><input id="ex-res-unit" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto"></div>'+
+          '</div>'+
+          '<label class="flbl">Rate (₹ / unit)</label><input id="ex-res-rate" class="finp" type="number" step="0.01" placeholder="0">'+
+          '<button id="ex-res-add-btn" style="width:100%;margin-top:6px;background:#E3F2FD;color:#1565C0;border:none;border-radius:8px;padding:7px;font-size:12px;font-weight:800;cursor:pointer;">+ Add</button>'+
+        '</div>'
+      : '<div style="font-size:11px;color:var(--text3);background:#FFF8E1;border-radius:10px;padding:10px;border:1px solid #FFE082;">⚠️ No planned resources for this JM. Add planned resources first using the 📋 Plan button.</div>')+
     '</div>';
   document.getElementById('boq-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
@@ -7103,26 +7118,33 @@ async function boqOpenAddExec(itemId, jmId, unit){
   setTimeout(function(){
     var addBtn = document.getElementById('ex-res-add-btn');
     if(addBtn) addBtn.onclick = function(){ boqExecAddResource(unit); };
-    var typeEl = document.getElementById('ex-res-type');
-    if(typeEl) typeEl.onchange = function(){
-      var wrap = document.getElementById('ex-res-party-wrap');
-      if(wrap) wrap.innerHTML = '<label class="flbl">Party / Resource</label>'+boqPartyDropdown(typeEl.value).replace(/id="ex-party"/g,'id="ex-res-party"');
-    };
   }, 50);
 }
 
+function boqExecResPickChange(sel){
+  var opt = sel.options[sel.selectedIndex];
+  if(!opt||!opt.value) return;
+  var unitEl = document.getElementById('ex-res-unit');
+  var rateEl = document.getElementById('ex-res-rate');
+  if(unitEl) unitEl.value = opt.getAttribute('data-unit')||'';
+  if(rateEl) rateEl.value = opt.getAttribute('data-rate')||'';
+}
+
 function boqExecAddResource(unit){
-  var type  = (document.getElementById('ex-res-type')||{value:'other'}).value;
-  var party = (document.getElementById('ex-res-party')||{value:''}).value.trim();
-  var qty   = parseFloat((document.getElementById('ex-res-qty')||{value:0}).value)||0;
-  var resUnit= (document.getElementById('ex-res-unit')||{value:unit}).value||unit;
-  var rate  = parseFloat((document.getElementById('ex-res-rate')||{value:0}).value)||0;
-  if(!party){ toast('Party / resource name required','warning'); return; }
-  execUtilizedRes.push({type:type, party:party, qty:qty, unit:resUnit, rate:rate});
+  var pickEl = document.getElementById('ex-res-pick');
+  var opt    = pickEl ? pickEl.options[pickEl.selectedIndex] : null;
+  if(!opt||!opt.value){ toast('Select a planned resource','warning'); return; }
+  var type    = opt.getAttribute('data-type')||'other';
+  var party   = opt.getAttribute('data-party')||'';
+  var qty     = parseFloat((document.getElementById('ex-res-qty')||{value:0}).value)||0;
+  var resUnit = (document.getElementById('ex-res-unit')||{value:unit}).value||unit;
+  var rate    = parseFloat((document.getElementById('ex-res-rate')||{value:0}).value)||0;
+  if(!qty){ toast('Enter quantity used','warning'); return; }
+  execUtilizedRes.push({type:type, party:party, qty:qty, unit:resUnit, rate:rate, plannedId:opt.value});
   boqExecRefreshResList(unit);
   // Clear inputs
   ['ex-res-qty','ex-res-rate'].forEach(function(id){ var el=document.getElementById(id); if(el)el.value=''; });
-  var pEl=document.getElementById('ex-res-party'); if(pEl)pEl.value='';
+  var uEl=document.getElementById('ex-res-unit'); if(uEl)uEl.value='';
   toast('Resource added','success');
 }
 
