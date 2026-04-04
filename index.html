@@ -1297,6 +1297,14 @@ input,select,textarea{font-size:16px !important;}
 #app-boq{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-jm{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-jm.on{display:flex;}
+#app-planning{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
+#app-planning.on{display:flex;}
+#app-execution{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
+#app-execution.on{display:flex;}
+/* Module-specific topbar colors */
+#app-jm .boq-topbar{background:linear-gradient(135deg,#1565C0,#1976D2);}
+#app-planning .boq-topbar{background:linear-gradient(135deg,#E65100,#F57C00);}
+#app-execution .boq-topbar{background:linear-gradient(135deg,#2E7D32,#388E3C);}
 #app-plan{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-plan.on{display:flex;}
 #app-exec{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
@@ -2146,7 +2154,7 @@ input,select,textarea{font-size:16px !important;}
 <div class="app-screen" id="app-boq">
   <div class="boq-topbar">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div class="tb-title">BOQ &amp; Execution</div>
+    <div class="tb-title">📋 BOQ Items</div>
     <div style="flex:1;"></div>
     <button class="tb-btn" id="boq-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Add</button>
   </div>
@@ -2179,8 +2187,9 @@ input,select,textarea{font-size:16px !important;}
 <div class="app-screen" id="app-jm">
   <div class="boq-topbar">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div class="tb-title">Joint Measurements</div>
+    <div class="tb-title">📐 Joint Measurements</div>
     <div style="flex:1;"></div>
+    <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
     <button class="tb-btn" id="jm-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Add JM</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
@@ -2188,11 +2197,7 @@ input,select,textarea{font-size:16px !important;}
       <option value="">— Select Project —</option>
     </select>
   </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="jm-boq-sel" class="fsel" style="width:100%;" onchange="jmLoadJMs()">
-      <option value="">— Select BOQ Item —</option>
-    </select>
-  </div>
+
   <div class="boq-scroll" id="jm-content">
     <div style="text-align:center;padding:40px;color:var(--text3);">Select a project and BOQ item</div>
   </div>
@@ -2209,12 +2214,13 @@ input,select,textarea{font-size:16px !important;}
 <div class="app-screen" id="app-planning">
   <div class="boq-topbar">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div class="tb-title">Planning</div>
+    <div class="tb-title">📦 Planning</div>
     <div style="flex:1;"></div>
-    <button class="tb-btn" id="plan-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Add</button>
+    <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
+    <button class="tb-btn" id="plan-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Plan</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadBOQ()">
+    <select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()">
       <option value="">— Select Project —</option>
     </select>
   </div>
@@ -2244,9 +2250,10 @@ input,select,textarea{font-size:16px !important;}
 <div class="app-screen" id="app-execution">
   <div class="boq-topbar">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div class="tb-title">Execution</div>
+    <div class="tb-title">✅ Execution</div>
     <div style="flex:1;"></div>
-    <button class="tb-btn" id="exec-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Add Entry</button>
+    <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
+    <button class="tb-btn" id="exec-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Entry</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadBOQ()">
@@ -2551,8 +2558,9 @@ function showApp(name){
   document.querySelectorAll('.app-screen').forEach(function(s){s.classList.remove('on');});
   document.getElementById('app-'+name).classList.add('on');
   currentApp=name;
-  // Show bottom nav
-  document.getElementById('app-nav').style.display='flex';
+  // Hide bottom nav for full-screen modules
+  var noNav = ['boq','jm','planning','execution','projects','attendance'];
+  document.getElementById('app-nav').style.display = noNav.indexOf(name)>-1 ? 'none' : 'flex';
   // Update nav highlight
   ['home','attendance','registry','profile'].forEach(function(n){
     var el=document.getElementById('an-'+n);
@@ -6276,7 +6284,7 @@ function boqRender(){
       : '')+
       // Actions
       '<div style="padding:8px 14px;display:flex;gap:8px;justify-content:flex-end;">'+
-        '<button onclick="boqOpenAddItem(BOQ_ITEMS.find(function(i){return i.id===\''+item.id+'\';})" '+
+        '<button onclick="boqOpenAddItem(BOQ_ITEMS.find(function(i){return i.id===\''+item.id+'\';}) )" '+
           'style="background:none;border:1px solid var(--border);border-radius:8px;color:#7B1FA2;font-size:11px;font-weight:800;cursor:pointer;padding:4px 12px;">✏️ Edit</button>'+
         '<button onclick="boqDeleteItem(\''+item.id+'\')" '+
           'style="background:none;border:1px solid #FFCDD2;border-radius:8px;color:#C62828;font-size:11px;font-weight:800;cursor:pointer;padding:4px 12px;">🗑 Delete</button>'+
@@ -6622,7 +6630,7 @@ function closeJMSheet(){ document.getElementById('ov-jm').classList.remove('on')
 
 function initJM(){
   var btn = document.getElementById('jm-add-btn');
-  if(btn) btn.onclick = function(){ jmOpenAdd(); };
+  if(btn) btn.onclick = function(){ toast('Use + JM button next to each BOQ item','info'); };
   jmLoadProjects();
 }
 
