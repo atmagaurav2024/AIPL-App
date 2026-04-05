@@ -2247,7 +2247,7 @@ input,select,textarea{font-size:16px !important;}
     <div style="flex:1;"></div>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadBOQ()">
+    <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()">
       <option value="">— Select Project —</option>
     </select>
   </div>
@@ -6803,7 +6803,7 @@ function planRender(){
         '<span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
       '</div>'+
       itemJMs.map(function(jm){
-        var jmSubs=PLAN_SUBS.filter(function(s){return s.jm_id===jm.id;});
+        var jmSubs=PLAN_SUBS.filter(function(s){return s.boq_item_id===item.id;});
         var jmRes=PLAN_RESOURCES.filter(function(r){return r.jm_id===jm.id;});
         var totalPlanned=jmRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
         var subsHtml = jmSubs.length ? jmSubs.map(function(sub){
