@@ -7073,7 +7073,7 @@ function execRender(){
 }
 
 async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
-  if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await boqPreloadPartyData();
+  if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await loadAllData(true);
   var jm=EXEC_JMS.find(function(j){return j.id===jmId;})||{};
   var usedQty=EXEC_ENTRIES.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
   if(editEntry) usedQty-=parseFloat(editEntry.qty)||0;
