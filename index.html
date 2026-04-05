@@ -1302,15 +1302,15 @@ input,select,textarea{font-size:16px !important;}
 #app-execution{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-execution.on{display:flex;}
 /* Module-specific topbar colors */
-#app-jm .boq-topbar{background:linear-gradient(135deg,#1565C0,#1976D2);}
-#app-planning .boq-topbar{background:linear-gradient(135deg,#E65100,#F57C00);}
-#app-execution .boq-topbar{background:linear-gradient(135deg,#2E7D32,#388E3C);}
+#app-jm .boq-topbar{background:var(--navy);}
+#app-planning .boq-topbar{background:var(--navy);}
+#app-execution .boq-topbar{background:var(--navy);}
 #app-plan{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-plan.on{display:flex;}
 #app-exec{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-exec.on{display:flex;}
 #app-boq.on{display:flex;}
-#app-boq .boq-topbar{background:linear-gradient(135deg,#4A148C,#7B1FA2);height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
+#app-boq .boq-topbar{background:var(--navy);height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
 #app-boq .boq-scroll{flex:1;overflow-y:auto;padding:10px 14px 90px;}
 .boq-card{background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;cursor:pointer;}
 .boq-card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;}
@@ -2190,7 +2190,6 @@ input,select,textarea{font-size:16px !important;}
     <div class="tb-title">📐 Joint Measurements</div>
     <div style="flex:1;"></div>
     <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
-    <button class="tb-btn" id="jm-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Add JM</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()">
@@ -2217,7 +2216,6 @@ input,select,textarea{font-size:16px !important;}
     <div class="tb-title">📦 Planning</div>
     <div style="flex:1;"></div>
     <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
-    <button class="tb-btn" id="plan-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Plan</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()">
@@ -2253,7 +2251,6 @@ input,select,textarea{font-size:16px !important;}
     <div class="tb-title">✅ Execution</div>
     <div style="flex:1;"></div>
     <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
-    <button class="tb-btn" id="exec-add-btn" style="background:rgba(255,255,255,.15);border-radius:10px;padding:6px 12px;font-size:12px;font-weight:800;">+ Entry</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadBOQ()">
