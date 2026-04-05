@@ -7093,80 +7093,193 @@ function execRender(){
   }).join('');
 }
 
+var execAssignments = []; // [{type, party, resources:[{subId,subName,qty,unit,rate}]}]
+
 async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
+  execAssignments = [];
   if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await loadAllData(true);
-  var jm=EXEC_JMS.find(function(j){return j.id===jmId;})||{};
-  var usedQty=EXEC_ENTRIES.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
-  if(editEntry) usedQty-=parseFloat(editEntry.qty)||0;
-  var maxQty=(parseFloat(jmQty)||0)-usedQty;
-  var typeOpts=[['sc','🏗️ Subcontractor'],['labour','👷 Labour'],['material','📦 Material'],
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  var jm = EXEC_JMS.find(function(j){return j.id===jmId;})||{};
+  var usedQty = EXEC_ENTRIES.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
+  var maxQty = (parseFloat(jmQty)||0) - usedQty;
+  // Get subitems for this BOQ item from planned resources
+  var plannedSubs = EXEC_SUBS.filter(function(s){return s.boq_item_id===itemId;});
+  var subOpts = plannedSubs.length ?
+    plannedSubs.map(function(s){return '<option value="'+s.id+'">'+
+      (s.category?'['+s.category+'] ':'')+s.name+'</option>';}).join('') :
+    '<option value="">No activities — add in Planning</option>';
+  var uomOpts = (CAT_DATA.uom||[]).filter(function(u){return u.active;}).map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+  var typeOpts = [
+    ['sc','🏗️ Subcontractor'],['labour','👷 Labour'],['material','📦 Material'],
     ['transport','🚛 Transport'],['fuel','⛽ Fuel / POL'],['hire','🏗️ Plant Hire'],['other','📝 Other']
-  ].map(function(t){return '<option value="'+t[0]+'"'+(editEntry&&editEntry.exec_type===t[0]?' selected':'')+'>'+t[1]+'</option>';}).join('');
-  document.getElementById('exec-sheet-title').textContent=editEntry?'Edit Execution Entry':'Add Execution Entry';
-  document.getElementById('exec-sheet-body').innerHTML=
+  ].map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('');
+
+  document.getElementById('exec-sheet-title').textContent = 'Add Execution Entry';
+  document.getElementById('exec-sheet-body').innerHTML =
+    // JM info bar
     '<div style="background:#E8F5E9;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;">'+
       '<div><div style="font-size:11px;font-weight:800;color:#2E7D32;">JM-'+jm.jm_number+'</div>'+
       '<div style="font-size:16px;font-weight:900;color:#1B5E20;">Available: '+maxQty+' '+unit+'</div></div>'+
-      '<div style="font-size:10px;color:var(--text3);text-align:right;">Executed: '+usedQty+'<br>JM: '+jmQty+' '+unit+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);text-align:right;">Executed: '+usedQty+'<br>JM Qty: '+jmQty+' '+unit+'</div>'+
     '</div>'+
-    '<label class="flbl">Date *</label><input id="ef-date" class="finp" type="date" value="'+(editEntry?editEntry.date:new Date().toISOString().slice(0,10))+'">'+
-    '<label class="flbl">Execution Type *</label><select id="ef-type" class="fsel" onchange="execTypeChange()">'+typeOpts+'</select>'+
-    '<div id="ef-party-wrap"><label class="flbl">Party Name *</label>'+boqPartyDropdown(editEntry?editEntry.exec_type:'sc').replace('id="ex-party"','id="ef-party"')+'</div>'+
-    '<div class="g2"><div><label class="flbl">Qty ('+unit+') *</label><input id="ef-qty" class="finp" type="number" step="0.001" placeholder="Max: '+maxQty+'" value="'+(editEntry?editEntry.qty:'')+'" oninput="execCalcAmt()"></div>'+
-    '<div><label class="flbl">Rate (₹/'+unit+')</label><input id="ef-rate" class="finp" type="number" step="0.01" value="'+(editEntry?editEntry.rate:'')+'" oninput="execCalcAmt()"></div></div>'+
-    '<label class="flbl">Amount (₹)</label><input id="ef-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" value="'+(editEntry&&editEntry.qty&&editEntry.rate?fmtINR(editEntry.qty*editEntry.rate):'')+'">'+
-    '<label class="flbl">Remarks</label><input id="ef-remarks" class="finp" value="'+(editEntry&&editEntry.remarks?editEntry.remarks:'')+'" placeholder="Optional">';
-  if(editEntry) setTimeout(function(){ var p=document.getElementById('ef-party'); if(p) p.value=editEntry.party_name||''; },50);
-  document.getElementById('exec-sheet-foot').innerHTML=
+    '<label class="flbl">Date *</label>'+
+    '<input id="ef-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    // Assignments list
+    '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;">Party Assignments</div>'+
+    '<div id="ef-assignments"><div style="font-size:11px;color:var(--text3);padding:4px 0 8px;">No assignments yet</div></div>'+
+    // Add assignment panel
+    '<div style="background:#F0FFF4;border-radius:12px;padding:10px;border:1px dashed #A5D6A7;margin-top:8px;">'+
+      '<div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">+ New Assignment</div>'+
+      '<div class="g2" style="margin-bottom:6px;">'+
+        '<div><label class="flbl">Party Type</label>'+
+          '<select id="ef-type" class="fsel" onchange="execTypeChange()">'+typeOpts+'</select></div>'+
+        '<div id="ef-party-wrap"><label class="flbl">Party Name *</label>'+
+          boqPartyDropdown('sc').replace('id="ex-party"','id="ef-party"')+'</div>'+
+      '</div>'+
+      // Resource rows for this assignment
+      '<div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:4px;">Resources for this party:</div>'+
+      '<div id="ef-res-rows"></div>'+
+      '<button onclick="execAddResRow(\''+unit+'\',\''+subOpts+'\',\''+uomOpts+'\')" '+
+        'style="width:100%;background:#E8F5E9;color:#2E7D32;border:1px dashed #A5D6A7;border-radius:8px;padding:6px;font-size:11px;font-weight:800;cursor:pointer;margin-bottom:8px;">+ Add Resource Row</button>'+
+      '<button onclick="execAddAssignment()" '+
+        'style="width:100%;background:#2E7D32;color:white;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;">✓ Add This Assignment</button>'+
+    '</div>'+
+    '<label class="flbl" style="margin-top:10px;">Remarks</label>'+
+    '<input id="ef-remarks" class="finp" placeholder="Optional">';
+
+  document.getElementById('exec-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeExecSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#2E7D32;color:white;" onclick="execSave(\''+jmId+'\',\''+itemId+'\',\''+unit+'\','+jmQty+','+(editEntry?'\''+editEntry.id+'\'':'null')+')">✓ '+(editEntry?'Save Changes':'Add Entry')+'</button>';
+    '<button class="btn" style="background:#2E7D32;color:white;" onclick="execSaveAll(\''+jmId+'\',\''+itemId+'\',\''+unit+'\','+jmQty+')">✓ Save All Entries</button>';
+
+  // Add first resource row
+  execAddResRow(unit, subOpts, uomOpts);
   openExecSheet();
 }
 
-function execTypeChange(){
-  var type=(document.getElementById('ef-type')||{value:'sc'}).value;
-  var wrap=document.getElementById('ef-party-wrap');
-  if(wrap) wrap.innerHTML='<label class="flbl">Party Name *</label>'+boqPartyDropdown(type).replace('id="ex-party"','id="ef-party"');
-}
-function execCalcAmt(){
-  var q=parseFloat((document.getElementById('ef-qty')||{value:0}).value)||0;
-  var r=parseFloat((document.getElementById('ef-rate')||{value:0}).value)||0;
-  var el=document.getElementById('ef-amt'); if(el) el.value=q&&r?fmtINR(q*r):'';
+var _execSubOpts = '';
+var _execUomOpts = '';
+
+function execAddResRow(unit, subOpts, uomOpts){
+  if(subOpts) _execSubOpts = subOpts;
+  if(uomOpts) _execUomOpts = uomOpts;
+  var container = document.getElementById('ef-res-rows');
+  if(!container) return;
+  var idx = container.children.length;
+  var row = document.createElement('div');
+  row.className = 'ef-res-row';
+  row.style.cssText = 'background:white;border-radius:8px;padding:8px;margin-bottom:6px;border:1px solid var(--border);';
+  row.innerHTML =
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);">Resource '+(idx+1)+'</div>'+
+      '<button onclick="this.parentElement.parentElement.remove()" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;">×</button>'+
+    '</div>'+
+    '<label class="flbl">Work Activity</label>'+
+    '<select class="fsel ef-sub" style="margin-bottom:6px;"><option value="">— Select Activity —</option>'+_execSubOpts+'</select>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Qty *</label><input class="finp ef-qty" type="number" step="0.001" placeholder="0"></div>'+
+      '<div><label class="flbl">Unit</label><select class="fsel ef-unit"><option value="">'+unit+'</option>'+_execUomOpts+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Rate (₹)</label><input class="finp ef-rate" type="number" step="0.01" placeholder="0">';
+  container.appendChild(row);
 }
 
-async function execSave(jmId, itemId, unit, jmQty, editId){
-  var date=(document.getElementById('ef-date')||{value:''}).value;
-  var type=(document.getElementById('ef-type')||{value:'other'}).value;
-  var party=(document.getElementById('ef-party')||{value:''}).value.trim();
-  var qty=parseFloat((document.getElementById('ef-qty')||{value:0}).value)||0;
-  var rate=parseFloat((document.getElementById('ef-rate')||{value:0}).value)||0;
-  var remarks=(document.getElementById('ef-remarks')||{value:''}).value.trim()||null;
-  if(!date||!party||!qty){ toast('Date, party and qty required','warning'); return; }
-  // Validate qty
-  var usedQty=EXEC_ENTRIES.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
-  if(editId){ var old=EXEC_ENTRIES.find(function(e){return e.id===editId;}); if(old) usedQty-=parseFloat(old.qty)||0; }
-  if(usedQty+qty>(parseFloat(jmQty)||0)){ toast('Execution qty exceeds JM balance! Max: '+((parseFloat(jmQty)||0)-usedQty)+' '+unit,'error'); return; }
-  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+function execTypeChange(){
+  var type = (document.getElementById('ef-type')||{value:'sc'}).value;
+  var wrap = document.getElementById('ef-party-wrap');
+  if(wrap) wrap.innerHTML = '<label class="flbl">Party Name *</label>'+boqPartyDropdown(type).replace('id="ex-party"','id="ef-party"');
+}
+
+function execAddAssignment(){
+  var type  = (document.getElementById('ef-type')||{value:'other'}).value;
+  var party = (document.getElementById('ef-party')||{value:''}).value.trim();
+  if(!party){ toast('Select a party first','warning'); return; }
+  var rows = document.querySelectorAll('.ef-res-row');
+  var resources = [];
+  var valid = true;
+  rows.forEach(function(row){
+    var sub  = row.querySelector('.ef-sub');
+    var qty  = parseFloat((row.querySelector('.ef-qty')||{value:0}).value)||0;
+    var unit = (row.querySelector('.ef-unit')||{value:''}).value;
+    var rate = parseFloat((row.querySelector('.ef-rate')||{value:0}).value)||0;
+    if(!qty){ valid=false; return; }
+    var subId   = sub ? sub.value : '';
+    var subName = sub && sub.value ? sub.options[sub.selectedIndex].text : '(General)';
+    resources.push({subId:subId, subName:subName, qty:qty, unit:unit, rate:rate});
+  });
+  if(!valid||!resources.length){ toast('Enter qty for all resource rows','warning'); return; }
+  execAssignments.push({type:type, party:party, resources:resources});
+  execRefreshAssignments();
+  // Reset form
+  var typeEl=document.getElementById('ef-type'); if(typeEl) typeEl.value='sc';
+  execTypeChange();
+  var container=document.getElementById('ef-res-rows'); if(container) container.innerHTML='';
+  execAddResRow('', '', '');
+  toast('Assignment added','success');
+}
+
+function execRefreshAssignments(){
+  var el = document.getElementById('ef-assignments');
+  if(!el) return;
+  if(!execAssignments.length){
+    el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:4px 0 8px;">No assignments yet</div>';
+    return;
+  }
+  var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
+  var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
+  el.innerHTML = execAssignments.map(function(a,ai){
+    var total = a.resources.reduce(function(s,r){return s+(r.qty||0)*(r.rate||0);},0);
+    return '<div style="background:white;border-radius:10px;border:1px solid var(--border);padding:10px;margin-bottom:8px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
+        '<div style="display:flex;align-items:center;gap:6px;">'+
+          '<span class="exec-type-badge '+(tcMap[a.type]||'exec-other')+'">'+(tlMap[a.type]||a.type)+'</span>'+
+          '<span style="font-size:13px;font-weight:800;">'+a.party+'</span>'+
+        '</div>'+
+        '<div style="display:flex;align-items:center;gap:6px;">'+
+          (total?'<span style="font-size:12px;font-weight:900;color:#2E7D32;">'+fmtINR(total)+'</span>':'')+
+          '<button onclick="execAssignments.splice('+ai+',1);execRefreshAssignments();" '+
+            'style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;">×</button>'+
+        '</div>'+
+      '</div>'+
+      a.resources.map(function(r){
+        return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-top:1px solid var(--border);">'+
+          '<div style="flex:1;font-size:11px;color:var(--text2);">'+r.subName+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+r.qty+' '+r.unit+' @ ₹'+r.rate+'</div>'+
+          '<div style="font-size:11px;font-weight:800;color:#2E7D32;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+}
+
+async function execSaveAll(jmId, itemId, unit, jmQty){
+  if(!execAssignments.length){ toast('Add at least one assignment','warning'); return; }
+  var date    = (document.getElementById('ef-date')||{value:''}).value;
+  var remarks = (document.getElementById('ef-remarks')||{value:''}).value.trim()||null;
+  if(!date){ toast('Date is required','warning'); return; }
+  var projId = (document.getElementById('exec-proj-sel')||{}).value||'';
   try{
     toast('Saving...','info');
-    var data={project_id:projId,boq_item_id:itemId,jm_id:jmId,date:date,exec_type:type,party_name:party,qty:qty,rate:rate,remarks:remarks};
-    if(editId){
-      await sbUpdate('boq_execution',editId,data);
-      var e=EXEC_ENTRIES.find(function(x){return x.id===editId;}); if(e) Object.assign(e,data);
-      toast('Entry updated!','success');
-    } else {
-      var res=await sbInsert('boq_execution',data);
-      if(res&&res[0]) EXEC_ENTRIES.push(res[0]);
-      toast('Entry added!','success');
-    }
-    closeExecSheet(); execRender();
+    var inserts = [];
+    execAssignments.forEach(function(a){
+      a.resources.forEach(function(r){
+        inserts.push(sbInsert('boq_execution',{
+          project_id:projId, boq_item_id:itemId, jm_id:jmId,
+          date:date, exec_type:a.type, party_name:a.party,
+          qty:r.qty, rate:r.rate,
+          remarks:(r.subName&&r.subName!=='(General)'?r.subName+': ':'')+
+                  (remarks||'')+(r.unit&&r.unit!==unit?' ['+r.unit+']':'')
+        }));
+      });
+    });
+    var results = await Promise.all(inserts);
+    results.forEach(function(res){ if(res&&res[0]) EXEC_ENTRIES.push(res[0]); });
+    execAssignments = [];
+    toast(results.length+' execution entries saved!','success');
+    closeExecSheet();
+    execRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
-}
-
-function execEdit(btn){
-  var id=btn.getAttribute('data-id'),jmId=btn.getAttribute('data-jm'),itemId=btn.getAttribute('data-item'),unit=btn.getAttribute('data-unit'),jmQty=parseFloat(btn.getAttribute('data-jmqty'))||0;
-  var entry=EXEC_ENTRIES.find(function(e){return e.id===id;}); if(!entry) return;
-  execOpenAdd(jmId,itemId,unit,jmQty,entry);
 }
 async function execDeleteEntry(btn){
   if(!confirm('Delete this execution entry?')) return;
