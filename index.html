@@ -7141,7 +7141,7 @@ async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
       // Resource rows for this assignment
       '<div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:4px;">Resources for this party:</div>'+
       '<div id="ef-res-rows"></div>'+
-      '<button onclick="execAddResRow(\''+unit+'\',\''+subOpts+'\',\''+uomOpts+'\')" '+
+      '<button onclick="execAddResRow()" '+
         'style="width:100%;background:#E8F5E9;color:#2E7D32;border:1px dashed #A5D6A7;border-radius:8px;padding:6px;font-size:11px;font-weight:800;cursor:pointer;margin-bottom:8px;">+ Add Resource Row</button>'+
       '<button onclick="execAddAssignment()" '+
         'style="width:100%;background:#2E7D32;color:white;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;">✓ Add This Assignment</button>'+
@@ -7268,8 +7268,7 @@ async function execSaveAll(jmId, itemId, unit, jmQty){
           project_id:projId, boq_item_id:itemId, jm_id:jmId,
           date:date, exec_type:a.type, party_name:a.party,
           qty:r.qty, rate:r.rate,
-          remarks:(r.subName&&r.subName!=='(General)'?r.subName+': ':'')+
-                  (remarks||'')+(r.unit&&r.unit!==unit?' ['+r.unit+']':'')
+          remarks:remarks||null
         }));
       });
     });
