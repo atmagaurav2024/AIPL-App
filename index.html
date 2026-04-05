@@ -2217,16 +2217,7 @@ input,select,textarea{font-size:16px !important;}
       <option value="">— Select Project —</option>
     </select>
   </div>
-  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="plan-boq-sel" class="fsel" style="width:100%;" onchange="planLoadJMs()">
-      <option value="">— Select BOQ Item —</option>
-    </select>
-  </div>
-  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="plan-jm-sel" class="fsel" style="width:100%;" onchange="planLoadSubitems()">
-      <option value="">— Select JM —</option>
-    </select>
-  </div>
+
   <div class="boq-scroll" id="plan-content">
     <div style="text-align:center;padding:40px;color:var(--text3);">Select project, BOQ item and JM</div>
   </div>
@@ -2251,16 +2242,7 @@ input,select,textarea{font-size:16px !important;}
       <option value="">— Select Project —</option>
     </select>
   </div>
-  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="exec-boq-sel" class="fsel" style="width:100%;" onchange="execLoadJMs()">
-      <option value="">— Select BOQ Item —</option>
-    </select>
-  </div>
-  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="exec-jm-sel" class="fsel" style="width:100%;" onchange="execLoadEntries()">
-      <option value="">— Select JM —</option>
-    </select>
-  </div>
+
   <div class="boq-scroll" id="exec-content">
     <div style="text-align:center;padding:40px;color:var(--text3);">Select project, BOQ item and JM</div>
   </div>
@@ -6863,7 +6845,9 @@ async function planSaveSub(jmId, itemId){
   var cat=document.getElementById('ps-cat').value;
   var name=document.getElementById('ps-name').value.trim();
   if(!cat||!name){ toast('Category and name required','warning'); return; }
+  if(!itemId||itemId==='undefined'||itemId==='null'){ toast('BOQ item not found — please re-open','error'); return; }
   var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
+  if(!projId){ toast('No project selected','error'); return; }
   var sortOrder=PLAN_SUBS.filter(function(s){return s.boq_item_id===itemId;}).length+1;
   try{
     var res=await sbInsert('boq_subitems',{project_id:projId,boq_item_id:itemId,name:name,category:cat,sort_order:sortOrder});
