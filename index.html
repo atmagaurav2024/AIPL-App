@@ -6803,7 +6803,7 @@ function planRender(){
               return '<div style="display:flex;align-items:center;gap:6px;padding:4px 8px;background:#F8F9FF;border-radius:8px;margin-bottom:3px;">'+
                 '<span class="exec-type-badge '+(r.exec_type==='material'?'exec-material':r.exec_type==='labour'?'exec-labour':'exec-sc')+'" style="font-size:9px;">'+r.exec_type+'</span>'+
                 '<div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+'</div>'+
-                '<div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||(r.remarks&&r.remarks.startsWith('unit:')?r.remarks.replace('unit:',''):''))+' @ ₹'+r.rate+'</div>'+
+                '<div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(getResUnit(r))+' @ ₹'+r.rate+'</div>'+
                 '<div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div>'+
                 '<button onclick="planDeleteResource(this)" data-id="'+r.id+'" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
               '</div>';
@@ -7079,6 +7079,12 @@ function execRender(){
 
 var execAssignments = []; // [{type, party, resources:[{subId,subName,qty,unit,rate}]}]
 
+
+function getResUnit(r){
+  if(r.unit) return r.unit;
+  if(r.remarks && r.remarks.indexOf('unit:')>-1) return r.remarks.split('unit:')[1].trim();
+  return '';
+}
 async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
   if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await loadAllData(true);
   var jm = EXEC_JMS.find(function(j){return j.id===jmId;})||{};
@@ -7101,14 +7107,17 @@ async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
   var resCheckboxes = _execPlannedRes.length ?
     _execPlannedRes.map(function(r,i){
       var sub = EXEC_SUBS.find(function(s){return s.id===r.boq_subitem_id;})||{};
-      var resUnit = r.unit||(r.remarks&&r.remarks.startsWith('unit:')?r.remarks.split('unit:')[1].trim():'');
-      var label = (sub.name||r.party_name||'Resource')+' — '+r.qty+' '+resUnit+(r.rate?' @ ₹'+r.rate:'');
+      var resUnit = getResUnit(r);
       return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:white;border-radius:8px;margin-bottom:4px;border:1px solid var(--border);cursor:pointer;">'+
-        '<input type="checkbox" class="ef-res-chk" data-id="'+r.id+'" data-name="'+(sub.name||r.party_name||'')+
+        '<input type="checkbox" class="ef-res-chk" data-id="'+r.id+'" data-name="'+r.party_name+
         '" data-unit="'+resUnit+'" data-qty="'+r.qty+'" data-rate="'+(r.rate||0)+
         '" style="margin-top:2px;flex-shrink:0;">'+
-        '<div style="flex:1;"><div style="font-size:12px;font-weight:700;">'+(sub.name||r.party_name||'Resource')+'</div>'+
-        '<div style="font-size:10px;color:var(--text3);">Planned: '+r.qty+' '+resUnit+(r.rate?' @ ₹'+r.rate:'')+'</div></div>'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:12px;font-weight:700;">'+r.party_name+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+
+            (sub.name?'['+sub.name+'] ':'')+r.qty+' '+resUnit+(r.rate?' @ ₹'+r.rate:'')+
+          '</div>'+
+        '</div>'+
       '</label>';
     }).join('')
     : '<div style="font-size:11px;color:var(--text3);padding:8px;background:#FFF8E1;border-radius:8px;border:1px solid #FFE082;">⚠️ No planned resources for this JM. Add resources in Planning module first.</div>';
