@@ -6992,6 +6992,27 @@ var EXEC_ITEMS=[]; var EXEC_JMS=[]; var EXEC_SUBS=[]; var EXEC_RESOURCES=[]; var
 function openExecSheet(){ document.getElementById('ov-exec').classList.add('on'); document.getElementById('sh-exec').classList.add('on'); }
 function closeExecSheet(){ document.getElementById('ov-exec').classList.remove('on'); document.getElementById('sh-exec').classList.remove('on'); }
 
+
+function boqPartyDropdown(type){
+  var opts = '';
+  if(type==='sc'){
+    var list = SUBCONTRACTORS||[];
+    if(!list.length) return '<input id="ex-party" class="finp" placeholder="Subcontractor name">';
+    opts = list.map(function(s){ var n=s.name||s.companyName||''; return '<option value="'+n+'">'+n+'</option>'; }).join('');
+  } else if(type==='labour'){
+    var list = LABOUR_DATA||[];
+    if(!list.length) return '<input id="ex-party" class="finp" placeholder="Labour type / name">';
+    opts = list.map(function(l){ return '<option value="'+l.name+'">'+l.name+(l.trade?' — '+l.trade:'')+'</option>'; }).join('');
+  } else if(type==='material'){
+    var list = VENDORS||[];
+    if(!list.length) return '<input id="ex-party" class="finp" placeholder="Vendor / supplier name">';
+    opts = list.map(function(v){ var n=v.name||v.companyName||''; return '<option value="'+n+'">'+n+'</option>'; }).join('');
+  } else {
+    return '<input id="ex-party" class="finp" placeholder="Party / vendor name">';
+  }
+  return '<select id="ex-party" class="fsel">'+opts+'</select>';
+}
+
 function initExec(){
   var btn=document.getElementById('exec-add-btn');
   if(btn) btn.onclick=function(){ toast('Select a JM from the list to add execution','info'); };
