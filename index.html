@@ -2230,11 +2230,11 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="plan-sheet-foot"></div>
 </div>
 
-<!-- EXECUTION MODULE SCREEN -->
+<!-- WORK ALLOTMENT MODULE SCREEN -->
 <div class="app-screen" id="app-execution">
   <div class="boq-topbar">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div class="tb-title">✅ Execution</div>
+    <div class="tb-title">📝 Work Allotment</div>
     <div style="flex:1;"></div>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
@@ -7066,7 +7066,7 @@ function execRender(){
             '<div><span class="jm-badge">JM-'+jm.jm_number+'</span> <span style="font-size:12px;font-weight:700;color:#4A148C;">'+jm.jm_qty+' '+item.unit+'</span> <span style="font-size:10px;color:var(--text3);">'+jm.date+'</span></div>'+
             '<div style="display:flex;align-items:center;gap:6px;">'+
               '<span style="font-size:10px;font-weight:700;color:'+(jmBalance<0?'#C62828':'#2E7D32')+';">Bal: '+jmBalance+' '+item.unit+'</span>'+
-              '<button onclick="execOpenAdd(\''+jm.id+'\',\''+item.id+'\',\''+item.unit+'\','+jm.jm_qty+')" style="background:#2E7D32;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Entry</button>'+
+              '<button onclick="execOpenAdd(\''+jm.id+'\',\''+item.id+'\',\''+item.unit+'\','+jm.jm_qty+')" style="background:#E65100;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Allot</button>'+
             '</div>'+
           '</div>'+
           entriesHtml+
@@ -7122,7 +7122,7 @@ async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
     }).join('')
     : '<div style="font-size:11px;color:var(--text3);padding:8px;background:#FFF8E1;border-radius:8px;border:1px solid #FFE082;">⚠️ No planned resources for this JM. Add resources in Planning module first.</div>';
 
-  document.getElementById('exec-sheet-title').textContent = '✅ Execution Entry';
+  document.getElementById('exec-sheet-title').textContent = '📝 Work Allotment';
   document.getElementById('exec-sheet-body').innerHTML =
     '<div style="background:#E8F5E9;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;">'+
       '<div><div style="font-size:11px;font-weight:800;color:#2E7D32;">JM-'+jm.jm_number+'</div>'+
@@ -7338,8 +7338,8 @@ async function execDeleteEntry(btn){
       <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resource planning per JM</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF3E0;">✅</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Execution</div><div class="drawer-item-sub">Daily execution entries</div></div>
+      <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
     </div>
 
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
