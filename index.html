@@ -6945,7 +6945,7 @@ async function planSaveResource(subId, jmId, itemId, jmQty, unit){
       boq_subitem_id:subId,
       date:new Date().toISOString().slice(0,10),
       exec_type:cat, party_name:name,
-      qty:qty, rate:rate, remarks:resUnit&&resUnit!==unit?'unit:'+resUnit:null
+      qty:qty, rate:rate, remarks:resUnit?'unit:'+resUnit:null
     });
     if(res&&res[0]) PLAN_RESOURCES.push(res[0]);
     toast('Resource saved!','success'); closePlanSheet(); planRender();
@@ -7080,191 +7080,89 @@ function execRender(){
 var execAssignments = []; // [{type, party, resources:[{subId,subName,qty,unit,rate}]}]
 
 async function execOpenAdd(jmId, itemId, unit, jmQty, editEntry){
-  execAssignments = []; _execPlannedRes = [];
   if(!SUBCONTRACTORS.length||!VENDORS.length||!LABOUR_DATA.length) await loadAllData(true);
-  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
   var jm = EXEC_JMS.find(function(j){return j.id===jmId;})||{};
   var usedQty = EXEC_ENTRIES.filter(function(e){return e.jm_id===jmId;}).reduce(function(s,e){return s+(parseFloat(e.qty)||0);},0);
   var maxQty = (parseFloat(jmQty)||0) - usedQty;
+
   // Load planned resources for this JM
   try{
     var pr = await sbFetch('boq_exec_resources',{select:'*',filter:'jm_id=eq.'+jmId,order:'created_at.asc'});
     _execPlannedRes = Array.isArray(pr)?pr:[];
   }catch(e){ _execPlannedRes=[]; }
-  var typeOpts = [
-    ['sc','🏗️ Subcontractor'],['labour','👷 Labour'],['material','📦 Material'],
-    ['transport','🚛 Transport'],['fuel','⛽ Fuel / POL'],['hire','🏗️ Plant Hire'],['other','📝 Other']
+
+  // Assign-to dropdown
+  var assignOpts = [
+    ['vendor','📦 Vendor'],['sc','🏗️ Subcontractor'],
+    ['labour_contractor','👷 Labour Contractor'],['labour','👤 Labour']
   ].map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('');
-  document.getElementById('exec-sheet-title').textContent = '✅ Add Execution Entry';
+
+  // Build resources checkboxes
+  var resCheckboxes = _execPlannedRes.length ?
+    _execPlannedRes.map(function(r,i){
+      var sub = EXEC_SUBS.find(function(s){return s.id===r.boq_subitem_id;})||{};
+      var resUnit = r.unit||(r.remarks&&r.remarks.startsWith('unit:')?r.remarks.split('unit:')[1].trim():'');
+      var label = (sub.name||r.party_name||'Resource')+' — '+r.qty+' '+resUnit+(r.rate?' @ ₹'+r.rate:'');
+      return '<label style="display:flex;align-items:flex-start;gap:8px;padding:8px 10px;background:white;border-radius:8px;margin-bottom:4px;border:1px solid var(--border);cursor:pointer;">'+
+        '<input type="checkbox" class="ef-res-chk" data-id="'+r.id+'" data-name="'+(sub.name||r.party_name||'')+
+        '" data-unit="'+resUnit+'" data-qty="'+r.qty+'" data-rate="'+(r.rate||0)+
+        '" style="margin-top:2px;flex-shrink:0;">'+
+        '<div style="flex:1;"><div style="font-size:12px;font-weight:700;">'+(sub.name||r.party_name||'Resource')+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">Planned: '+r.qty+' '+resUnit+(r.rate?' @ ₹'+r.rate:'')+'</div></div>'+
+      '</label>';
+    }).join('')
+    : '<div style="font-size:11px;color:var(--text3);padding:8px;background:#FFF8E1;border-radius:8px;border:1px solid #FFE082;">⚠️ No planned resources for this JM. Add resources in Planning module first.</div>';
+
+  document.getElementById('exec-sheet-title').textContent = '✅ Execution Entry';
   document.getElementById('exec-sheet-body').innerHTML =
     '<div style="background:#E8F5E9;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;justify-content:space-between;">'+
       '<div><div style="font-size:11px;font-weight:800;color:#2E7D32;">JM-'+jm.jm_number+'</div>'+
-      '<div style="font-size:16px;font-weight:900;color:#1B5E20;">'+jmQty+' '+unit+'</div></div>'+
+      '<div style="font-size:15px;font-weight:900;color:#1B5E20;">'+jmQty+' '+unit+'</div></div>'+
       '<div style="font-size:10px;color:var(--text3);text-align:right;">Executed: '+usedQty+' '+unit+'<br>Balance: '+maxQty+' '+unit+'</div>'+
     '</div>'+
     '<label class="flbl">Date *</label>'+
     '<input id="ef-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
-    '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin:10px 0 6px;">Assignments</div>'+
-    '<div id="ef-assignments"><div style="font-size:11px;color:var(--text3);padding:4px 0 8px;">No assignments yet</div></div>'+
-    '<div style="background:#F0FFF4;border-radius:12px;padding:10px;border:1px dashed #A5D6A7;margin-top:6px;">'+
-      '<div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:8px;">NEW ASSIGNMENT</div>'+
-      '<div class="g2" style="margin-bottom:6px;">'+
-        '<div><label class="flbl">Type</label><select id="ef-type" class="fsel" onchange="execTypeChange()">'+typeOpts+'</select></div>'+
-        '<div id="ef-party-wrap"><label class="flbl">Party *</label>'+boqPartyDropdown('sc').replace('id="ex-party"','id="ef-party"')+'</div>'+
-      '</div>'+
-      '<div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:6px;">Resources &amp; Accepted Rates:</div>'+
-      '<div id="ef-res-rows"></div>'+
-      '<button onclick="execAddResRow()" style="width:100%;background:#E8F5E9;color:#2E7D32;border:1px dashed #A5D6A7;border-radius:8px;padding:6px;font-size:11px;font-weight:800;cursor:pointer;margin-bottom:8px;">+ Add Resource</button>'+
-      '<button onclick="execAddAssignment()" style="width:100%;background:#2E7D32;color:white;border:none;border-radius:8px;padding:8px;font-size:12px;font-weight:800;cursor:pointer;">✓ Add Assignment</button>'+
-    '</div>'+
-    '<label class="flbl" style="margin-top:10px;">Remarks</label>'+
+    '<label class="flbl">Assign To *</label>'+
+    '<select id="ef-assign-to" class="fsel" onchange="execAssignToChange()">'+assignOpts+'</select>'+
+    '<div id="ef-party-wrap" style="margin-top:6px;"></div>'+
+    '<label class="flbl" style="margin-top:10px;">Select Resources to Assign</label>'+
+    '<div id="ef-res-list" style="margin-bottom:8px;">'+resCheckboxes+'</div>'+
+    '<label class="flbl">Remarks</label>'+
     '<input id="ef-remarks" class="finp" placeholder="Optional">';
+
   document.getElementById('exec-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeExecSheet()">Cancel</button>'+
     '<button class="btn" style="background:#2E7D32;color:white;" onclick="execSaveAll(this)" '+
-      'data-jm="'+jmId+'" data-item="'+itemId+'" data-unit="'+unit+'" data-qty="'+jmQty+'">✓ Save All</button>';
-  execAddResRow();
+      'data-jm="'+jmId+'" data-item="'+itemId+'" data-unit="'+unit+'" data-qty="'+jmQty+'">✓ Save</button>';
+
+  // Trigger initial party list
+  execAssignToChange();
   openExecSheet();
 }
 
 var _execPlannedRes = [];
 
-function execAddResRow(){
-  var container = document.getElementById('ef-res-rows'); if(!container) return;
-  var idx = container.children.length;
-  var resOpts = _execPlannedRes.length ?
-    _execPlannedRes.map(function(r){
-      var sub = EXEC_SUBS.find(function(s){return s.id===r.boq_subitem_id;})||{};
-      var resUnit = r.unit||(r.remarks&&r.remarks.startsWith('unit:')?r.remarks.replace('unit:',''):'');
-      var label = (sub.name||r.party_name||'Resource')+' — '+r.qty+' '+resUnit;
-      return '<option value="'+r.id+'" data-name="'+(sub.name||r.party_name||'')+
-        '" data-unit="'+resUnit+'" data-rate="'+r.rate+'">'+label+'</option>';
-    }).join('') : '<option value="">No planned resources for this JM</option>';
-  var row = document.createElement('div');
-  row.className = 'ef-res-row';
-  row.style.cssText = 'background:white;border-radius:8px;padding:8px;margin-bottom:6px;border:1px solid var(--border);';
-  row.innerHTML =
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
-      '<span style="font-size:10px;font-weight:800;color:var(--text3);">Resource '+(idx+1)+'</span>'+
-      '<button onclick="execRemoveResRow(this)" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;">×</button>'+
-    '</div>'+
-    '<label class="flbl">Planned Resource</label>'+
-    '<select class="fsel ef-res-pick" style="margin-bottom:6px;" onchange="execResPickChange(this)">'+
-      '<option value="">— Select —</option>'+resOpts+
-    '</select>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">Qty *</label><input class="finp ef-qty" type="number" step="0.001" placeholder="0"></div>'+
-      '<div><label class="flbl">Unit</label><input class="finp ef-unit" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto"></div>'+
-    '</div>'+
-    '<label class="flbl">Accepted Rate (₹)</label>'+
-    '<input class="finp ef-rate" type="number" step="0.01" placeholder="Rate agreed with party">';
-  container.appendChild(row);
-}
-
-function execRemoveResRow(btn){ var r=btn; while(r&&!r.classList.contains("ef-res-row"))r=r.parentElement; if(r)r.remove(); }
-function execResPickChange(sel){
-  var opt = sel.options[sel.selectedIndex]; if(!opt||!opt.value) return;
-  var row=sel; while(row&&!row.classList.contains('ef-res-row'))row=row.parentElement;
-  var unitEl = row.querySelector('.ef-unit');
-  var rateEl = row.querySelector('.ef-rate');
-  if(unitEl) unitEl.value = opt.getAttribute('data-unit')||'';
-  if(rateEl && !rateEl.value) rateEl.value = opt.getAttribute('data-rate')||'';
-}
-
-function execAddAssignment(){
-  var type  = (document.getElementById('ef-type')||{value:'other'}).value;
-  var party = (document.getElementById('ef-party')||{value:''}).value.trim();
-  if(!party){ toast('Select a party first','warning'); return; }
-  var rows = document.querySelectorAll('.ef-res-row');
-  var resources = [];
-  rows.forEach(function(row){
-    var pick = row.querySelector('.ef-res-pick');
-    var qty  = parseFloat((row.querySelector('.ef-qty')||{value:0}).value)||0;
-    var unit = (row.querySelector('.ef-unit')||{value:''}).value;
-    var rate = parseFloat((row.querySelector('.ef-rate')||{value:0}).value)||0;
-    if(!qty) return;
-    var opt = pick&&pick.value ? pick.options[pick.selectedIndex] : null;
-    var resName = opt ? (opt.getAttribute('data-name')||opt.text) : '(General)';
-    resources.push({resId:pick?pick.value:'', resName:resName, qty:qty, unit:unit, rate:rate});
-  });
-  if(!resources.length){ toast('Add at least one resource with qty','warning'); return; }
-  execAssignments.push({type:type, party:party, resources:resources});
-  execRefreshAssignments();
-  var typeEl=document.getElementById('ef-type'); if(typeEl) typeEl.value='sc';
-  execTypeChange();
-  var c=document.getElementById('ef-res-rows'); if(c) c.innerHTML='';
-  execAddResRow();
-  toast('Assignment added','success');
-}
-
-
-function execTypeChange(){
-  var type = (document.getElementById('ef-type')||{value:'sc'}).value;
-  var wrap = document.getElementById('ef-party-wrap');
-  if(wrap) wrap.innerHTML = '<label class="flbl">Party Name *</label>'+boqPartyDropdown(type).replace('id="ex-party"','id="ef-party"');
-}
-
-function execAddAssignment(){
-  var type  = (document.getElementById('ef-type')||{value:'other'}).value;
-  var party = (document.getElementById('ef-party')||{value:''}).value.trim();
-  if(!party){ toast('Select a party first','warning'); return; }
-  var rows = document.querySelectorAll('.ef-res-row');
-  var resources = [];
-  var valid = true;
-  rows.forEach(function(row){
-    var sub  = row.querySelector('.ef-sub');
-    var qty  = parseFloat((row.querySelector('.ef-qty')||{value:0}).value)||0;
-    var unit = (row.querySelector('.ef-unit')||{value:''}).value;
-    var rate = parseFloat((row.querySelector('.ef-rate')||{value:0}).value)||0;
-    if(!qty){ valid=false; return; }
-    var subId   = sub ? sub.value : '';
-    var subName = sub && sub.value ? sub.options[sub.selectedIndex].text : '(General)';
-    resources.push({subId:subId, subName:subName, qty:qty, unit:unit, rate:rate});
-  });
-  if(!valid||!resources.length){ toast('Enter qty for all resource rows','warning'); return; }
-  execAssignments.push({type:type, party:party, resources:resources});
-  execRefreshAssignments();
-  // Reset form
-  var typeEl=document.getElementById('ef-type'); if(typeEl) typeEl.value='sc';
-  execTypeChange();
-  var container=document.getElementById('ef-res-rows'); if(container) container.innerHTML='';
-  execAddResRow('', '', '');
-  toast('Assignment added','success');
-}
-
-function execRefreshAssignments(){
-  var el = document.getElementById('ef-assignments');
-  if(!el) return;
-  if(!execAssignments.length){
-    el.innerHTML='<div style="font-size:11px;color:var(--text3);padding:4px 0 8px;">No assignments yet</div>';
-    return;
+function execAssignToChange(){
+  var assignTo = (document.getElementById('ef-assign-to')||{value:'vendor'}).value;
+  var wrap = document.getElementById('ef-party-wrap'); if(!wrap) return;
+  var label = {vendor:'Vendor Name',sc:'Subcontractor',labour_contractor:'Labour Contractor',labour:'Labour Name'}[assignTo]||'Party Name';
+  var input = '';
+  if(assignTo==='vendor'){
+    var opts = (VENDORS||[]).map(function(v){var n=v.name||v.companyName||''; return '<option value="'+n+'">'+n+'</option>';}).join('');
+    input = opts ? '<select id="ef-party" class="fsel">'+opts+'</select>' : '<input id="ef-party" class="finp" placeholder="Vendor name">';
+  } else if(assignTo==='sc'){
+    var opts = (SUBCONTRACTORS||[]).map(function(s){var n=s.name||s.companyName||''; return '<option value="'+n+'">'+n+'</option>';}).join('');
+    input = opts ? '<select id="ef-party" class="fsel">'+opts+'</select>' : '<input id="ef-party" class="finp" placeholder="Subcontractor name">';
+  } else if(assignTo==='labour_contractor'){
+    var opts = (SUBCONTRACTORS||[]).map(function(s){var n=s.name||s.companyName||''; return '<option value="'+n+'">'+n+'</option>';}).join('');
+    input = opts ? '<select id="ef-party" class="fsel">'+opts+'</select>' : '<input id="ef-party" class="finp" placeholder="Labour contractor name">';
+  } else {
+    var opts = (LABOUR_DATA||[]).map(function(l){return '<option value="'+l.name+'">'+l.name+'</option>';}).join('');
+    input = opts ? '<select id="ef-party" class="fsel">'+opts+'</select>' : '<input id="ef-party" class="finp" placeholder="Labour name">';
   }
-  var tcMap={sc:'exec-sc',labour:'exec-labour',material:'exec-material',transport:'exec-transport',fuel:'exec-fuel',hire:'exec-hire',other:'exec-other'};
-  var tlMap={sc:'SC',labour:'Labour',material:'Material',transport:'Transport',fuel:'Fuel',hire:'Hire',other:'Other'};
-  el.innerHTML = execAssignments.map(function(a,ai){
-    var total = a.resources.reduce(function(s,r){return s+(r.qty||0)*(r.rate||0);},0);
-    return '<div style="background:white;border-radius:10px;border:1px solid var(--border);padding:10px;margin-bottom:8px;">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
-        '<div style="display:flex;align-items:center;gap:6px;">'+
-          '<span class="exec-type-badge '+(tcMap[a.type]||'exec-other')+'">'+(tlMap[a.type]||a.type)+'</span>'+
-          '<span style="font-size:13px;font-weight:800;">'+a.party+'</span>'+
-        '</div>'+
-        '<div style="display:flex;align-items:center;gap:6px;">'+
-          (total?'<span style="font-size:12px;font-weight:900;color:#2E7D32;">'+fmtINR(total)+'</span>':'')+
-          '<button onclick="execAssignments.splice('+ai+',1);execRefreshAssignments();" '+
-            'style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;">×</button>'+
-        '</div>'+
-      '</div>'+
-      a.resources.map(function(r){
-        return '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;border-top:1px solid var(--border);">'+
-          '<div style="flex:1;font-size:11px;color:var(--text2);">'+r.subName+'</div>'+
-          '<div style="font-size:11px;color:var(--text3);">'+r.qty+' '+r.unit+' @ ₹'+r.rate+'</div>'+
-          '<div style="font-size:11px;font-weight:800;color:#2E7D32;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div>'+
-        '</div>';
-      }).join('')+
-    '</div>';
-  }).join('');
+  wrap.innerHTML = '<label class="flbl">'+label+' *</label>'+input;
 }
+
 
 async function execSaveAll(btn){
   var jmId=btn.getAttribute("data-jm"),itemId=btn.getAttribute("data-item"),unit=btn.getAttribute("data-unit"),jmQty=parseFloat(btn.getAttribute("data-qty"))||0;
