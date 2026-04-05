@@ -2189,16 +2189,14 @@ input,select,textarea{font-size:16px !important;}
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
     <div class="tb-title">📐 Joint Measurements</div>
     <div style="flex:1;"></div>
-    <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()">
       <option value="">— Select Project —</option>
     </select>
   </div>
-
   <div class="boq-scroll" id="jm-content">
-    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project and BOQ item</div>
+    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>
   </div>
 </div>
 <div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
@@ -2215,19 +2213,18 @@ input,select,textarea{font-size:16px !important;}
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
     <div class="tb-title">📦 Planning</div>
     <div style="flex:1;"></div>
-    <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()">
       <option value="">— Select Project —</option>
     </select>
   </div>
-  <div style="padding:6px 14px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="plan-boq-sel" class="fsel" style="width:100%;" onchange="planLoadJMs()">
       <option value="">— Select BOQ Item —</option>
     </select>
   </div>
-  <div style="padding:6px 14px 8px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="plan-jm-sel" class="fsel" style="width:100%;" onchange="planLoadSubitems()">
       <option value="">— Select JM —</option>
     </select>
@@ -2250,19 +2247,18 @@ input,select,textarea{font-size:16px !important;}
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
     <div class="tb-title">✅ Execution</div>
     <div style="flex:1;"></div>
-    <button class="tb-btn" onclick="openDrawer()" style="font-size:18px;">&#9776;</button>
   </div>
   <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadBOQ()">
       <option value="">— Select Project —</option>
     </select>
   </div>
-  <div style="padding:6px 14px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="exec-boq-sel" class="fsel" style="width:100%;" onchange="execLoadJMs()">
       <option value="">— Select BOQ Item —</option>
     </select>
   </div>
-  <div style="padding:6px 14px 8px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+  <div style="padding:6px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
     <select id="exec-jm-sel" class="fsel" style="width:100%;" onchange="execLoadEntries()">
       <option value="">— Select JM —</option>
     </select>
