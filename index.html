@@ -1302,15 +1302,13 @@ input,select,textarea{font-size:16px !important;}
 #app-execution{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-execution.on{display:flex;}
 /* Module-specific topbar colors */
-#app-jm .boq-topbar{background:var(--navy);}
-#app-planning .boq-topbar{background:var(--navy);}
-#app-execution .boq-topbar{background:var(--navy);}
+.boq-topbar{background:var(--navy);height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
 #app-plan{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-plan.on{display:flex;}
 #app-exec{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-exec.on{display:flex;}
 #app-boq.on{display:flex;}
-#app-boq .boq-topbar{background:var(--navy);height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;}
+
 #app-boq .boq-scroll{flex:1;overflow-y:auto;padding:10px 14px 90px;}
 .boq-card{background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;cursor:pointer;}
 .boq-card-head{padding:12px 14px;display:flex;align-items:center;gap:10px;}
@@ -2566,7 +2564,7 @@ function showApp(name){
   else if(name==='boq'){initBOQ();stopSync();}
   else if(name==='jm'){initJM();stopSync();}
   else if(name==='planning'){initPlan();stopSync();}
-  else if(name==='execution'){initExecution();stopSync();}
+  else if(name==='execution'){initExec();stopSync();}
   else {stopSync();}
 }
 
