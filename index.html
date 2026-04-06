@@ -1539,6 +1539,62 @@ input,select,textarea{font-size:16px !important;}
   </div>
 </div>
 
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="app-drawer">
+  <div class="drawer-head">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="drawer-avatar" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;">A</div>
+      <div>
+        <div id="drawer-name" style="font-size:15px;font-weight:800;color:white;">—</div>
+        <div id="drawer-role" style="font-size:11px;color:rgba(255,255,255,.6);">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-items">
+    <div class="drawer-item" onclick="showApp('dashboard');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">🏠</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Dashboard</div><div class="drawer-item-sub">Home screen</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">BOQ</div><div class="drawer-item-sub">Bill of Quantities items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8EAF6;">📐</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">📦</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resource planning per item</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out &amp; records</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
+    </div>
+    <div id="drawer-pending-item" class="drawer-item" style="display:none;" onclick="showPendingApprovals();closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">⏳</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Pending Approvals <span id="drawer-pending-badge" style="background:#C62828;color:white;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px;"></span></div><div class="drawer-item-sub">Employee registrations</div></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#C62828;cursor:pointer;" onclick="doLogout();closeDrawer();">🚪 Sign Out</button>
+  </div>
+</div>
+
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 
@@ -2503,6 +2559,62 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="add-foot"></div>
 </div>
 
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="app-drawer">
+  <div class="drawer-head">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="drawer-avatar" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;">A</div>
+      <div>
+        <div id="drawer-name" style="font-size:15px;font-weight:800;color:white;">—</div>
+        <div id="drawer-role" style="font-size:11px;color:rgba(255,255,255,.6);">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-items">
+    <div class="drawer-item" onclick="showApp('dashboard');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">🏠</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Dashboard</div><div class="drawer-item-sub">Home screen</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">BOQ</div><div class="drawer-item-sub">Bill of Quantities items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8EAF6;">📐</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">📦</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resource planning per item</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out &amp; records</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
+    </div>
+    <div id="drawer-pending-item" class="drawer-item" style="display:none;" onclick="showPendingApprovals();closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">⏳</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Pending Approvals <span id="drawer-pending-badge" style="background:#C62828;color:white;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px;"></span></div><div class="drawer-item-sub">Employee registrations</div></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#C62828;cursor:pointer;" onclick="doLogout();closeDrawer();">🚪 Sign Out</button>
+  </div>
+</div>
+
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 
@@ -2516,6 +2628,62 @@ input,select,textarea{font-size:16px !important;}
   <button class="an-item" id="an-registry" onclick="showApp('registry')"><div class="an-ic">&#128218;</div><div class="an-lb">Registry</div></button>
   <button class="an-item" id="an-profile" onclick="showProfile()"><div class="an-ic">&#128100;</div><div class="an-lb">Profile</div></button>
 </nav>
+
+<!-- DRAWER -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="app-drawer">
+  <div class="drawer-head">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div id="drawer-avatar" style="width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:white;">A</div>
+      <div>
+        <div id="drawer-name" style="font-size:15px;font-weight:800;color:white;">—</div>
+        <div id="drawer-role" style="font-size:11px;color:rgba(255,255,255,.6);">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="drawer-items">
+    <div class="drawer-item" onclick="showApp('dashboard');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">🏠</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Dashboard</div><div class="drawer-item-sub">Home screen</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">BOQ</div><div class="drawer-item-sub">Bill of Quantities items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8EAF6;">📐</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">📦</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resource planning per item</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out &amp; records</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
+    </div>
+    <div id="drawer-pending-item" class="drawer-item" style="display:none;" onclick="showPendingApprovals();closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">⏳</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Pending Approvals <span id="drawer-pending-badge" style="background:#C62828;color:white;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px;"></span></div><div class="drawer-item-sub">Employee registrations</div></div>
+    </div>
+  </div>
+  <div class="drawer-foot">
+    <button style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#C62828;cursor:pointer;" onclick="doLogout();closeDrawer();">🚪 Sign Out</button>
+  </div>
+</div>
+
 
 <div class="toast-wrap" id="toast-wrap"></div>
 
