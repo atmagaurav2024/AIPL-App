@@ -7222,6 +7222,135 @@ async function waSaveAllot(btn){
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
 }
 
+async function planOpenAddSub(btn){
+  var itemId = btn.getAttribute('data-item');
+  if(!(CAT_DATA.workcat&&CAT_DATA.workcat.length)) await loadCategories();
+  var catOpts=(CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');
+  document.getElementById('plan-sheet-title').textContent='Add Work Activity';
+  document.getElementById('plan-sheet-body').innerHTML=
+    '<label class="flbl">Category (optional)</label>'+
+    '<select id="ps-cat" class="fsel"><option value="">— None —</option>'+catOpts+'</select>'+
+    '<label class="flbl">Activity Name *</label>'+
+    '<input id="ps-name" class="finp" placeholder="e.g. Material Procurement, Bar Bending...">';
+  document.getElementById('plan-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closePlanSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveSubBtn(this)" data-item="'+itemId+'">+ Add Activity</button>';
+  openPlanSheet();
+}
+
+function planSaveSubBtn(btn){ planSaveSub(btn.getAttribute('data-item')); }
+
+
+async function planSaveSub(itemId){
+  var cat  = (document.getElementById('ps-cat')||{value:''}).value;
+  var name = (document.getElementById('ps-name')||{value:''}).value.trim();
+  if(!name){ toast('Activity name required','warning'); return; }
+  if(!itemId||itemId==='undefined'||itemId==='null'){ toast('BOQ item not found','error'); return; }
+  var projId = (document.getElementById('plan-proj-sel')||{}).value||'';
+  if(!projId){ toast('No project selected','error'); return; }
+  var sortOrder = PLAN_SUBS.filter(function(s){return s.boq_item_id===itemId;}).length+1;
+  try{
+    var res = await sbInsert('boq_subitems',{
+      project_id:projId, boq_item_id:itemId,
+      name:name, category:cat||null, sort_order:sortOrder
+    });
+    if(res&&res[0]) PLAN_SUBS.push(res[0]);
+    toast(name+' added','success');
+    closePlanSheet();
+    planRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+async function planOpenAddResource(btn){
+  var subId  = btn.getAttribute('data-sub');
+  var itemId = btn.getAttribute('data-item');
+  var unit   = btn.getAttribute('data-unit');
+  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
+  if(!MATERIALS.length||!SUBCONTRACTORS.length) await loadAllData(true);
+  var sub = PLAN_SUBS.find(function(s){return s.id===subId;})||{};
+  var typeOpts = [
+    ['material','📦 Material'],['labour','👷 Labour'],
+    ['sc','🏗️ Subcontractor'],['transport','🚛 Transport'],
+    ['fuel','⛽ Fuel'],['hire','🏗️ Plant Hire'],['other','📝 Other']
+  ].map(function(t){return '<option value="'+t[0]+'">'+t[1]+'</option>';}).join('');
+  var uomOpts = (CAT_DATA.uom||[]).filter(function(u){return u.active;}).map(function(u){
+    return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
+  }).join('');
+  document.getElementById('plan-sheet-title').textContent = 'Add Resource';
+  document.getElementById('plan-sheet-body').innerHTML =
+    '<div style="background:#E3F2FD;border-radius:10px;padding:8px 12px;margin-bottom:10px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#1565C0;">Activity: '+(sub.name||'General')+'</div>'+
+    '</div>'+
+    '<label class="flbl">Resource Type *</label>'+
+    '<select id="pr-cat" class="fsel">'+typeOpts+'</select>'+
+    '<label class="flbl">Resource Name *</label>'+
+    '<input id="pr-name" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour...">'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Planned Qty</label><input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="planCalcAmt()"></div>'+
+      '<div><label class="flbl">Unit</label><select id="pr-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Planned Rate (₹ / unit)</label>'+
+    '<input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="planCalcAmt()">'+
+    '<label class="flbl">Planned Amount (₹)</label>'+
+    '<input id="pr-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto">';
+  document.getElementById('plan-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closePlanSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveResource(this)" '+
+      'data-sub="'+subId+'" data-item="'+itemId+'" data-unit="'+unit+'">📦 Save Resource</button>';
+  openPlanSheet();
+}
+
+function planCalcAmt(){
+  var q = parseFloat((document.getElementById('pr-qty')||{value:0}).value)||0;
+  var r = parseFloat((document.getElementById('pr-rate')||{value:0}).value)||0;
+  var el = document.getElementById('pr-amt');
+  if(el) el.value = q&&r ? fmtINR(q*r) : '';
+}
+
+async function planSaveResource(btn){
+  var subId  = btn.getAttribute('data-sub');
+  var itemId = btn.getAttribute('data-item');
+  var unit   = btn.getAttribute('data-unit');
+  var cat    = (document.getElementById('pr-cat')||{value:'material'}).value;
+  var name   = (document.getElementById('pr-name')||{value:''}).value.trim();
+  var qty    = parseFloat((document.getElementById('pr-qty')||{value:0}).value)||0;
+  var resUnit= (document.getElementById('pr-unit')||{value:unit}).value||unit;
+  var rate   = parseFloat((document.getElementById('pr-rate')||{value:0}).value)||0;
+  if(!name){ toast('Resource name required','warning'); return; }
+  var projId = (document.getElementById('plan-proj-sel')||{}).value||'';
+  try{
+    toast('Saving...','info');
+    var res = await sbInsert('boq_exec_resources',{
+      project_id:projId, boq_item_id:itemId, jm_id:null,
+      boq_subitem_id:subId||null,
+      date:new Date().toISOString().slice(0,10),
+      exec_type:cat, party_name:name,
+      qty:qty, unit:resUnit||null, rate:rate, remarks:null
+    });
+    if(res&&res[0]) PLAN_RESOURCES.push(res[0]);
+    toast(name+' added','success');
+    closePlanSheet();
+    planRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+async function planDeleteSub(btn){
+  if(!confirm('Delete this activity? Resources under it will also be removed.')) return;
+  var id = btn.getAttribute('data-id');
+  PLAN_SUBS = PLAN_SUBS.filter(function(s){return s.id!==id;});
+  PLAN_RESOURCES = PLAN_RESOURCES.filter(function(r){return r.boq_subitem_id!==id;});
+  planRender();
+  try{ await sbDelete('boq_subitems',id); toast('Activity deleted','info'); }catch(e){ console.error(e); }
+}
+
+async function planDeleteResource(btn){
+  if(!confirm('Delete this resource?')) return;
+  var id = btn.getAttribute('data-id');
+  PLAN_RESOURCES = PLAN_RESOURCES.filter(function(r){return r.id!==id;});
+  planRender();
+  try{ await sbDelete('boq_exec_resources',id); toast('Resource deleted','info'); }catch(e){ console.error(e); }
+}
+
 </script>
 
 <!-- PENDING APPROVALS SHEET -->
@@ -7339,21 +7468,3 @@ async function waSaveAllot(btn){
 </div>
 
 </body>
-async function planOpenAddSub(btn){
-  var itemId = btn.getAttribute('data-item');
-  if(!(CAT_DATA.workcat&&CAT_DATA.workcat.length)) await loadCategories();
-  var catOpts=(CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');
-  document.getElementById('plan-sheet-title').textContent='Add Work Activity';
-  document.getElementById('plan-sheet-body').innerHTML=
-    '<label class="flbl">Category (optional)</label>'+
-    '<select id="ps-cat" class="fsel"><option value="">— None —</option>'+catOpts+'</select>'+
-    '<label class="flbl">Activity Name *</label>'+
-    '<input id="ps-name" class="finp" placeholder="e.g. Material Procurement, Bar Bending...">';
-  document.getElementById('plan-sheet-foot').innerHTML=
-    '<button class="btn btn-outline" onclick="closePlanSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveSubBtn(this)" data-item="'+itemId+'">+ Add Activity</button>';
-  openPlanSheet();
-}
-
-function planSaveSubBtn(btn){ planSaveSub(btn.getAttribute('data-item')); }
->
