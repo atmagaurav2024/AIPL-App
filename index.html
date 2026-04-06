@@ -7228,8 +7228,6 @@ async function planOpenAddSub(btn){
   var catOpts=(CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');
   document.getElementById('plan-sheet-title').textContent='Add Work Activity';
   document.getElementById('plan-sheet-body').innerHTML=
-    '<label class="flbl">Category (optional)</label>'+
-    '<select id="ps-cat" class="fsel"><option value="">— None —</option>'+catOpts+'</select>'+
     '<label class="flbl">Activity Name *</label>'+
     '<input id="ps-name" class="finp" placeholder="e.g. Material Procurement, Bar Bending...">';
   document.getElementById('plan-sheet-foot').innerHTML=
@@ -7242,7 +7240,6 @@ function planSaveSubBtn(btn){ planSaveSub(btn.getAttribute('data-item')); }
 
 
 async function planSaveSub(itemId){
-  var cat  = (document.getElementById('ps-cat')||{value:''}).value;
   var name = (document.getElementById('ps-name')||{value:''}).value.trim();
   if(!name){ toast('Activity name required','warning'); return; }
   if(!itemId||itemId==='undefined'||itemId==='null'){ toast('BOQ item not found','error'); return; }
@@ -7252,7 +7249,7 @@ async function planSaveSub(itemId){
   try{
     var res = await sbInsert('boq_subitems',{
       project_id:projId, boq_item_id:itemId,
-      name:name, category:cat||null, sort_order:sortOrder
+      name:name, category:null, sort_order:sortOrder
     });
     if(res&&res[0]) PLAN_SUBS.push(res[0]);
     toast(name+' added','success');
@@ -7321,8 +7318,8 @@ async function planSaveResource(btn){
   try{
     toast('Saving...','info');
     var res = await sbInsert('boq_exec_resources',{
-      project_id:projId, boq_item_id:itemId, jm_id:null,
-      boq_subitem_id:subId||null,
+      project_id:projId, boq_item_id:itemId,
+      boq_subitem_id:(subId&&subId!=='null'&&subId!=='')?subId:null,
       date:new Date().toISOString().slice(0,10),
       exec_type:cat, party_name:name,
       qty:qty, unit:resUnit||null, rate:rate, remarks:null
