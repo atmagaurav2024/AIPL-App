@@ -6836,81 +6836,65 @@ function planRender(){
 
 
 async function planOpenAddResource(btn){
-  var subId=btn.getAttribute('data-sub'), itemId=btn.getAttribute('data-item'), unit=btn.getAttribute('data-unit');
-  if(!(CAT_DATA.uom&&CAT_DATA.uom.length)) await loadCategories();
-  if(!MATERIALS.length||!SUBCONTRACTORS.length) await loadAllData(true);
-  var jm=PLAN_JMS.find(function(j){return j.id===jmId;})||{};
-  var usedQty=PLAN_RESOURCES.filter(function(r){return r.boq_subitem_id===subId;}).reduce(function(s,r){return s+(parseFloat(r.qty)||0);},0);
-  var maxQty=(parseFloat(jmQty)||0)-usedQty;
-  var uomOpts=(CAT_DATA.uom||[]).filter(function(u){return u.active;}).map(function(u){return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';}).join('');
-  var sub=PLAN_SUBS.find(function(s){return s.id===subId;})||{};
-  var catLabel=sub.category||'Resource';
+  var subId  = btn.getAttribute('data-sub');
+  var itemId = btn.getAttribute('data-item');
+  var unit   = btn.getAttribute('data-unit');
+  var sub = PLAN_SUBS.find(function(s){return s.id===subId;})||{};
+  // Fetch categories directly from DB
+  var wCatOpts = ''; var uomOpts = '';
+  try{
+    var cats = await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.workcat',order:'name.asc'});
+    wCatOpts = Array.isArray(cats) ? cats.map(function(c){
+      return '<option value="'+c.name+'"'+(c.name===sub.category?' selected':'')+'>'+c.name+'</option>';
+    }).join('') : '';
+  }catch(e){ console.error('workcat fetch:',e); }
+  try{
+    var uoms = await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.uom',order:'name.asc'});
+    uomOpts = Array.isArray(uoms) ? uoms.map(function(u){
+      return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
+    }).join('') : '';
+  }catch(e){ console.error('uom fetch:',e); }
 
-  // Category dropdown from workcat
-  var wCatOpts=(CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'"'+(c.name===sub.category?' selected':'')+'>'+c.name+'</option>';}).join('');
-
-  document.getElementById('plan-sheet-title').textContent='Add Resource — '+sub.name;
-  document.getElementById('plan-sheet-body').innerHTML=
-    '<div style="background:#E3F2FD;border-radius:12px;padding:10px 14px;margin-bottom:12px;">'+
-      '<div style="font-size:11px;font-weight:800;color:#1565C0;">JM-'+jm.jm_number+' · '+sub.name+'</div>'+
-      '<div style="font-size:11px;color:var(--text3);">JM Qty: '+jmQty+' '+unit+' · Used in this sub: '+usedQty+'</div>'+
+  document.getElementById('plan-sheet-title').textContent = 'Add Resource';
+  document.getElementById('plan-sheet-body').innerHTML =
+    '<div style="background:#E3F2FD;border-radius:10px;padding:8px 12px;margin-bottom:10px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#1565C0;">Activity: '+(sub.name||'General')+'</div>'+
     '</div>'+
     '<label class="flbl">Resource Category *</label>'+
-    '<select id="pr-cat" class="fsel" onchange="planResTypChange()"><option value="">— Select —</option>'+wCatOpts+'</select>'+
-    '<div id="pr-name-wrap"><label class="flbl">Resource Name *</label><input id="pr-name" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour..."></div>'+
-    '<div class="g2"><div><label class="flbl">Planned Qty *</label><input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="planResCalcAmt()"></div>'+
-    '<div><label class="flbl">Unit</label><select id="pr-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div></div>'+
-    '<label class="flbl">Planned Rate (₹ / unit)</label><input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="planResCalcAmt()">'+
-    '<label class="flbl">Planned Amount (₹)</label><input id="pr-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto">';
-  document.getElementById('plan-sheet-foot').innerHTML=
+    '<select id="pr-cat" class="fsel">'+
+      '<option value="">— Select Category —</option>'+wCatOpts+
+    '</select>'+
+    '<label class="flbl">Resource Name *</label>'+
+    '<input id="pr-name" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour...">'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Planned Qty</label>'+
+        '<input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="planCalcAmt()"></div>'+
+      '<div><label class="flbl">Unit</label>'+
+        '<select id="pr-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Planned Rate (₹ / unit)</label>'+
+    '<input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="planCalcAmt()">'+
+    '<label class="flbl">Planned Amount (₹)</label>'+
+    '<input id="pr-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto">';
+  document.getElementById('plan-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closePlanSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveResource(this)" data-sub="'+subId+'" data-item="'+itemId+'" data-unit="'+unit+'">📦 Save Resource</button>';
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveResource(this)" '+
+      'data-sub="'+subId+'" data-item="'+itemId+'" data-unit="'+unit+'">📦 Save Resource</button>';
   openPlanSheet();
-
-  // If category is "Material" → show material dropdown
-  setTimeout(function(){
-    var catEl=document.getElementById('pr-cat');
-    if(catEl) catEl.onchange = function(){ planResTypChange(); };
-  },50);
 }
 
-function planResTypChange(){
-  var cat=(document.getElementById('pr-cat')||{value:''}).value;
-  var wrap=document.getElementById('pr-name-wrap');
-  if(!wrap) return;
-  // If category matches material-like names, show material dropdown
-  var lc=cat.toLowerCase();
-  if(lc.includes('material')||lc.includes('procure')){
-    var matOpts=(MATERIALS||[]).map(function(m){return '<option value="'+m.name+'">'+m.name+(m.uom?' ('+m.uom+')':'')+'</option>';}).join('');
-    wrap.innerHTML='<label class="flbl">Material *</label><select id="pr-name" class="fsel"><option value="">— Select Material —</option>'+matOpts+'</select>';
-    // Auto-fill unit on material select
-    var sel=document.getElementById('pr-name');
-    if(sel) sel.onchange=function(){
-      var mat=MATERIALS.find(function(m){return m.name===sel.value;});
-      if(mat){ var u=document.getElementById('pr-unit'); if(u&&mat.uom) u.value=mat.uom; }
-    };
-  } else if(lc.includes('labour')||lc.includes('labor')){
-    var labOpts=(LABOUR_DATA||[]).map(function(l){return '<option value="'+l.name+'">'+l.name+(l.trade?' — '+l.trade:'')+'</option>';}).join('');
-    wrap.innerHTML='<label class="flbl">Labour *</label>'+(labOpts?'<select id="pr-name" class="fsel"><option value="">— Select Labour —</option>'+labOpts+'</select>':'<input id="pr-name" class="finp" placeholder="Labour type / name">');
-  } else if(lc.includes('subcontract')||lc.includes('sc')){
-    var scOpts=(SUBCONTRACTORS||[]).map(function(s){return '<option value="'+(s.name||'')+'">'+s.name+'</option>';}).join('');
-    wrap.innerHTML='<label class="flbl">Subcontractor *</label>'+(scOpts?'<select id="pr-name" class="fsel"><option value="">— Select SC —</option>'+scOpts+'</select>':'<input id="pr-name" class="finp" placeholder="SC name">');
-  } else {
-    wrap.innerHTML='<label class="flbl">Resource Name *</label><input id="pr-name" class="finp" placeholder="e.g. Transit Mixer, Crane...">';
-  }
-}
-
-function planResCalcAmt(){
-  var q=parseFloat((document.getElementById('pr-qty')||{value:0}).value)||0;
-  var r=parseFloat((document.getElementById('pr-rate')||{value:0}).value)||0;
-  var el=document.getElementById('pr-amt'); if(el) el.value=q&&r?fmtINR(q*r):'';
+function planCalcAmt(){
+  var q = parseFloat((document.getElementById('pr-qty')||{value:0}).value)||0;
+  var r = parseFloat((document.getElementById('pr-rate')||{value:0}).value)||0;
+  var el = document.getElementById('pr-amt');
+  if(el) el.value = q&&r ? fmtINR(q*r) : '';
 }
 
 async function planSaveResource(btn){
   var subId  = btn.getAttribute('data-sub');
   var itemId = btn.getAttribute('data-item');
   var unit   = btn.getAttribute('data-unit');
-  var cat    = (document.getElementById('pr-cat')||{value:'material'}).value;
+  var cat    = (document.getElementById('pr-cat')||{value:''}).value;
   var name   = (document.getElementById('pr-name')||{value:''}).value.trim();
   var qty    = parseFloat((document.getElementById('pr-qty')||{value:0}).value)||0;
   var resUnit= (document.getElementById('pr-unit')||{value:unit}).value||unit;
@@ -6934,7 +6918,7 @@ async function planSaveResource(btn){
 }
 
 async function planDeleteSub(btn){
-  if(!confirm('Delete this activity? Resources under it will also be removed.')) return;
+  if(!confirm('Delete this activity and its resources?')) return;
   var id = btn.getAttribute('data-id');
   PLAN_SUBS = PLAN_SUBS.filter(function(s){return s.id!==id;});
   PLAN_RESOURCES = PLAN_RESOURCES.filter(function(r){return r.boq_subitem_id!==id;});
@@ -6952,118 +6936,5 @@ async function planDeleteResource(btn){
 
 </script>
 
-<!-- PENDING APPROVALS SHEET -->
-<div class="sh-overlay" id="ov-pending" onclick="closeSheet('ov-pending','sh-pending')"></div>
-<div class="sheet" id="sh-pending" style="max-height:95vh;">
-  <div class="sh-head">
-    <div class="sh-title">&#9203; Pending Approvals</div>
-    <span class="sh-close" onclick="closeSheet('ov-pending','sh-pending')">&#10005;</span>
-  </div>
-  <div class="sh-body" id="pending-list-body">
-    <div style="text-align:center;padding:30px;color:var(--text3);">Loading...</div>
-  </div>
-</div>
-
-<!-- EMPLOYEE APPROVAL DETAIL SHEET -->
-<div class="sh-overlay" id="ov-approval-det" onclick="closeSheet('ov-approval-det','sh-approval-det')"></div>
-<div class="sheet" id="sh-approval-det" style="max-height:95vh;">
-  <div class="sh-head">
-    <div class="sh-title">&#128101; Employee Profile</div>
-    <span class="sh-close" onclick="closeSheet('ov-approval-det','sh-approval-det')">&#10005;</span>
-  </div>
-  <div class="sh-body" id="approval-det-body"></div>
-  <div class="sh-foot" id="approval-det-foot"></div>
-</div>
-
-<!-- PROFILE SHEET -->
-<div class="sh-overlay" id="ov-profile" onclick="closeSheet('ov-profile','sh-profile')"></div>
-<div class="sheet" id="sh-profile" style="max-height:95vh;">
-  <div class="sh-head">
-    <div class="sh-title">&#128100; My Profile</div>
-    <span class="sh-close" onclick="closeSheet('ov-profile','sh-profile')">&#10005;</span>
-  </div>
-  <div class="sh-body" id="profile-body"></div>
-  <div class="sh-foot" id="profile-foot"></div>
-</div>
-
-<!-- HAMBURGER DRAWER -->
-<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
-<div class="drawer" id="app-drawer">
-  <div class="drawer-head">
-    <div class="drawer-avatar" id="drawer-avatar">A</div>
-    <div class="drawer-name" id="drawer-name">—</div>
-    <div class="drawer-role" id="drawer-role">—</div>
-  </div>
-  <div class="drawer-body">
-    <div class="drawer-section">Modules</div>
-
-    <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">BOQ</div><div class="drawer-item-sub">Bill of Quantities items</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8F5E9;">📐</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ items</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E3F2FD;">📦</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resource planning per JM</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
-    </div>
-
-    <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out & records</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('DPR module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8F5E9;">📝</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Daily Progress Report</div><div class="drawer-item-sub">DPR, site progress</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('Labour module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF3E0;">👷</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Labour Management</div><div class="drawer-item-sub">Headcount, wages, deployment</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('Quality module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8F5E9;">✅</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Quality Control</div><div class="drawer-item-sub">Inspections, NCRs, test results</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('Safety module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF8E1;">⛑️</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Safety & HSE</div><div class="drawer-item-sub">Incidents, toolbox talks, audits</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('Procurement module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E3F2FD;">📦</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Procurement</div><div class="drawer-item-sub">PO, GRN, material requests</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('Billing module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FCE4EC;">💰</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Client Billing</div><div class="drawer-item-sub">RA bills, invoices, cash flow</div></div>
-    </div>
-    <div class="drawer-item" onclick="toast('Reports module coming soon','info');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#EDE7F6;">📊</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Reports</div><div class="drawer-item-sub">Analytics, exports, summaries</div></div>
-    </div>
-    <div class="drawer-section">Admin</div>
-    <div class="drawer-item" id="drawer-pending-item" style="display:none;" onclick="openPendingApprovals();closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF3E0;">⏳</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Pending Approvals</div><div class="drawer-item-sub">Review employee registrations</div></div>
-      <div class="drawer-item-badge" id="drawer-pending-badge">0</div>
-    </div>
-  </div>
-  <div class="drawer-foot">
-    <button style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#C62828;cursor:pointer;" onclick="doLogout();closeDrawer();">🚪 Sign Out</button>
-  </div>
-</div>
-
 </body>
+</html>
