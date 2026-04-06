@@ -7339,7 +7339,7 @@ async function waSaveAllot(btn){
 </div>
 
 </body>
-</htmlasync function planOpenAddSub(btn){
+async function planOpenAddSub(btn){
   var itemId = btn.getAttribute('data-item');
   if(!(CAT_DATA.workcat&&CAT_DATA.workcat.length)) await loadCategories();
   var catOpts=(CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');
