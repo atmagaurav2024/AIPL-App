@@ -6950,19 +6950,9 @@ function getResUnit(r){
 
 async function planOpenAddSub(btn){
   var itemId = btn.getAttribute('data-item');
-  try{ await loadCategories(); }catch(e){}
-  var catOpts=(CAT_DATA.workcat||[]).filter(function(c){return c.active;}).map(function(c){
-    return '<option value="'+c.name+'">'+c.name+'</option>';}).join('');
-  if(!catOpts){
-    try{
-      var cats=await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.workcat',order:'name.asc'});
-      catOpts=Array.isArray(cats)?cats.map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join(''):'';
-    }catch(e){}
-  }
+
   document.getElementById('plan-sheet-title').textContent='Add Work Activity';
   document.getElementById('plan-sheet-body').innerHTML=
-    '<label class="flbl">Category (optional)</label>'+
-    '<select id="ps-cat" class="fsel"><option value="">— None —</option>'+catOpts+'</select>'+
     '<label class="flbl">Activity Name *</label>'+
     '<input id="ps-name" class="finp" placeholder="e.g. Material Procurement, Bar Bending...">';
   document.getElementById('plan-sheet-foot').innerHTML=
@@ -6974,7 +6964,7 @@ async function planOpenAddSub(btn){
 function planSaveSubBtn(btn){ planSaveSub(btn.getAttribute('data-item')); }
 
 async function planSaveSub(itemId){
-  var cat  = (document.getElementById('ps-cat')||{value:''}).value;
+  var cat  = null;
   var name = (document.getElementById('ps-name')||{value:''}).value.trim();
   if(!name){ toast('Activity name required','warning'); return; }
   if(!itemId||itemId==='undefined'||itemId==='null'){ toast('BOQ item not found','error'); return; }
