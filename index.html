@@ -7046,6 +7046,16 @@ async function planOpenAddResource(btn){
   var itemId = btn.getAttribute('data-item');
   var unit   = btn.getAttribute('data-unit');
   var sub    = PLAN_SUBS.find(function(s){return s.id===subId;})||{};
+  var itemJMs = PLAN_JMS.filter(function(j){return j.boq_item_id===itemId;});
+
+  // Already planned qty per JM for this sub-item
+  var plannedPerJM = {};
+  PLAN_RESOURCES.forEach(function(r){
+    if(r.boq_subitem_id===subId && r.jm_id){
+      plannedPerJM[r.jm_id] = (plannedPerJM[r.jm_id]||0) + (parseFloat(r.qty)||0);
+    }
+  });
+
   var uomOpts = '';
   try{
     var uoms = await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.uom',order:'name.asc'});
@@ -7053,25 +7063,96 @@ async function planOpenAddResource(btn){
       return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
     }).join(''):'';
   }catch(e){}
+
+  // JM selection rows
+  var jmRows = itemJMs.length ? itemJMs.map(function(jm){
+    var alreadyPlanned = plannedPerJM[jm.id]||0;
+    var available = (parseFloat(jm.jm_qty)||0) - alreadyPlanned;
+    return '<div class="plan-jm-row" style="background:white;border-radius:8px;border:1px solid var(--border);padding:8px 10px;margin-bottom:6px;">'+
+      '<label style="display:flex;align-items:center;gap:8px;cursor:pointer;">'+
+        '<input type="checkbox" class="pjm-chk" data-jmid="'+jm.id+'" data-jmqty="'+jm.jm_qty+'" data-available="'+available+
+        '" onchange="planJMToggle(this)" style="flex-shrink:0;">'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:12px;font-weight:800;color:#1565C0;">JM-'+jm.jm_number+' &nbsp;—&nbsp; '+jm.jm_qty+' '+unit+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">Available for planning: '+available.toFixed(3).replace(/\.?0+$/,'')+' '+unit+
+          (alreadyPlanned?' &nbsp;·&nbsp; Already planned: '+alreadyPlanned+' '+unit:'')+
+          '</div>'+
+        '</div>'+
+        '<input type="number" class="finp pjm-qty" step="0.001" placeholder="0" style="width:80px;flex-shrink:0;display:none;" '+
+          'max="'+available+'" oninput="planUpdateTotal(this)">'+
+      '</label>'+
+    '</div>';
+  }).join('') :
+  '<div style="font-size:11px;color:#E65100;background:#FFF3E0;border-radius:8px;padding:10px;">⚠️ No JMs yet. Add JMs first.</div>';
+
   document.getElementById('plan-sheet-title').textContent = 'Add Resource — '+(sub.name||'');
   document.getElementById('plan-sheet-body').innerHTML =
+    // JM selection
+    '<div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Select JMs &amp; Quantities to Plan For</div>'+
+    jmRows+
+    '<div id="plan-total-bar" style="background:#E3F2FD;border-radius:8px;padding:8px 10px;margin-bottom:12px;display:none;">'+
+      '<span style="font-size:12px;font-weight:800;color:#1565C0;">Total Planned Qty: <span id="plan-total-qty">0</span> '+unit+'</span>'+
+    '</div>'+
+    // Resource fields
     '<label class="flbl">Resource Name *</label>'+
     '<input id="pr-name" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour...">'+
     '<div class="g2">'+
-      '<div><label class="flbl">Planned Qty</label>'+
-        '<input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="planCalcAmt()"></div>'+
+      '<div><label class="flbl">Qty per '+unit+'</label>'+
+        '<input id="pr-qty-per" class="finp" type="number" step="0.001" placeholder="0" oninput="planCalcFromTotal()"></div>'+
       '<div><label class="flbl">Unit</label>'+
         '<select id="pr-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div>'+
     '</div>'+
+    '<label class="flbl">Total Planned Qty (auto)</label>'+
+    '<input id="pr-qty" class="finp" type="number" step="0.001" placeholder="Or enter directly" oninput="planCalcAmt()">'+
     '<label class="flbl">Planned Rate (₹ / unit)</label>'+
     '<input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0" oninput="planCalcAmt()">'+
     '<label class="flbl">Planned Amount (₹)</label>'+
     '<input id="pr-amt" class="finp" readonly style="background:#F8FAFC;opacity:.8;" placeholder="Auto">';
+
   document.getElementById('plan-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closePlanSheet()">Cancel</button>'+
     '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveResource(this)" '+
       'data-sub="'+subId+'" data-item="'+itemId+'" data-unit="'+unit+'">📦 Save Resource</button>';
   openPlanSheet();
+}
+
+function planJMToggle(chk){
+  var qtyInput = chk.parentElement.querySelector('.pjm-qty');
+  if(qtyInput){
+    qtyInput.style.display = chk.checked ? 'block' : 'none';
+    if(chk.checked) qtyInput.focus();
+    else qtyInput.value = '';
+  }
+  var unit = '';
+  planUpdateTotal(null);
+}
+
+function planUpdateTotal(el){
+  var unit = (document.getElementById('pr-unit')||{value:''}).value||'';
+  var total = 0;
+  document.querySelectorAll('.pjm-chk:checked').forEach(function(chk){
+    var qEl = chk.parentElement.querySelector('.pjm-qty');
+    var val = parseFloat(qEl?qEl.value:0)||0;
+    var avail = parseFloat(chk.getAttribute('data-available'))||0;
+    if(val > avail){ qEl.value = avail; val = avail; toast('Cannot exceed available qty: '+avail+' '+unit,'warning'); }
+    total += val;
+  });
+  var bar = document.getElementById('plan-total-bar');
+  var totalEl = document.getElementById('plan-total-qty');
+  if(bar) bar.style.display = total>0?'block':'none';
+  if(totalEl) totalEl.textContent = total.toFixed(3).replace(/\.?0+$/,'');
+  // Update pr-qty if qty-per is filled
+  planCalcFromTotal();
+}
+
+function planCalcFromTotal(){
+  var unit = (document.getElementById('pr-unit')||{value:''}).value||'';
+  var totalEl = document.getElementById('plan-total-qty');
+  var total = parseFloat(totalEl?totalEl.textContent:0)||0;
+  var qtyPer = parseFloat((document.getElementById('pr-qty-per')||{value:0}).value)||0;
+  var qtyEl = document.getElementById('pr-qty');
+  if(qtyEl && total>0 && qtyPer>0) qtyEl.value = (total*qtyPer).toFixed(3).replace(/\.?0+$/,'');
+  planCalcAmt();
 }
 
 function planCalcAmt(){
@@ -7085,24 +7166,52 @@ async function planSaveResource(btn){
   var subId  = btn.getAttribute('data-sub');
   var itemId = btn.getAttribute('data-item');
   var unit   = btn.getAttribute('data-unit');
-  var cat    = (document.getElementById('pr-cat')||{value:''}).value;
   var name   = (document.getElementById('pr-name')||{value:''}).value.trim();
   var qty    = parseFloat((document.getElementById('pr-qty')||{value:0}).value)||0;
   var resUnit= (document.getElementById('pr-unit')||{value:unit}).value||unit;
   var rate   = parseFloat((document.getElementById('pr-rate')||{value:0}).value)||0;
   if(!name){ toast('Resource name required','warning'); return; }
+  if(!qty){ toast('Enter planned quantity','warning'); return; }
   var projId = (document.getElementById('plan-proj-sel')||{}).value||'';
+  // Collect selected JMs with their planned quantities
+  var selectedJMs = [];
+  document.querySelectorAll('.pjm-chk:checked').forEach(function(chk){
+    var qEl = chk.parentElement.querySelector('.pjm-qty');
+    var q = parseFloat(qEl?qEl.value:0)||0;
+    if(q>0) selectedJMs.push({jmId:chk.getAttribute('data-jmid'), planQty:q});
+  });
   try{
     toast('Saving...','info');
-    var res = await sbInsert('boq_exec_resources',{
-      project_id:projId, boq_item_id:itemId,
-      boq_subitem_id:(subId&&subId!=='null'&&subId!=='')?subId:null,
-      date:new Date().toISOString().slice(0,10),
-      exec_type:cat, party_name:name,
-      qty:qty, unit:resUnit||null, rate:rate, remarks:null
-    });
-    if(res&&res[0]) PLAN_RESOURCES.push(res[0]);
-    toast(name+' added','success');
+    var inserts = [];
+    if(selectedJMs.length){
+      // Save one record per JM
+      var totalJMQty = selectedJMs.reduce(function(s,j){return s+j.planQty;},0);
+      selectedJMs.forEach(function(jmEntry){
+        // Proportional resource qty for this JM
+        var resQty = Math.round((qty * jmEntry.planQty / totalJMQty) * 1000) / 1000;
+        inserts.push(sbInsert('boq_exec_resources',{
+          project_id:projId, boq_item_id:itemId,
+          jm_id:jmEntry.jmId,
+          boq_subitem_id:(subId&&subId!=='null'&&subId!=='')?subId:null,
+          date:new Date().toISOString().slice(0,10),
+          exec_type:'planned', party_name:name,
+          qty:resQty, unit:resUnit||null, rate:rate, remarks:'PLAN|jmqty:'+jmEntry.planQty
+        }));
+      });
+    } else {
+      // No JM selected — save at item level
+      inserts.push(sbInsert('boq_exec_resources',{
+        project_id:projId, boq_item_id:itemId,
+        jm_id:null,
+        boq_subitem_id:(subId&&subId!=='null'&&subId!=='')?subId:null,
+        date:new Date().toISOString().slice(0,10),
+        exec_type:'planned', party_name:name,
+        qty:qty, unit:resUnit||null, rate:rate, remarks:null
+      }));
+    }
+    var results = await Promise.all(inserts);
+    results.forEach(function(r){ if(r&&r[0]) PLAN_RESOURCES.push(r[0]); });
+    toast(name+' saved ('+(selectedJMs.length||'item')+' JM'+(selectedJMs.length>1?'s':'')+'!','success');
     closePlanSheet();
     planRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
