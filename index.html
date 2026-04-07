@@ -6990,97 +6990,94 @@ function planRender(){
     return;
   }
   el.innerHTML = PLAN_ITEMS.map(function(item){
-    // Activities and resources are item-based
     var itemSubs = PLAN_SUBS.filter(function(s){return s.boq_item_id===item.id;});
-    var itemRes  = PLAN_RESOURCES.filter(function(r){return r.boq_item_id===item.id && !r.jm_id;});
-    var totalPlanned = itemRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
+    var itemJMs  = PLAN_JMS.filter(function(j){return j.boq_item_id===item.id;});
 
-    var subsHtml = itemSubs.length ? itemSubs.map(function(sub){
-      var subRes = PLAN_RESOURCES.filter(function(r){return r.boq_subitem_id===sub.id && !r.jm_id;});
-      var subTotal = subRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
-      return '<div style="margin-bottom:8px;">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;">'+
-          '<div style="font-size:11px;font-weight:800;color:#1565C0;">'+(sub.category?'<span style="opacity:.7;">['+sub.category+']</span> ':'')+sub.name+'</div>'+
-          '<div style="display:flex;gap:4px;">'+
-            '<button onclick="planOpenAddResource(this)" data-sub="'+sub.id+'" data-item="'+item.id+'" data-unit="'+item.unit+'" '+
-              'style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button>'+
-            '<button onclick="planDeleteSub(this)" data-id="'+sub.id+'" '+
-              'style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
+    var jmsHtml = itemJMs.length ? itemJMs.map(function(jm){
+      var jmRes = PLAN_RESOURCES.filter(function(r){return r.jm_id===jm.id;});
+      var totalPlanned = jmRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
+
+      var subsHtml = itemSubs.length ? itemSubs.map(function(sub){
+        var subRes = jmRes.filter(function(r){return r.boq_subitem_id===sub.id;});
+        var subTotal = subRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
+        return '<div style="margin-bottom:6px;">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;">'+
+            '<div style="font-size:11px;font-weight:800;color:#1565C0;">'+sub.name+'</div>'+
+            '<div style="display:flex;gap:4px;">'+
+              '<button onclick="planOpenAddResource(this)" data-sub="'+sub.id+'" data-item="'+item.id+'" data-jm="'+jm.id+'" data-jmqty="'+jm.jm_qty+'" data-unit="'+item.unit+'" '+
+                'style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button>'+
+              '<button onclick="planDeleteSub(this)" data-id="'+sub.id+'" '+
+                'style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
+            '</div>'+
           '</div>'+
-        '</div>'+
-        (subRes.length ?
-          subRes.map(function(r){
+          (subRes.length ? subRes.map(function(r){
             return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F8F9FF;border-radius:8px;margin-top:3px;">'+
               '<div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+'</div>'+
               '<div style="font-size:10px;color:var(--text3);">'+r.qty+' '+getResUnit(r)+' @ ₹'+r.rate+'</div>'+
               '<div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div>'+
-              '<button onclick="planDeleteResource(this)" data-id="'+r.id+'" '+
-                'style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
+              '<button onclick="planDeleteResource(this)" data-id="'+r.id+'" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
             '</div>';
-          }).join('')
-          : '<div style="font-size:10px;color:var(--text3);padding:4px 10px;">No resources yet</div>')+
-        (subTotal?'<div style="text-align:right;font-size:10px;font-weight:800;color:#1565C0;padding:2px 10px;">'+fmtINR(subTotal)+'</div>':'')+
+          }).join('') : '<div style="font-size:10px;color:var(--text3);padding:3px 10px;">No resources planned</div>')+
+          (subTotal?'<div style="text-align:right;font-size:10px;font-weight:800;color:#1565C0;padding:2px 10px;">'+fmtINR(subTotal)+'</div>':'')+
+        '</div>';
+      }).join('') : '<div style="font-size:11px;color:var(--text3);padding:4px 0 6px;">No activities — add below</div>';
+
+      return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+          '<div>'+
+            '<span class="jm-badge">JM-'+jm.jm_number+'</span> '+
+            '<span style="font-size:12px;font-weight:700;color:#1565C0;">'+jm.jm_qty+' '+item.unit+'</span> '+
+            '<span style="font-size:10px;color:var(--text3);">'+jm.date+'</span>'+
+          '</div>'+
+          '<div style="display:flex;align-items:center;gap:6px;">'+
+            (totalPlanned?'<span style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR(totalPlanned)+'</span>':'')+
+            '<button onclick="planOpenAddSub(this)" data-item="'+item.id+'" '+
+              'style="background:#E3F2FD;color:#1565C0;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Activity</button>'+
+          '</div>'+
+        '</div>'+
+        subsHtml+
       '</div>';
-    }).join('') : '<div style="font-size:11px;color:var(--text3);padding:6px 0;">No activities yet</div>';
+    }).join('') : '<div style="padding:10px 14px;font-size:11px;color:var(--text3);">No JMs yet — add JMs first</div>';
 
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
-      // Item header
       '<div style="padding:10px 14px;background:#E3F2FD;display:flex;align-items:center;justify-content:space-between;">'+
         '<div>'+
           '<span class="boq-card-code">'+item.item_code+'</span>'+
           '<span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
-          '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+item.boq_qty+' '+item.unit+(item.rate?' @ ₹'+item.rate:'')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);margin-top:2px;">BOQ: '+item.boq_qty+' '+item.unit+'</div>'+
         '</div>'+
-        (totalPlanned?'<div style="font-size:13px;font-weight:900;color:#1565C0;">'+fmtINR(totalPlanned)+'</div>':'')+
       '</div>'+
-      // Activities section
-      '<div style="padding:10px 14px;">'+
-        '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
-          '<div style="font-size:10px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;">Work Activities &amp; Resources</div>'+
-          '<button onclick="planOpenAddSub(this)" data-item="'+item.id+'" '+
-            'style="background:#E3F2FD;color:#1565C0;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;">+ Activity</button>'+
-        '</div>'+
-        subsHtml+
-      '</div>'+
+      jmsHtml+
     '</div>';
   }).join('');
 }
 
-
 async function planOpenAddResource(btn){
   var subId  = btn.getAttribute('data-sub');
   var itemId = btn.getAttribute('data-item');
+  var jmId   = btn.getAttribute('data-jm');
+  var jmQty  = parseFloat(btn.getAttribute('data-jmqty'))||0;
   var unit   = btn.getAttribute('data-unit');
   var sub = PLAN_SUBS.find(function(s){return s.id===subId;})||{};
-  // Fetch categories directly from DB
-  var wCatOpts = ''; var uomOpts = '';
-  try{
-    var cats = await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.workcat',order:'name.asc'});
-    wCatOpts = Array.isArray(cats) ? cats.map(function(c){
-      return '<option value="'+c.name+'"'+(c.name===sub.category?' selected':'')+'>'+c.name+'</option>';
-    }).join('') : '';
-  }catch(e){ console.error('workcat fetch:',e); }
+  var jm  = PLAN_JMS.find(function(j){return j.id===jmId;})||{};
+  var uomOpts = '';
   try{
     var uoms = await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.uom',order:'name.asc'});
     uomOpts = Array.isArray(uoms) ? uoms.map(function(u){
       return '<option value="'+u.name+'"'+(u.name===unit?' selected':'')+'>'+u.name+'</option>';
     }).join('') : '';
-  }catch(e){ console.error('uom fetch:',e); }
-
-  document.getElementById('plan-sheet-title').textContent = 'Add Resource';
+  }catch(e){ console.error(e); }
+  document.getElementById('plan-sheet-title').textContent = 'Add Planned Resource';
   document.getElementById('plan-sheet-body').innerHTML =
     '<div style="background:#E3F2FD;border-radius:10px;padding:8px 12px;margin-bottom:10px;">'+
-      '<div style="font-size:11px;font-weight:800;color:#1565C0;">Activity: '+(sub.name||'General')+'</div>'+
+      '<div style="font-size:11px;font-weight:800;color:#1565C0;">JM-'+(jm.jm_number||'?')+' &nbsp;·&nbsp; '+jmQty+' '+unit+'</div>'+
+      '<div style="font-size:11px;color:var(--text3);">Activity: '+(sub.name||'General')+'</div>'+
     '</div>'+
-    '<label class="flbl">Resource Category *</label>'+
-    '<select id="pr-cat" class="fsel">'+
-      '<option value="">— Select Category —</option>'+wCatOpts+
-    '</select>'+
     '<label class="flbl">Resource Name *</label>'+
     '<input id="pr-name" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour...">'+
     '<div class="g2">'+
-      '<div><label class="flbl">Planned Qty</label>'+
-        '<input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0" oninput="planCalcAmt()"></div>'+
+      '<div><label class="flbl">Planned Qty (JM: '+jmQty+' '+unit+')</label>'+
+        '<input id="pr-qty" class="finp" type="number" step="0.001" placeholder="'+jmQty+'" oninput="planCalcAmt()"></div>'+
       '<div><label class="flbl">Unit</label>'+
         '<select id="pr-unit" class="fsel"><option value="">'+unit+'</option>'+uomOpts+'</select></div>'+
     '</div>'+
@@ -7091,7 +7088,7 @@ async function planOpenAddResource(btn){
   document.getElementById('plan-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closePlanSheet()">Cancel</button>'+
     '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveResource(this)" '+
-      'data-sub="'+subId+'" data-item="'+itemId+'" data-unit="'+unit+'">📦 Save Resource</button>';
+      'data-sub="'+subId+'" data-item="'+itemId+'" data-jm="'+jmId+'" data-unit="'+unit+'">📦 Save Resource</button>';
   openPlanSheet();
 }
 
@@ -7112,11 +7109,13 @@ async function planSaveResource(btn){
   var resUnit= (document.getElementById('pr-unit')||{value:unit}).value||unit;
   var rate   = parseFloat((document.getElementById('pr-rate')||{value:0}).value)||0;
   if(!name){ toast('Resource name required','warning'); return; }
+  var jmId   = btn.getAttribute('data-jm')||null;
   var projId = (document.getElementById('plan-proj-sel')||{}).value||'';
   try{
     toast('Saving...','info');
     var res = await sbInsert('boq_exec_resources',{
       project_id:projId, boq_item_id:itemId,
+      jm_id:(jmId&&jmId!=='null'&&jmId!=='')?jmId:null,
       boq_subitem_id:(subId&&subId!=='null'&&subId!=='')?subId:null,
       date:new Date().toISOString().slice(0,10),
       exec_type:cat, party_name:name,
