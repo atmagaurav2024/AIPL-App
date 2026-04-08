@@ -1334,6 +1334,17 @@ input,select,textarea{font-size:16px !important;}
 .exec-hire{background:#F3E5F5;color:#6A1B9A;}
 .exec-other{background:#ECEFF1;color:#455A64;}
 .exec-material{background:#FFF3E0;color:#E65100;}
+
+/* ── PETTY CASH MODULE ─────────────────────── */
+#app-petty-cash{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
+#app-petty-cash.on{display:flex;}
+#app-petty-cash .boq-topbar{background:var(--navy);}
+.pc-balance-card{background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:14px;margin:10px 14px;padding:16px 18px;color:white;}
+.pc-emp-card{background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;}
+.pc-emp-head{padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.pc-proj-row{padding:6px 14px 6px 42px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;}
+.pc-badge-in{background:#E8F5E9;color:#2E7D32;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;}
+.pc-badge-out{background:#FFEBEE;color:#C62828;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;}
 </style>
 </head>
 <body>
@@ -1577,6 +1588,10 @@ input,select,textarea{font-size:16px !important;}
     <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
       <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('petty-cash');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">💵</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Petty Cash</div><div class="drawer-item-sub">Cash in hand, expenses per project</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
@@ -2311,6 +2326,37 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-head"><div class="sh-title" id="exec-sheet-title">Add Execution Entry</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div>
   <div class="sh-body" id="exec-sheet-body"></div>
   <div class="sh-foot" id="exec-sheet-foot"></div>
+
+<!-- PETTY CASH MODULE SCREEN -->
+<div class="app-screen" id="app-petty-cash">
+  <div class="boq-topbar">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">💵 Petty Cash</div>
+    <div style="flex:1;"></div>
+  </div>
+  <!-- Project selector -->
+  <div style="padding:8px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <select id="pc-proj-sel" class="fsel" style="width:100%;" onchange="pcRender()">
+      <option value="">— All Projects —</option>
+    </select>
+  </div>
+  <div class="boq-scroll" id="pc-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div>
+  </div>
+</div>
+
+<!-- PETTY CASH SHEET -->
+<div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
+<div class="sheet" id="sh-pc">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title" id="pc-sheet-title">Add Entry</div>
+    <span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="pc-sheet-body"></div>
+  <div class="sh-foot" id="pc-sheet-foot"></div>
+</div>
+
 </div>
 
 <div class="app-screen" id="app-registry">
@@ -2598,6 +2644,10 @@ input,select,textarea{font-size:16px !important;}
       <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
     </div>
+    <div class="drawer-item" onclick="showApp('petty-cash');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">💵</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Petty Cash</div><div class="drawer-item-sub">Cash in hand, expenses per project</div></div>
+    </div>
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out &amp; records</div></div>
@@ -2668,6 +2718,10 @@ input,select,textarea{font-size:16px !important;}
       <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to vendors / SC / labour</div></div>
     </div>
+    <div class="drawer-item" onclick="showApp('petty-cash');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">💵</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Petty Cash</div><div class="drawer-item-sub">Cash in hand, expenses per project</div></div>
+    </div>
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out &amp; records</div></div>
@@ -2702,7 +2756,7 @@ function showApp(name){
   document.getElementById('app-'+name).classList.add('on');
   currentApp=name;
   // Hide bottom nav for full-screen modules
-  var noNav = ['boq','jm','planning','execution','projects','attendance'];
+  var noNav = ['boq','jm','planning','execution','projects','attendance','petty-cash'];
   document.getElementById('app-nav').style.display = noNav.indexOf(name)>-1 ? 'none' : 'flex';
   // Update nav highlight
   ['home','attendance','registry','profile'].forEach(function(n){
@@ -2717,6 +2771,7 @@ function showApp(name){
   else if(name==='jm'){initJM();stopSync();}
   else if(name==='planning'){initPlan();stopSync();}
   else if(name==='execution'){initExec();stopSync();}
+  else if(name==='petty-cash'){initPettyCash();stopSync();}
   else {stopSync();}
 }
 
@@ -7483,6 +7538,328 @@ async function waSaveAllot(btn){
     closeWASheet(); waRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
 }
+
+
+// ═══════════════════════════════════════════════════════════
+// PETTY CASH MODULE
+// ═══════════════════════════════════════════════════════════
+
+var PC_CASH_IN   = [];  // petty_cash_in records
+var PC_EXPENSES  = [];  // petty_cash_expense records
+var PC_EMPLOYEES = [];  // from employees table
+
+function openPCSheet(){ openSheet('ov-pc','sh-pc'); }
+function closePCSheet(){ closeSheet('ov-pc','sh-pc'); }
+
+async function initPettyCash(){
+  var el = document.getElementById('pc-content');
+  if(el) el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">⏳ Loading...</div>';
+  try{
+    var results = await Promise.all([
+      sbFetch('petty_cash_in',{select:'*',order:'date.desc'}),
+      sbFetch('petty_cash_expense',{select:'*',order:'date.desc'}),
+      sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'}),
+      sbFetch('projects',{select:'id,name',order:'name.asc'})
+    ]);
+    PC_CASH_IN   = Array.isArray(results[0])?results[0]:[];
+    PC_EXPENSES  = Array.isArray(results[1])?results[1]:[];
+    PC_EMPLOYEES = Array.isArray(results[2])?results[2]:[];
+    // Populate project selector
+    var sel = document.getElementById('pc-proj-sel');
+    if(sel){
+      var projs = Array.isArray(results[3])?results[3]:[];
+      sel.innerHTML = '<option value="">— All Projects —</option>'+
+        projs.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+    }
+  }catch(e){ console.error(e); }
+  pcRender();
+}
+
+function pcRender(){
+  var el = document.getElementById('pc-content'); if(!el) return;
+  var filterProjId = (document.getElementById('pc-proj-sel')||{}).value||'';
+
+  // ── Summary calculations ──
+  var totalIn    = PC_CASH_IN.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var totalExp   = PC_EXPENSES.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var netBalance = totalIn - totalExp;
+
+  // ── Per-employee balances ──
+  var empMap = {};
+  PC_EMPLOYEES.forEach(function(e){
+    empMap[e.id] = {
+      name: (e.first_name||'')+(e.last_name?' '+e.last_name:''),
+      empId: e.emp_id||'',
+      designation: e.designation||'',
+      totalIn:0, totalExp:0, projects:{}
+    };
+  });
+  PC_CASH_IN.forEach(function(r){
+    if(!empMap[r.employee_id]) empMap[r.employee_id]={name:'Unknown',empId:'',designation:'',totalIn:0,totalExp:0,projects:{}};
+    empMap[r.employee_id].totalIn += parseFloat(r.amount)||0;
+  });
+  PC_EXPENSES.forEach(function(r){
+    if(!filterProjId || r.project_id===filterProjId){
+      if(!empMap[r.employee_id]) empMap[r.employee_id]={name:'Unknown',empId:'',designation:'',totalIn:0,totalExp:0,projects:{}};
+      empMap[r.employee_id].totalExp += parseFloat(r.amount)||0;
+      var pk = r.project_id||'none';
+      if(!empMap[r.employee_id].projects[pk]) empMap[r.employee_id].projects[pk]={name:r.project_name||'—',amt:0};
+      empMap[r.employee_id].projects[pk].amt += parseFloat(r.amount)||0;
+    }
+  });
+
+  // ── Category breakup ──
+  var catMap = {};
+  PC_EXPENSES.filter(function(r){return !filterProjId||r.project_id===filterProjId;}).forEach(function(r){
+    var c = r.category||'Other';
+    catMap[c] = (catMap[c]||0) + (parseFloat(r.amount)||0);
+  });
+  var catColors = {Labour:'#E65100',Material:'#1565C0',Diesel:'#6A1B9A',Machinery:'#F57F17',Food:'#2E7D32',Transport:'#00838F',Advance:'#C62828',Office:'#455A64',Other:'#78909C'};
+  var catEmoji  = {Labour:'👷',Material:'🧱',Diesel:'⛽',Machinery:'🚜',Food:'🍱',Transport:'🚛',Advance:'💳',Office:'🏢',Other:'📦'};
+
+  // ── HTML ──
+  var empCards = Object.values(empMap).filter(function(e){
+    return e.totalIn>0 || e.totalExp>0;
+  }).sort(function(a,b){return (b.totalIn-b.totalExp)-(a.totalIn-a.totalExp);}).map(function(emp){
+    var bal = emp.totalIn - emp.totalExp;
+    var projRows = Object.values(emp.projects).map(function(p){
+      return '<div class="pc-proj-row">'+
+        '<span style="color:var(--text2);">'+p.name+'</span>'+
+        '<span class="pc-badge-out">−'+fmtINR(p.amt)+'</span>'+
+      '</div>';
+    }).join('');
+    return '<div class="pc-emp-card">'+
+      '<div class="pc-emp-head">'+
+        '<div style="width:36px;height:36px;border-radius:50%;background:#EDE7F6;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#4A148C;flex-shrink:0;">'+
+          (emp.name?emp.name[0].toUpperCase():'?')+
+        '</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:13px;font-weight:800;">'+emp.name+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+emp.empId+(emp.designation?' · '+emp.designation:'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;">'+
+          '<div style="font-size:13px;font-weight:900;color:'+(bal<0?'#C62828':'#2E7D32')+';">'+fmtINR(bal)+'</div>'+
+          '<div style="font-size:9px;color:var(--text3);">In: '+fmtINR(emp.totalIn)+' · Out: '+fmtINR(emp.totalExp)+'</div>'+
+        '</div>'+
+      '</div>'+
+      projRows+
+    '</div>';
+  }).join('');
+
+  var catHtml = Object.keys(catMap).length ?
+    '<div style="background:white;border-radius:12px;border:1px solid var(--border);padding:12px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">📊 Category Breakup</div>'+
+      Object.entries(catMap).sort(function(a,b){return b[1]-a[1];}).map(function(kv){
+        var cat=kv[0], amt=kv[1];
+        var pct = totalExp>0?Math.round(amt/totalExp*100):0;
+        var col = catColors[cat]||'#78909C';
+        var ico = catEmoji[cat]||'📦';
+        return '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">'+
+          '<div style="font-size:16px;width:24px;text-align:center;">'+ico+'</div>'+
+          '<div style="flex:1;">'+
+            '<div style="display:flex;justify-content:space-between;font-size:11px;font-weight:700;margin-bottom:3px;">'+
+              '<span>'+cat+'</span><span style="color:'+col+';">'+fmtINR(amt)+' ('+pct+'%)</span>'+
+            '</div>'+
+            '<div style="height:5px;background:#F0F4F8;border-radius:3px;">'+
+              '<div style="height:5px;width:'+pct+'%;background:'+col+';border-radius:3px;"></div>'+
+            '</div>'+
+          '</div>'+
+        '</div>';
+      }).join('')+
+    '</div>' : '';
+
+  // Recent expenses
+  var recentExp = PC_EXPENSES.filter(function(r){return !filterProjId||r.project_id===filterProjId;})
+    .slice(0,15).map(function(r){
+      var emp = PC_EMPLOYEES.find(function(e){return e.id===r.employee_id;})||{};
+      var empName = emp.first_name?(emp.first_name+(emp.last_name?' '+emp.last_name:'')):'Unknown';
+      var col = catColors[r.category]||'#78909C';
+      var ico = catEmoji[r.category]||'📦';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">'+
+        '<div style="width:32px;height:32px;border-radius:8px;background:'+col+'20;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">'+ico+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:12px;font-weight:700;">'+( r.party_name||r.purpose||'—')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+empName+' · '+(r.project_name||'—')+' · '+r.date+'</div>'+
+        '</div>'+
+        '<div style="font-size:12px;font-weight:900;color:#C62828;">−'+fmtINR(r.amount)+'</div>'+
+      '</div>';
+    }).join('');
+
+  el.innerHTML =
+    // Overall balance card
+    '<div class="pc-balance-card">'+
+      '<div style="font-size:11px;opacity:.7;margin-bottom:4px;">TOTAL CASH IN CIRCULATION</div>'+
+      '<div style="font-size:28px;font-weight:900;">'+fmtINR(netBalance)+'</div>'+
+      '<div style="display:flex;gap:20px;margin-top:10px;font-size:11px;opacity:.8;">'+
+        '<span>↓ In: '+fmtINR(totalIn)+'</span>'+
+        '<span>↑ Spent: '+fmtINR(totalExp)+'</span>'+
+      '</div>'+
+    '</div>'+
+    // Action buttons
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px 14px;">'+
+      '<button onclick="pcOpenCashIn()" style="background:#2E7D32;color:white;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;">↓ Cash In</button>'+
+      '<button onclick="pcOpenExpense()" style="background:#C62828;color:white;border:none;border-radius:10px;padding:10px;font-size:12px;font-weight:800;cursor:pointer;">↑ Add Expense</button>'+
+    '</div>'+
+    // Employee balances
+    '<div style="padding:0 14px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">👤 Employee Cash Balances</div>'+
+      (empCards||'<div style="font-size:12px;color:var(--text3);padding:10px 0;">No cash entries yet</div>')+
+    '</div>'+
+    // Category breakup
+    '<div style="padding:0 14px;">'+catHtml+'</div>'+
+    // Recent expenses
+    (recentExp ?
+      '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin:0 14px 14px;padding:12px 14px;">'+
+        '<div style="font-size:10px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🧾 Recent Expenses</div>'+
+        recentExp+
+      '</div>' : '');
+}
+
+// ── CASH IN FORM ─────────────────────────────────────────
+async function pcOpenCashIn(){
+  if(!PC_EMPLOYEES.length) await initPettyCash();
+  var empOpts = PC_EMPLOYEES.map(function(e){
+    var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    return '<option value="'+e.id+'">'+n+(e.emp_id?' ('+e.emp_id+')':'')+'</option>';
+  }).join('');
+  var givenByOpts = PC_EMPLOYEES.map(function(e){
+    var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    return '<option value="'+e.id+'">'+n+'</option>';
+  }).join('');
+
+  document.getElementById('pc-sheet-title').textContent = '↓ Cash In';
+  document.getElementById('pc-sheet-body').innerHTML =
+    '<div style="background:#E8F5E9;border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;font-weight:700;color:#2E7D32;">Cash given to employee — not linked to any project</div>'+
+    '<label class="flbl">Date *</label>'+
+    '<input id="pc-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">Given To (Employee) *</label>'+
+    '<select id="pc-emp" class="fsel"><option value="">— Select Employee —</option>'+empOpts+'</select>'+
+    '<label class="flbl">Given By *</label>'+
+    '<select id="pc-given-by" class="fsel"><option value="">— Select —</option>'+
+      '<option value="HO">Head Office / Management</option>'+
+      givenByOpts+
+    '</select>'+
+    '<label class="flbl">Amount (₹) *</label>'+
+    '<input id="pc-amount" class="finp" type="number" step="0.01" placeholder="0">'+
+    '<label class="flbl">Payment Mode</label>'+
+    '<select id="pc-pay-mode" class="fsel">'+
+      '<option value="Cash">💵 Cash</option>'+
+      '<option value="Bank Transfer">🏦 Bank Transfer</option>'+
+      '<option value="UPI">📱 UPI</option>'+
+    '</select>'+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="pc-remarks" class="finp" placeholder="Optional">';
+  document.getElementById('pc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closePCSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#2E7D32;color:white;" onclick="pcSaveCashIn()">↓ Save Cash In</button>';
+  openPCSheet();
+}
+
+async function pcSaveCashIn(){
+  var date     = (document.getElementById('pc-date')||{value:''}).value;
+  var empId    = (document.getElementById('pc-emp')||{value:''}).value;
+  var givenBy  = (document.getElementById('pc-given-by')||{value:''}).value;
+  var amount   = parseFloat((document.getElementById('pc-amount')||{value:0}).value)||0;
+  var payMode  = (document.getElementById('pc-pay-mode')||{value:'Cash'}).value;
+  var remarks  = (document.getElementById('pc-remarks')||{value:''}).value.trim()||null;
+  if(!date||!empId||!amount){ toast('Date, employee and amount required','warning'); return; }
+  try{
+    toast('Saving...','info');
+    var res = await sbInsert('petty_cash_in',{
+      date:date, employee_id:empId, given_by:givenBy||null,
+      amount:amount, payment_mode:payMode, remarks:remarks
+    });
+    if(res&&res[0]) PC_CASH_IN.unshift(res[0]);
+    toast('Cash In saved!','success');
+    closePCSheet();
+    pcRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+// ── EXPENSE FORM ─────────────────────────────────────────
+async function pcOpenExpense(){
+  if(!PC_EMPLOYEES.length) await initPettyCash();
+  var empOpts = PC_EMPLOYEES.map(function(e){
+    var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var bal = PC_CASH_IN.filter(function(r){return r.employee_id===e.id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)
+            - PC_EXPENSES.filter(function(r){return r.employee_id===e.id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+    return '<option value="'+e.id+'">'+n+' (Bal: ₹'+Math.round(bal)+')</option>';
+  }).join('');
+
+  // Load projects
+  var projs = [];
+  try{ projs = await sbFetch('projects',{select:'id,name',order:'name.asc'}); }catch(e){}
+  var projOpts = (Array.isArray(projs)?projs:[]).map(function(p){
+    return '<option value="'+p.id+'" data-name="'+p.name+'">'+p.name+'</option>';
+  }).join('');
+
+  var catOpts = ['Labour','Material','Diesel','Machinery','Food','Transport','Advance','Office','Other'].map(function(c){
+    return '<option value="'+c+'">'+c+'</option>';
+  }).join('');
+
+  document.getElementById('pc-sheet-title').textContent = '↑ Add Expense';
+  document.getElementById('pc-sheet-body').innerHTML =
+    '<label class="flbl">Date *</label>'+
+    '<input id="pc-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">Employee (Spending) *</label>'+
+    '<select id="pc-emp" class="fsel"><option value="">— Select Employee —</option>'+empOpts+'</select>'+
+    '<label class="flbl">Project *</label>'+
+    '<select id="pc-proj" class="fsel"><option value="">— Select Project —</option>'+projOpts+'</select>'+
+    '<label class="flbl">Category *</label>'+
+    '<select id="pc-cat" class="fsel"><option value="">— Select —</option>'+catOpts+'</select>'+
+    '<label class="flbl">Paid To / Party Name</label>'+
+    '<input id="pc-party" class="finp" placeholder="e.g. Labour contractor name">'+
+    '<label class="flbl">Amount (₹) *</label>'+
+    '<input id="pc-amount" class="finp" type="number" step="0.01" placeholder="0">'+
+    '<label class="flbl">Payment Mode</label>'+
+    '<select id="pc-pay-mode" class="fsel">'+
+      '<option value="Cash">💵 Cash</option>'+
+      '<option value="UPI">📱 UPI</option>'+
+      '<option value="Bank Transfer">🏦 Bank Transfer</option>'+
+    '</select>'+
+    '<label class="flbl">Purpose / Description *</label>'+
+    '<input id="pc-purpose" class="finp" placeholder="Describe the expense...">'+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="pc-remarks" class="finp" placeholder="Optional">';
+  document.getElementById('pc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closePCSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#C62828;color:white;" onclick="pcSaveExpense()">↑ Save Expense</button>';
+  openPCSheet();
+}
+
+async function pcSaveExpense(){
+  var date    = (document.getElementById('pc-date')||{value:''}).value;
+  var empId   = (document.getElementById('pc-emp')||{value:''}).value;
+  var projSel = document.getElementById('pc-proj');
+  var projId  = projSel ? projSel.value : '';
+  var projName= projSel&&projSel.options[projSel.selectedIndex] ? projSel.options[projSel.selectedIndex].text : '';
+  var cat     = (document.getElementById('pc-cat')||{value:''}).value;
+  var party   = (document.getElementById('pc-party')||{value:''}).value.trim()||null;
+  var amount  = parseFloat((document.getElementById('pc-amount')||{value:0}).value)||0;
+  var payMode = (document.getElementById('pc-pay-mode')||{value:'Cash'}).value;
+  var purpose = (document.getElementById('pc-purpose')||{value:''}).value.trim();
+  var remarks = (document.getElementById('pc-remarks')||{value:''}).value.trim()||null;
+  if(!date||!empId||!projId||!cat||!amount||!purpose){ toast('All required fields must be filled','warning'); return; }
+  // Check balance
+  var bal = PC_CASH_IN.filter(function(r){return r.employee_id===empId;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)
+          - PC_EXPENSES.filter(function(r){return r.employee_id===empId;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  if(amount > bal){
+    toast('Insufficient balance! Available: ₹'+Math.round(bal),'warning'); return;
+  }
+  try{
+    toast('Saving...','info');
+    var res = await sbInsert('petty_cash_expense',{
+      date:date, employee_id:empId, project_id:projId, project_name:projName,
+      category:cat, party_name:party, amount:amount,
+      payment_mode:payMode, purpose:purpose, remarks:remarks
+    });
+    if(res&&res[0]) PC_EXPENSES.unshift(res[0]);
+    toast('Expense saved!','success');
+    closePCSheet();
+    pcRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
 
 </script>
 
