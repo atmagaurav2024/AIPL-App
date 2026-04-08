@@ -7728,7 +7728,6 @@ function _pcRenderInner(el){
       '</div>' : '')+
     '<div style="height:20px;"></div>';
 }
-}
 
 // ── CASH IN FORM ─────────────────────────────────────────
 async function pcOpenCashIn(){
@@ -7873,7 +7872,7 @@ async function pcSaveExpense(){
     closePCSheet();
     pcRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
-
+}
 
 </script>
 
