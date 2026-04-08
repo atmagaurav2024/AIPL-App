@@ -1338,6 +1338,7 @@ input,select,textarea{font-size:16px !important;}
 /* ── PETTY CASH MODULE ─────────────────────── */
 #app-petty-cash{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
 #app-petty-cash.on{display:flex;}
+#app-petty-cash .boq-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 0 80px;}
 #app-petty-cash .boq-topbar{background:var(--navy);}
 .pc-balance-card{background:linear-gradient(135deg,#1B5E20,#2E7D32);border-radius:14px;margin:10px 14px;padding:16px 18px;color:white;}
 .pc-emp-card{background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;}
@@ -7579,7 +7580,16 @@ async function initPettyCash(){
 }
 
 function pcRender(){
-  var el = document.getElementById('pc-content'); if(!el) return;
+  var el = document.getElementById('pc-content');
+  if(!el){ console.warn('pc-content not found'); return; }
+  try{ _pcRenderInner(el); }
+  catch(e){
+    console.error('pcRender error:',e);
+    el.innerHTML='<div style="padding:20px;color:#C62828;">Error: '+e.message+'</div>';
+  }
+}
+
+function _pcRenderInner(el){
   var filterProjId = (document.getElementById('pc-proj-sel')||{}).value||'';
 
   // ── Summary calculations ──
@@ -7715,7 +7725,9 @@ function pcRender(){
       '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin:0 14px 14px;padding:12px 14px;">'+
         '<div style="font-size:10px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">🧾 Recent Expenses</div>'+
         recentExp+
-      '</div>' : '');
+      '</div>' : '')+
+    '<div style="height:20px;"></div>';
+}
 }
 
 // ── CASH IN FORM ─────────────────────────────────────────
@@ -7861,7 +7873,6 @@ async function pcSaveExpense(){
     closePCSheet();
     pcRender();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
-}
 
 
 </script>
