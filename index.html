@@ -7554,24 +7554,27 @@ function closePCSheet(){ closeSheet('ov-pc','sh-pc'); }
 async function initPettyCash(){
   var el = document.getElementById('pc-content');
   if(el) el.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text3);">⏳ Loading...</div>';
+
+  // Load each table independently so one failure doesn't block others
+  try{ var r0=await sbFetch('petty_cash_in',{select:'*',order:'date.desc'}); PC_CASH_IN=Array.isArray(r0)?r0:[]; }
+  catch(e){ PC_CASH_IN=[]; console.warn('petty_cash_in not ready:',e.message); }
+
+  try{ var r1=await sbFetch('petty_cash_expense',{select:'*',order:'date.desc'}); PC_EXPENSES=Array.isArray(r1)?r1:[]; }
+  catch(e){ PC_EXPENSES=[]; console.warn('petty_cash_expense not ready:',e.message); }
+
+  try{ var r2=await sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'}); PC_EMPLOYEES=Array.isArray(r2)?r2:[]; }
+  catch(e){ PC_EMPLOYEES=[]; console.warn('employees:',e.message); }
+
   try{
-    var results = await Promise.all([
-      sbFetch('petty_cash_in',{select:'*',order:'date.desc'}),
-      sbFetch('petty_cash_expense',{select:'*',order:'date.desc'}),
-      sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'}),
-      sbFetch('projects',{select:'id,name',order:'name.asc'})
-    ]);
-    PC_CASH_IN   = Array.isArray(results[0])?results[0]:[];
-    PC_EXPENSES  = Array.isArray(results[1])?results[1]:[];
-    PC_EMPLOYEES = Array.isArray(results[2])?results[2]:[];
-    // Populate project selector
-    var sel = document.getElementById('pc-proj-sel');
+    var r3=await sbFetch('projects',{select:'id,name',order:'name.asc'});
+    var sel=document.getElementById('pc-proj-sel');
     if(sel){
-      var projs = Array.isArray(results[3])?results[3]:[];
-      sel.innerHTML = '<option value="">— All Projects —</option>'+
+      var projs=Array.isArray(r3)?r3:[];
+      sel.innerHTML='<option value="">— All Projects —</option>'+
         projs.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
     }
-  }catch(e){ console.error(e); }
+  }catch(e){ console.warn('projects:',e.message); }
+
   pcRender();
 }
 
