@@ -24,7 +24,7 @@ html,body{height:100%;overflow:hidden;}
 .app-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E2E8F0;display:flex;z-index:500;}
 .an-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:transparent;}
 .an-ic{font-size:22px;line-height:1;}
-.an-lb{font-size:10px;font-weight:700;color:#94A3B8;font-family:'Nunito',sans-serif;}
+.an-lb{font-size:10px;font-weight:700;color:#94A3B8;font-family:Nunito,sans-serif;}
 .an-item.on .an-lb{color:#1565C0;}
 
 /* ═══════════════════════════════════════════
@@ -40,7 +40,7 @@ html,body{height:100%;overflow:hidden;}
   --shadow:0 2px 12px rgba(13,33,55,.08);--shadow2:0 8px 32px rgba(13,33,55,.18);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+html,body{height:100%;font-family:Nunito,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
 
 .screen{position:fixed;inset:0;display:none;flex-direction:column;overflow-y:auto;}
 .screen.on{display:flex;}
@@ -67,14 +67,14 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .login-desc{font-size:13px;color:var(--text2);margin-bottom:20px;}
 .flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:5px;}
 .inp-wrap{position:relative;margin-bottom:14px;}
-.screen .finp{width:100%;padding:14px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;}
+.screen .finp{width:100%;padding:14px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;font-size:16px;font-family:Nunito,sans-serif;color:var(--text);outline:none;}
 .screen .finp:focus{border-color:var(--blue);}
 .screen .finp::placeholder{color:var(--text3);}
-.screen .fsel{width:100%;padding:14px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;appearance:none;}
+.screen .fsel{width:100%;padding:14px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;font-size:16px;font-family:Nunito,sans-serif;color:var(--text);outline:none;appearance:none;}
 .inp-ic{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:18px;cursor:pointer;color:var(--text3);}
-.btn-primary{width:100%;padding:16px;background:linear-gradient(135deg,var(--navy),var(--blue));border:none;border-radius:14px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;color:white;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;}
+.btn-primary{width:100%;padding:16px;background:linear-gradient(135deg,var(--navy),var(--blue));border:none;border-radius:14px;font-family:Nunito,sans-serif;font-size:16px;font-weight:800;color:white;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px;}
 .btn-primary:active{transform:scale(.97);}
-.btn-outline{width:100%;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:14px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;margin-bottom:12px;}
+.btn-outline{width:100%;padding:14px;background:transparent;border:1.5px solid var(--border);border-radius:14px;font-family:Nunito,sans-serif;font-size:14px;font-weight:700;color:var(--text2);cursor:pointer;margin-bottom:12px;}
 .divider{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--text3);font-size:12px;}
 .divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
 .login-foot{text-align:center;font-size:13px;color:var(--text3);}
@@ -178,7 +178,7 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .rc-detail{padding:0 14px 12px;font-size:12px;color:var(--text2);display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;}
 .rc-detail span{display:flex;align-items:center;gap:4px;}
 .rc-actions{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);background:var(--bg);}
-.act-btn{flex:1;padding:9px;border:none;border-radius:10px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;}
+.act-btn{flex:1;padding:9px;border:none;border-radius:10px;font-family:Nunito,sans-serif;font-size:12px;font-weight:800;cursor:pointer;}
 .act-approve{background:var(--greenl);color:var(--green);}
 .act-reject{background:var(--redl);color:var(--red);}
 .act-blacklist{background:#212121;color:white;}
@@ -996,7 +996,7 @@ body {
 
 :root{--navy:#0D2137;--blue:#1565C0;--green:#2E7D32;--greenl:#E8F5E9;--greenb:#A5D6A7;--red:#C62828;--redl:#FFEBEE;--redb:#EF9A9A;--amber:#F57F17;--amberl:#FFF8E1;--amberb:#FFE082;--teal:#00838F;--teall:#E0F7FA;--tealb:#80DEEA;--purple:#6A1B9A;--purplel:#F3E5F5;--purpleb:#CE93D8;--orange:#E65100;--orangel:#FFF3E0;--orangeb:#FFCC80;--rose:#880E4F;--rosel:#FCE4EC;--roseb:#F48FB1;--indigo:#283593;--indigol:#E8EAF6;--indigob:#9FA8DA;--bg:#F0F4F8;--white:#fff;--border:#E2E8F0;--text:#0D2137;--text2:#475569;--text3:#94A3B8;--shadow:0 2px 12px rgba(13,33,55,.08);--shadow2:0 8px 32px rgba(13,33,55,.15);--top:56px;--bot:68px;}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+html,body{height:100%;font-family:Nunito,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
 .topbar{position:fixed;top:0;left:0;right:0;height:var(--top);background:var(--navy);display:flex;align-items:center;padding:0 14px;gap:10px;z-index:100;box-shadow:0 2px 16px rgba(0,0,0,.3);}
 .tb-btn{width:36px;height:36px;border-radius:10px;background:rgba(255,255,255,.1);border:none;font-size:16px;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;}
 .tb-info{flex:1;}.tb-title{font-size:16px;font-weight:800;color:white;}.tb-sub{font-size:10px;color:rgba(255,255,255,.5);}
@@ -1008,7 +1008,7 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .ni-ic{font-size:20px;line-height:1;transition:transform .2s;}.ni-lb{font-size:9px;font-weight:600;color:var(--text3);}
 .ni.on .ni-lb{color:var(--navy);font-weight:800;}.ni.on .ni-ic{transform:translateY(-2px);}
 .search-bar{display:flex;align-items:center;gap:10px;background:var(--white);border:1px solid var(--border);border-radius:14px;padding:10px 14px;margin-bottom:12px;box-shadow:var(--shadow);}
-.search-bar input{flex:1;border:none;outline:none;font-size:14px;font-family:'Nunito',sans-serif;color:var(--text);background:transparent;}
+.search-bar input{flex:1;border:none;outline:none;font-size:14px;font-family:Nunito,sans-serif;color:var(--text);background:transparent;}
 .search-bar input::placeholder{color:var(--text3);}
 .pill-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;scrollbar-width:none;}
 .pill{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);font-size:12px;font-weight:700;color:var(--text2);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .2s;}
@@ -1052,7 +1052,7 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .sh-title{font-size:17px;font-weight:800;}.sh-close{font-size:22px;cursor:pointer;color:var(--text3);}
 .sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:12px 20px 80px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:701;position:relative;}
 .flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:5px;margin-top:2px;}
-.finp,.fsel,.ftxt{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s;box-sizing:border-box;}
+.finp,.fsel,.ftxt{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:Nunito,sans-serif;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s;box-sizing:border-box;}
 *{touch-action:pan-x pan-y;}
 input,select,textarea{font-size:16px !important;}
 .sh-body .finp,.sh-body .fsel,.sh-body .ftxt{padding:11px 14px !important;margin-bottom:12px !important;font-size:15px !important;}
@@ -1069,7 +1069,7 @@ input,select,textarea{font-size:16px !important;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .section-title{font-size:13px;font-weight:800;color:var(--navy);margin:4px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--border);}
-.btn{padding:12px 18px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
+.btn{padding:12px 18px;border-radius:12px;border:none;font-family:Nunito,sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
 .btn:active{transform:scale(.97);}
 .btn-red{background:var(--red);color:white;}
 .btn-red:active{background:#b71c1c;}
@@ -1201,29 +1201,29 @@ input,select,textarea{font-size:16px !important;}
 .dash-top{background:linear-gradient(135deg,#0D2137,#1A3A5C);padding:48px 16px 20px;}
 .dt-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
 .dt-greeting{font-size:14px;color:rgba(255,255,255,.5);}
-.dt-name{font-size:22px;font-weight:900;color:white;font-family:'Nunito',sans-serif;}
-.dt-role{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;font-family:'Nunito',sans-serif;}
+.dt-name{font-size:22px;font-weight:900;color:white;font-family:Nunito,sans-serif;}
+.dt-role{font-size:11px;color:rgba(255,255,255,.4);margin-top:2px;font-family:Nunito,sans-serif;}
 .dt-avatar{width:44px;height:44px;border-radius:14px;background:#1565C0;display:flex;align-items:center;justify-content:center;font-size:18px;color:white;}
 .dt-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:16px;}
 .dk{background:rgba(255,255,255,.09);border-radius:12px;padding:10px;text-align:center;}
 .dk-val{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:white;}
-.dk-lbl{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;margin-top:2px;font-family:'Nunito',sans-serif;}
+.dk-lbl{font-size:9px;color:rgba(255,255,255,.45);text-transform:uppercase;margin-top:2px;font-family:Nunito,sans-serif;}
 .dash-body{padding:14px;}
-.sec-title{font-size:14px;font-weight:800;margin-bottom:10px;font-family:'Nunito',sans-serif;}
+.sec-title{font-size:14px;font-weight:800;margin-bottom:10px;font-family:Nunito,sans-serif;}
 .mod-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px;}
 .mod-card{background:white;border-radius:16px;border:1px solid #E2E8F0;box-shadow:0 2px 12px rgba(13,33,55,.08);padding:18px 16px;cursor:pointer;transition:transform .15s;display:flex;align-items:center;gap:14px;}
 .mod-card:active{transform:scale(.96);}
 .mod-card-ic{width:48px;height:48px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0;}
-.mod-card-title{font-size:14px;font-weight:800;font-family:'Nunito',sans-serif;}
-.mod-card-sub{font-size:11px;color:#94A3B8;margin-top:2px;font-family:'Nunito',sans-serif;}
+.mod-card-title{font-size:14px;font-weight:800;font-family:Nunito,sans-serif;}
+.mod-card-sub{font-size:11px;color:#94A3B8;margin-top:2px;font-family:Nunito,sans-serif;}
 .notif-item{background:white;border-radius:12px;border:1px solid #E2E8F0;padding:11px 12px;margin-bottom:8px;display:flex;gap:10px;}
 .ni-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px;}
-.ni-text{font-size:12px;font-weight:700;flex:1;font-family:'Nunito',sans-serif;}
-.ni-time{font-size:10px;color:#94A3B8;font-family:'Nunito',sans-serif;}
+.ni-text{font-size:12px;font-weight:700;flex:1;font-family:Nunito,sans-serif;}
+.ni-time{font-size:10px;color:#94A3B8;font-family:Nunito,sans-serif;}
 
 /* Toast shared */
 .toast-wrap{position:fixed;top:16px;left:14px;right:14px;z-index:9999;pointer-events:none;}
-.toast-item{background:#0D2137;color:white;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:8px;box-shadow:0 8px 32px rgba(13,33,55,.18);border-left:4px solid #43A047;animation:tIn .3s cubic-bezier(.34,1.56,.64,1);font-family:'Nunito',sans-serif;}
+.toast-item{background:#0D2137;color:white;border-radius:14px;padding:12px 16px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:8px;box-shadow:0 8px 32px rgba(13,33,55,.18);border-left:4px solid #43A047;animation:tIn .3s cubic-bezier(.34,1.56,.64,1);font-family:Nunito,sans-serif;}
 @keyframes tIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 
 
@@ -1517,7 +1517,7 @@ input,select,textarea{font-size:16px !important;}
     <div class="notif-item"><div class="ni-dot" style="background:#F57F17;"></div><div><div class="ni-text">NCR-NH48-003 overdue — compaction failure</div><div class="ni-time">1 hour ago</div></div></div>
     <div class="notif-item"><div class="ni-dot" style="background:#2E7D32;"></div><div><div class="ni-text">RA Bill #8 approved by client — ₹38.4L</div><div class="ni-time">Yesterday</div></div></div>
     <div style="text-align:center;padding:16px 0 8px;">
-      <button style="background:transparent;border:1.5px solid var(--border);border-radius:12px;padding:10px 24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);" onclick="toast('Logging out...','info');setTimeout(function(){showScreen('scr-login')},1000)">&#128275; Sign Out</button>
+      <button style="background:transparent;border:1.5px solid var(--border);border-radius:12px;padding:10px 24px;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);" onclick="toast('Logging out...','info');setTimeout(function(){showScreen('scr-login')},1000)">&#128275; Sign Out</button>
     </div>
   </div>
 </div>
@@ -1608,7 +1608,7 @@ input,select,textarea{font-size:16px !important;}
     </div>
   </div>
   <div class="drawer-foot">
-    <button style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;color:#C62828;cursor:pointer;" onclick="doLogout();closeDrawer();">🚪 Sign Out</button>
+    <button style="width:100%;padding:12px;background:#FEE2E2;border:none;border-radius:12px;font-family:Nunito,sans-serif;font-size:14px;font-weight:800;color:#C62828;cursor:pointer;" onclick="doLogout();closeDrawer();">🚪 Sign Out</button>
   </div>
 </div>
 
@@ -1667,7 +1667,7 @@ input,select,textarea{font-size:16px !important;}
     <div class="notif-item"><div class="ni-dot" style="background:#F57F17;"></div><div><div class="ni-text">NCR-NH48-003 overdue — compaction failure at CH 12+750</div><div class="ni-time">1 hour ago</div></div></div>
     <div class="notif-item"><div class="ni-dot" style="background:#2E7D32;"></div><div><div class="ni-text">RA Bill #8 approved by client — &#8377;38.4L</div><div class="ni-time">Yesterday</div></div></div>
     <div style="text-align:center;padding:20px 0 8px;">
-      <button style="background:transparent;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px 24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#475569;" onclick="doLogout()">&#128275; Sign Out</button>
+      <button style="background:transparent;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px 24px;font-family:Nunito,sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#475569;" onclick="doLogout()">&#128275; Sign Out</button>
     </div>
   </div>
 </div>
@@ -5627,7 +5627,7 @@ function renderProjList(data){
   el.innerHTML = PROJ_SHOW.map(function(p){
     var si = projStatusInfo(p.status); var col = si.col;
     var init = (p.name||'P').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
-    return '<div class="reg-card" onclick="openProjDetail(\''+p.id+'\')" style="font-family:var(--font,\'Nunito\',sans-serif)!important;">'+
+    return '<div class="reg-card" onclick="openProjDetail(\''+p.id+'\')" style="font-family:var(--font,Nunito,sans-serif)!important;">'+
       '<div class="rc-accent" style="background:'+col+'"></div>'+
       '<div class="rc-body">'+
         '<div class="avatar" style="background:'+col+';font-size:13px;font-weight:900;">'+init+'</div>'+
@@ -7428,350 +7428,194 @@ async function waSaveAllot(btn){
 
 // ═══════════════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════════════
-// PETTY CASH MODULE — Site Cash Manager
-// ═══════════════════════════════════════════════════════════
-
-var PC_CASH_IN   = [];
-var PC_EXPENSES  = [];
-var PC_EMPLOYEES = [];
-var PC_PROJECTS  = [];
-var PC_ACTIVE_PROJ = null; // {id, name, addr}
-
-var PC_CAT = {
-  Labour:    {e:'👷',c:'#E07820'},
-  Material:  {e:'🧱',c:'#3B82F6'},
-  Diesel:    {e:'⛽',c:'#8B5CF6'},
-  Machinery: {e:'🚜',c:'#F59E0B'},
-  Food:      {e:'🍱',c:'#10B981'},
-  Transport: {e:'🚛',c:'#06B6D4'},
-  Advance:   {e:'💳',c:'#EC4899'},
-  Office:    {e:'🏢',c:'#6B7280'},
-  Other:     {e:'📦',c:'#9CA3AF'},
-};
-
-function pcFmt(n){ return '₹'+Number(n||0).toLocaleString('en-IN'); }
-function pcFmtDate(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
-function openPCSheet(){ openSheet('ov-pc','sh-pc'); }
-function closePCSheet(){ closeSheet('ov-pc','sh-pc'); }
+// ═══════════════════════════════════════════════
+// PETTY CASH MODULE — Supabase backend
+// ═══════════════════════════════════════════════
+var PC_IN=[],PC_EXP=[],PC_EMPS=[],PC_PROJS=[],PC_ACTIVE=null;
+var PC_CAT={Labour:{e:'👷',c:'#E07820'},Material:{e:'🧱',c:'#3B82F6'},Diesel:{e:'⛽',c:'#8B5CF6'},Machinery:{e:'🚜',c:'#F59E0B'},Food:{e:'🍱',c:'#10B981'},Transport:{e:'🚛',c:'#06B6D4'},Advance:{e:'💳',c:'#EC4899'},Office:{e:'🏢',c:'#6B7280'},Other:{e:'📦',c:'#9CA3AF'}};
+function pcFmt(n){return '₹'+Number(n||0).toLocaleString('en-IN');}
+function pcFmtD(d){if(!d)return'—';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function openPCSheet(){openSheet('ov-pc','sh-pc');}
+function closePCSheet(){closeSheet('ov-pc','sh-pc');}
+function pcEmpName(id){var e=PC_EMPS.find(function(x){return x.id===id;})||{};return(e.first_name||'')+(e.last_name?' '+e.last_name:'');}
+function pcEmpBal(id){return PC_IN.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)-PC_EXP.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);}
 
 async function initPettyCash(){
-  var el = document.getElementById('pc-content');
-  if(el) el.innerHTML = '<div style="text-align:center;padding:40px;color:#9CA3AF;">⏳ Loading...</div>';
-  // Load data independently
-  try{ var r=await sbFetch('petty_cash_in',{select:'*',order:'date.desc'}); PC_CASH_IN=Array.isArray(r)?r:[]; }catch(e){ PC_CASH_IN=[]; }
-  try{ var r=await sbFetch('petty_cash_expense',{select:'*',order:'date.desc'}); PC_EXPENSES=Array.isArray(r)?r:[]; }catch(e){ PC_EXPENSES=[]; }
-  try{ var r=await sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'}); PC_EMPLOYEES=Array.isArray(r)?r:[]; }catch(e){ PC_EMPLOYEES=[]; }
-  try{ var r=await sbFetch('projects',{select:'id,name,location',order:'name.asc'}); PC_PROJECTS=Array.isArray(r)?r:[]; }catch(e){ PC_PROJECTS=[]; }
-  if(!PC_ACTIVE_PROJ && PC_PROJECTS.length) PC_ACTIVE_PROJ = PC_PROJECTS[0];
-  pcRenderTabs();
-  pcRender();
+  var el=document.getElementById('pc-main');
+  if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:#9CA3AF;">⏳ Loading...</div>';
+  var fab=document.getElementById('pc-fab');if(fab)fab.style.display='none';
+  try{var r=await sbFetch('petty_cash_in',{select:'*',order:'date.desc'});PC_IN=Array.isArray(r)?r:[];}catch(e){PC_IN=[];}
+  try{var r=await sbFetch('petty_cash_expense',{select:'*',order:'date.desc'});PC_EXP=Array.isArray(r)?r:[];}catch(e){PC_EXP=[];}
+  try{var r=await sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'});PC_EMPS=Array.isArray(r)?r:[];}catch(e){PC_EMPS=[];}
+  try{var r=await sbFetch('projects',{select:'id,name,location',order:'name.asc'});PC_PROJS=Array.isArray(r)?r:[];}catch(e){PC_PROJS=[];}
+  if(!PC_ACTIVE&&PC_PROJS.length)PC_ACTIVE=PC_PROJS[0];
+  if(fab)fab.style.display='';
+  pcRenderTabs();pcRefresh();
 }
 
 function pcRenderTabs(){
-  var container = document.getElementById('pc-site-tabs'); if(!container) return;
-  // Remove existing tabs
-  container.querySelectorAll('.pc-site-tab').forEach(function(t){t.remove();});
-  var addBtn = container.querySelector('[onclick="pcOpenManageProjects()"]');
-  PC_PROJECTS.forEach(function(p){
-    var tab = document.createElement('div');
-    tab.className = 'pc-site-tab'+(PC_ACTIVE_PROJ&&p.id===PC_ACTIVE_PROJ.id?' active':'');
-    tab.textContent = p.name;
-    tab.onclick = function(){ PC_ACTIVE_PROJ=p; pcRenderTabs(); pcRender(); };
-    container.insertBefore(tab, addBtn);
+  var c=document.getElementById('pc-site-tabs');if(!c)return;
+  c.innerHTML='';
+  PC_PROJS.forEach(function(p){
+    var sel=PC_ACTIVE&&p.id===PC_ACTIVE.id;
+    var t=document.createElement('div');
+    t.style.cssText='flex-shrink:0;padding:10px 20px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;transition:all .2s;border:1.5px solid '+(sel?'#E07820':'#E2DDD5')+';background:'+(sel?'#E07820':'#fff')+';color:'+(sel?'#fff':'#1E2547')+';';
+    t.textContent=p.name;t.onclick=function(){PC_ACTIVE=p;pcRenderTabs();pcRefresh();};
+    c.appendChild(t);
   });
+  var btn=document.createElement('div');
+  btn.style.cssText='flex-shrink:0;width:34px;height:34px;border-radius:50%;background:#fff;border:1.5px dashed #E2DDD5;display:flex;align-items:center;justify-content:center;font-size:18px;color:#6B7280;cursor:pointer;';
+  btn.innerHTML='+';btn.onclick=function(){pcOpenManageProjects();};c.appendChild(btn);
 }
 
-function pcRender(){
-  var el = document.getElementById('pc-content'); if(!el) return;
-  var proj = PC_ACTIVE_PROJ;
-  if(!proj){
-    el.innerHTML = '<div style="text-align:center;padding:40px;color:#9CA3AF;">'+
-      '<div style="font-size:40px;margin-bottom:10px;">🏗️</div>'+
-      '<div style="font-weight:700;color:#1E2547;">No projects yet</div>'+
-      '<div style="font-size:13px;margin-top:6px;">Tap ⚙ to add your first project</div></div>';
-    return;
-  }
-  // Filter by active project
-  var projIn  = PC_CASH_IN.filter(function(r){return r.project_id===proj.id||!r.project_id;});
-  var projExp = PC_EXPENSES.filter(function(r){return r.project_id===proj.id;});
-
-  var totalIn  = projIn.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-  var totalOut = projExp.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-  var balance  = totalIn - totalOut;
-
-  // Today and week
-  var today   = new Date().toISOString().split('T')[0];
-  var weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-6);
-  var todayOut = projExp.filter(function(r){return r.date===today;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-  var weekOut  = projExp.filter(function(r){return new Date(r.date)>=weekAgo;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-
-  // Employee balances
-  var empCards = '';
-  var empMap = {};
-  PC_EMPLOYEES.forEach(function(e){ empMap[e.id]={name:(e.first_name||'')+(e.last_name?' '+e.last_name:''),totalIn:0,totalOut:0}; });
-  PC_CASH_IN.forEach(function(r){ if(empMap[r.employee_id]){ empMap[r.employee_id].totalIn+=(parseFloat(r.amount)||0); } });
-  PC_EXPENSES.filter(function(r){return r.project_id===proj.id;}).forEach(function(r){ if(empMap[r.employee_id]){ empMap[r.employee_id].totalOut+=(parseFloat(r.amount)||0); } });
-  var activeEmps = Object.values(empMap).filter(function(e){return e.totalIn>0||e.totalOut>0;});
-  if(activeEmps.length){
-    empCards = activeEmps.map(function(e){
-      var bal = e.totalIn-e.totalOut;
-      return '<div class="pc-emp-card">'+
-        '<div class="pc-emp-head">'+
-          '<div style="width:34px;height:34px;border-radius:50%;background:#FEF0E0;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#E07820;flex-shrink:0;">'+e.name[0]+'</div>'+
-          '<div style="flex:1;"><div style="font-size:13px;font-weight:800;">'+e.name+'</div></div>'+
-          '<div style="text-align:right;">'+
-            '<div style="font-size:13px;font-weight:900;color:'+(bal<0?'#E53E3E':'#E07820')+';">'+pcFmt(bal)+'</div>'+
-            '<div style="font-size:10px;color:#9CA3AF;">In:'+pcFmt(e.totalIn)+' Out:'+pcFmt(e.totalOut)+'</div>'+
-          '</div>'+
-        '</div>'+
-      '</div>';
-    }).join('');
-  }
-
-  // Recent txns
-  var allTxns = projExp.map(function(r){return Object.assign({},r,{_type:'out'});})
-    .concat(projIn.map(function(r){return Object.assign({},r,{_type:'in'});}))
-    .sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,12);
-
-  var txnHtml = allTxns.length ? allTxns.map(function(t){
-    var isIn = t._type==='in';
-    var cat  = t.category||'—';
-    var cfg  = PC_CAT[cat]||{e:isIn?'💰':'📦',c:isIn?'#2DAE6A':'#9CA3AF'};
-    var emp  = PC_EMPLOYEES.find(function(e){return e.id===t.employee_id;})||{};
-    var empName = emp.first_name?(emp.first_name+(emp.last_name?' '+emp.last_name:'')):'';
-    return '<div class="pc-trow">'+
-      '<div class="pc-tico" style="background:'+(isIn?'#DCFCE7':cfg.c+'22')+';">'+(isIn?'💰':cfg.e)+'</div>'+
-      '<div class="pc-tinfo">'+
-        '<div class="pc-tparty">'+(isIn?(empName||'Cash In'):(t.party_name||t.purpose||'—'))+'</div>'+
-        '<div class="pc-tmeta">'+(isIn?'Cash Received':cat)+(empName&&!isIn?' · '+empName:'')+'</div>'+
-      '</div>'+
-      '<div>'+
-        '<div class="pc-tamt" style="color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'−')+pcFmt(t.amount)+'</div>'+
-        '<div class="pc-tdate">'+pcFmtDate(t.date)+'</div>'+
-      '</div>'+
+function pcRefresh(){
+  var el=document.getElementById('pc-main');if(!el)return;
+  var p=PC_ACTIVE;
+  if(!p){el.innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:44px;">🏗️</div><p style="color:#6B7280;font-weight:600;margin-top:10px;">No projects. Tap ⚙ to add one.</p></div>';return;}
+  var pIn=PC_IN.filter(function(r){return r.project_id===p.id||!r.project_id;});
+  var pEx=PC_EXP.filter(function(r){return r.project_id===p.id;});
+  var totalIn=pIn.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var totalOut=pEx.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var bal=totalIn-totalOut;
+  var today=new Date().toISOString().split('T')[0];
+  var wk=new Date();wk.setDate(wk.getDate()-6);
+  var todayOut=pEx.filter(function(r){return r.date===today;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var weekOut=pEx.filter(function(r){return new Date(r.date)>=wk;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var empSet={};PC_IN.forEach(function(r){empSet[r.employee_id]=1;});pEx.forEach(function(r){empSet[r.employee_id]=1;});
+  var empRows=Object.keys(empSet).map(function(id){
+    var n=pcEmpName(id)||'Unknown';var b=pcEmpBal(id);
+    return '<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+
+      '<div style="width:36px;height:36px;border-radius:50%;background:#FEF0E0;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#E07820;flex-shrink:0;">'+n[0]+'</div>'+
+      '<div style="flex:1;"><div style="font-size:14px;font-weight:700;color:#1E2547;">'+n+'</div></div>'+
+      '<div style="text-align:right;"><div style="font-size:15px;font-weight:900;color:'+(b<0?'#E53E3E':'#E07820')+';">'+pcFmt(b)+'</div>'+
+      '<div style="font-size:11px;color:#9CA3AF;">In:'+pcFmt(PC_IN.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0))+'</div></div>'+
     '</div>';
-  }).join('') : '<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px;">No transactions yet</div>';
-
-  el.innerHTML =
-    // Balance card
-    '<div class="pc-balance-card">'+
-      '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;">'+
-        '<div style="width:34px;height:34px;background:rgba(255,255,255,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🏗️</div>'+
-        '<div><div style="font-size:15px;font-weight:800;color:#fff;">'+proj.name+'</div>'+
-        '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">'+(proj.location||proj.addr||'')+'</div></div>'+
-      '</div>'+
-      '<div class="pc-bc-label">Current Cash Balance / शिल्लक</div>'+
-      '<div class="pc-bc-amount">'+pcFmt(balance)+'</div>'+
-    '</div>'+
-    // Stat grid
-    '<div class="pc-stat-grid">'+
-      '<div class="pc-stat-card"><div class="pc-stat-ico" style="background:#FEE2E2;">📉</div><div class="pc-stat-label">Today / आज</div><div class="pc-stat-val">'+pcFmt(todayOut)+'</div></div>'+
-      '<div class="pc-stat-card"><div class="pc-stat-ico" style="background:#FEF0E0;">📅</div><div class="pc-stat-label">This Week / या आठवड्यात</div><div class="pc-stat-val">'+pcFmt(weekOut)+'</div></div>'+
-      '<div class="pc-stat-card"><div class="pc-stat-ico" style="background:#DCFCE7;">💼</div><div class="pc-stat-label">Total Received / एकूण</div><div class="pc-stat-val">'+pcFmt(totalIn)+'</div></div>'+
-      '<div class="pc-stat-card"><div class="pc-stat-ico" style="background:#F3F4F6;">💸</div><div class="pc-stat-label">Total Spent / एकूण खर्च</div><div class="pc-stat-val">'+pcFmt(totalOut)+'</div></div>'+
-    '</div>'+
-    // Quick actions
-    '<div class="pc-sec-ttl">QUICK ACTIONS / जलद कृती</div>'+
-    '<div class="pc-qa-list">'+
-      '<button class="pc-qa-btn pc-qa-orange" onclick="pcOpenExpense()">'+
-        '<span class="pc-qa-icon">＋</span>'+
-        '<span>Add Expense / खर्च जोडा<span class="pc-qa-sub">नवीन खर्च नोंद करा</span></span>'+
-      '</button>'+
-      '<button class="pc-qa-btn pc-qa-green" onclick="pcOpenCashIn()">'+
-        '<span class="pc-qa-icon">↙</span>'+
-        '<span>Cash Received / रोख प्राप्त<span class="pc-qa-sub">रोख रक्कम मिळाली</span></span>'+
-      '</button>'+
-    '</div>'+
-    // Employee balances
-    (empCards ?
-      '<div class="pc-sec-ttl">EMPLOYEE BALANCES / कर्मचारी शिल्लक</div>'+
-      '<div style="padding:0 16px;">'+empCards+'</div>'
-    : '')+
-    // Recent transactions
-    '<div class="pc-sec-ttl">RECENT TRANSACTIONS / अलीकडील व्यवहार</div>'+
-    '<div style="background:#fff;border-radius:16px;margin:0 16px 16px;padding:14px;box-shadow:0 2px 10px rgba(0,0,0,.06);">'+
-      txnHtml+
-    '</div>';
+  }).join('');
+  var txns=pEx.map(function(r){return Object.assign({},r,{_in:false});}).concat(pIn.map(function(r){return Object.assign({},r,{_in:true});})).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,15);
+  var txnHtml=txns.map(function(t){
+    var cfg=PC_CAT[t.category]||{e:'📦',c:'#9CA3AF'};var n=pcEmpName(t.employee_id);
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+
+      '<div style="width:38px;height:38px;border-radius:10px;background:'+(t._in?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(t._in?'💰':cfg.e)+'</div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(t._in?(n||'Cash In'):(t.party_name||t.purpose||'—'))+'</div>'+
+      '<div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(t._in?'Payment In':t.category)+(n&&!t._in?' · '+n:'')+'</div>'+
+      '<div style="font-size:11px;color:#9CA3AF;">'+(t.purpose||'')+'</div></div>'+
+      '<div style="text-align:right;flex-shrink:0;"><div style="font-size:15px;font-weight:900;color:'+(t._in?'#2DAE6A':'#E53E3E')+'">'+(t._in?'+':'−')+pcFmt(t.amount)+'</div>'+
+      '<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div></div></div>';
+  }).join('')||'<div style="text-align:center;padding:30px;color:#9CA3AF;"><div style="font-size:40px;margin-bottom:10px;">🧾</div><p style="font-weight:600;">No transactions yet</p></div>';
+  el.innerHTML=
+    '<div style="margin:0 18px 16px;background:#1E2547;border-radius:18px;padding:20px 22px 22px;position:relative;overflow:hidden;">'+
+    '<div style="position:absolute;top:-30px;right:-30px;width:140px;height:140px;background:rgba(255,255,255,.04);border-radius:50%;"></div>'+
+    '<div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:14px;">'+
+    '<div style="width:34px;height:34px;background:rgba(255,255,255,.12);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">🏗️</div>'+
+    '<div><div style="font-size:15px;font-weight:800;color:#fff;">'+p.name+'</div>'+
+    '<div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">'+(p.location||'')+'</div></div></div>'+
+    '<div style="font-size:13px;color:rgba(255,255,255,.6);font-weight:500;margin-bottom:6px;">Current Cash Balance / शिल्लक</div>'+
+    '<div style="font-size:36px;font-weight:900;color:#fff;letter-spacing:-1px;">'+pcFmt(bal)+'</div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px;">'+
+    '<div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="width:38px;height:38px;border-radius:10px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;">📉</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Today / आज</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(todayOut)+'</div></div>'+
+    '<div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="width:38px;height:38px;border-radius:10px;background:#FEF0E0;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;">📅</div><div style="font-size:12px;color:#6B7280;font-weight:600;">This Week / या आठवड्यात</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(weekOut)+'</div></div>'+
+    '<div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="width:38px;height:38px;border-radius:10px;background:#DCFCE7;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;">💼</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Received / एकूण</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(totalIn)+'</div></div>'+
+    '<div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="width:38px;height:38px;border-radius:10px;background:#F3F4F6;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;">💸</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Spent / एकूण खर्च</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(totalOut)+'</div></div></div>'+
+    '<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1.5px;padding:4px 18px 12px;">QUICK ACTIONS / जलद कृती</div>'+
+    '<div style="padding:0 18px;display:flex;flex-direction:column;gap:10px;padding-bottom:6px;">'+
+    '<button onclick="pcOpenExpense()" style="display:flex;align-items:center;gap:14px;padding:17px 20px;border-radius:18px;font-size:15px;font-weight:800;cursor:pointer;border:none;width:100%;background:#E07820;color:#fff;box-shadow:0 4px 16px rgba(224,120,32,.35);text-align:left;">'+
+    '<span style="font-size:20px;flex-shrink:0;">＋</span><span>Add Expense / खर्च जोडा<span style="font-size:12px;opacity:.7;display:block;margin-top:2px;font-weight:600;">नवीन खर्च नोंद करा</span></span></button>'+
+    '<button onclick="pcOpenCashIn()" style="display:flex;align-items:center;gap:14px;padding:17px 20px;border-radius:18px;font-size:15px;font-weight:800;cursor:pointer;border:1.5px solid #2DAE6A;width:100%;background:#fff;color:#2DAE6A;text-align:left;">'+
+    '<span style="font-size:20px;flex-shrink:0;">↙</span><span>Cash Received / रोख प्राप्त<span style="font-size:12px;opacity:.7;display:block;margin-top:2px;font-weight:600;">रोख रक्कम मिळाली</span></span></button></div>'+
+    (empRows?'<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1.5px;padding:14px 18px 10px;">EMPLOYEE BALANCES</div>'+
+    '<div style="background:#fff;border-radius:18px;margin:0 18px 16px;padding:4px 16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">'+empRows+'</div>':'')+
+    '<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1.5px;padding:4px 18px 12px;">RECENT TRANSACTIONS / अलीकडील व्यवहार</div>'+
+    '<div style="background:#fff;border-radius:18px;margin:0 18px 16px;padding:4px 16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">'+txnHtml+'</div>';
 }
 
-// ── MANAGE PROJECTS ────────────────────────────────────────
 function pcOpenManageProjects(){
-  var projList = PC_PROJECTS.map(function(p){
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:'+(PC_ACTIVE_PROJ&&p.id===PC_ACTIVE_PROJ.id?'#FEF0E0':'#EFEBE4')+';border-radius:12px;margin-bottom:8px;border:1.5px solid '+(PC_ACTIVE_PROJ&&p.id===PC_ACTIVE_PROJ.id?'#E07820':'transparent')+';cursor:pointer;" onclick="pcSelectProj(\''+p.id+'\')">'+
-      '<div style="width:34px;height:34px;background:#FEF0E0;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;">🏗️</div>'+
-      '<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+p.name+'</div><div style="font-size:11px;color:#6B7280;">'+(p.location||p.addr||'No address')+'</div></div>'+
-      (PC_ACTIVE_PROJ&&p.id===PC_ACTIVE_PROJ.id?'<span style="color:#E07820;font-size:17px;">✓</span>':'')+
+  var list=PC_PROJS.map(function(p){
+    var sel=PC_ACTIVE&&p.id===PC_ACTIVE.id;
+    return '<div data-id="'+p.id+'" onclick="pcSetActive(this.getAttribute(\"data-id\"))" style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:'+(sel?'#FEF0E0':'#EFEBE4')+';border-radius:13px;margin-bottom:10px;border:1.5px solid '+(sel?'#E07820':'transparent')+';cursor:pointer;">'+
+    '<div style="width:36px;height:36px;background:#FEF0E0;border-radius:9px;display:flex;align-items:center;justify-content:center;">🏗️</div>'+
+    '<div style="flex:1;"><div style="font-size:14px;font-weight:700;">'+p.name+'</div><div style="font-size:11px;color:#6B7280;">'+(p.location||'No address')+'</div></div>'+
+    (sel?'<span style="color:#E07820;font-size:18px;">✓</span>':'')+
     '</div>';
   }).join('');
-
-  document.getElementById('pc-sheet-title').textContent = '⚙ Manage Projects';
-  document.getElementById('pc-sheet-body').innerHTML =
-    (projList||'<div style="text-align:center;padding:20px;color:#9CA3AF;">No projects yet</div>')+
-    '<div style="border-top:1px solid #E2DDD5;margin-top:12px;padding-top:14px;">'+
-      '<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;">➕ Link Project</div>'+
-      '<div style="font-size:12px;color:#6B7280;margin-bottom:8px;">Projects are managed in the Projects module. Select from existing projects:</div>'+
-      '<select id="pc-new-proj-sel" class="fsel" style="width:100%;margin-bottom:8px;">'+
-        '<option value="">— Select Project —</option>'+
-        PC_PROJECTS.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('')+
-      '</select>'+
-    '</div>';
-  document.getElementById('pc-sheet-foot').innerHTML =
-    '<button class="btn btn-outline" onclick="closePCSheet()">Close</button>'+
-    '<button class="btn" style="background:#E07820;color:white;" onclick="pcSelectProjFromModal()">✓ Set Active</button>';
+  document.getElementById('pc-sheet-title').textContent='Manage Projects / प्रकल्प';
+  document.getElementById('pc-sheet-body').innerHTML=list||'<div style="text-align:center;padding:20px;color:#9CA3AF;">No projects. Add in Projects module.</div>';
+  document.getElementById('pc-sheet-foot').innerHTML='<button class="btn" style="background:#E07820;color:#fff;width:100%;" onclick="closePCSheet()">Done</button>';
   openPCSheet();
 }
+function pcSetActive(id){var p=PC_PROJS.find(function(x){return x.id===id;});if(p){PC_ACTIVE=p;pcRenderTabs();pcRefresh();closePCSheet();}}
 
-function pcSelectProjFromModal(){
-  var sel = document.getElementById('pc-new-proj-sel');
-  if(sel&&sel.value){
-    var p = PC_PROJECTS.find(function(x){return x.id===sel.value;});
-    if(p){ PC_ACTIVE_PROJ=p; pcRenderTabs(); pcRender(); }
-  }
-  closePCSheet();
-}
-
-function pcSelectProj(id){
-  var p = PC_PROJECTS.find(function(x){return x.id===id;});
-  if(p){ PC_ACTIVE_PROJ=p; pcRenderTabs(); pcRender(); closePCSheet(); }
-}
-
-// ── CASH IN FORM ────────────────────────────────────────────
 async function pcOpenCashIn(){
-  if(!PC_EMPLOYEES.length) await initPettyCash();
-  var empOpts = PC_EMPLOYEES.map(function(e){
-    var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
-    var bal = PC_CASH_IN.filter(function(r){return r.employee_id===e.id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)
-            - PC_EXPENSES.filter(function(r){return r.employee_id===e.id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-    return '<option value="'+e.id+'">'+n+' (Bal: ₹'+Math.round(bal)+')</option>';
-  }).join('');
-
-  document.getElementById('pc-sheet-title').textContent = '↙ Cash Received / रोख प्राप्त';
-  document.getElementById('pc-sheet-body').innerHTML =
-    '<div style="background:#DCFCE7;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;font-weight:700;color:#2DAE6A;">Cash given to employee — not linked to any project</div>'+
-    '<div class="pc-form-card">'+
-      '<div class="pc-ftitle">Basic Info</div>'+
-      '<div class="g2">'+
-        '<div><label class="flbl">Date *</label><input id="pc-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
-        '<div><label class="flbl">Payment Mode</label><select id="pc-pay-mode" class="fsel"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI</option><option value="Bank Transfer">🏦 Bank Transfer</option></select></div>'+
-      '</div>'+
-      '<label class="flbl">Given To (Employee) *</label>'+
-      '<select id="pc-emp" class="fsel"><option value="">— Select Employee —</option>'+empOpts+'</select>'+
-      '<label class="flbl">Given By</label>'+
-      '<select id="pc-given-by" class="fsel"><option value="HO">Head Office</option><option value="Site Incharge">Site Incharge</option>'+
-        PC_EMPLOYEES.map(function(e){var n=(e.first_name||'')+(e.last_name?' '+e.last_name:''); return '<option value="'+n+'">'+n+'</option>';}).join('')+
-      '</select>'+
-      '<label class="flbl">Amount (₹) *</label>'+
-      '<input id="pc-amount" class="finp" type="number" step="0.01" placeholder="0.00" style="font-size:22px;font-weight:900;">'+
-      '<label class="flbl">Remarks</label>'+
-      '<input id="pc-remarks" class="finp" placeholder="Optional">'+
-    '</div>';
-  document.getElementById('pc-sheet-foot').innerHTML =
+  if(!PC_EMPS.length)await initPettyCash();
+  var eOpts=PC_EMPS.map(function(e){var n=pcEmpName(e.id);var b=pcEmpBal(e.id);return '<option value="'+e.id+'">'+n+' (Bal: ₹'+Math.round(b)+')</option>';}).join('');
+  var byOpts='<option value="HO">Head Office / Management</option><option value="Site Incharge">Site Incharge</option>'+PC_EMPS.map(function(e){return '<option>'+pcEmpName(e.id)+'</option>';}).join('');
+  document.getElementById('pc-sheet-title').textContent='↙ Cash Received / रोख प्राप्त';
+  document.getElementById('pc-sheet-body').innerHTML=
+    '<div style="background:#DCFCE7;border-radius:12px;padding:10px 14px;margin-bottom:14px;font-size:12px;font-weight:700;color:#2DAE6A;">Cash given to employee — not linked to any project</div>'+
+    '<div class="g2"><div><label class="flbl">Date *</label><input id="pcf-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+    '<div><label class="flbl">Mode</label><select id="pcf-mode" class="fsel"><option>Cash</option><option>UPI</option><option>Bank Transfer</option></select></div></div>'+
+    '<label class="flbl">Given To *</label><select id="pcf-emp" class="fsel"><option value="">— Select Employee —</option>'+eOpts+'</select>'+
+    '<label class="flbl">Given By</label><select id="pcf-by" class="fsel">'+byOpts+'</select>'+
+    '<label class="flbl">Amount (₹) *</label>'+
+    '<div style="position:relative;"><span style="position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;pointer-events:none;">₹</span>'+
+    '<input id="pcf-amt" class="finp" type="number" placeholder="0.00" style="padding-left:30px;font-size:24px;font-weight:900;" inputmode="decimal"></div>'+
+    '<label class="flbl">Remarks</label><input id="pcf-rem" class="finp" placeholder="Optional">';
+  document.getElementById('pc-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closePCSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#2DAE6A;color:white;" onclick="pcSaveCashIn()">↙ Save Cash In</button>';
+    '<button class="btn" style="background:#2DAE6A;color:#fff;" onclick="pcSaveCashIn()">↙ Save</button>';
   openPCSheet();
 }
-
 async function pcSaveCashIn(){
-  var date    = (document.getElementById('pc-date')||{value:''}).value;
-  var empId   = (document.getElementById('pc-emp')||{value:''}).value;
-  var givenBy = (document.getElementById('pc-given-by')||{value:''}).value;
-  var amount  = parseFloat((document.getElementById('pc-amount')||{value:0}).value)||0;
-  var payMode = (document.getElementById('pc-pay-mode')||{value:'Cash'}).value;
-  var remarks = (document.getElementById('pc-remarks')||{value:''}).value.trim()||null;
-  if(!date||!empId||!amount){ toast('Date, employee and amount required','warning'); return; }
-  try{
-    toast('Saving...','info');
-    var res = await sbInsert('petty_cash_in',{
-      date:date, employee_id:empId, given_by:givenBy||null,
-      amount:amount, payment_mode:payMode, remarks:remarks
-    });
-    if(res&&res[0]) PC_CASH_IN.unshift(res[0]);
-    toast('✓ Cash In saved!','success');
-    closePCSheet(); pcRender();
-  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var date=g('pcf-date'),empId=g('pcf-emp'),givenBy=g('pcf-by'),mode=g('pcf-mode'),rem=g('pcf-rem').trim()||null;
+  var amount=parseFloat(g('pcf-amt'))||0;
+  if(!date||!empId||!amount){toast('Date, employee and amount required','warning');return;}
+  try{toast('Saving...','info');
+    var r=await sbInsert('petty_cash_in',{date:date,employee_id:empId,given_by:givenBy||null,amount:amount,payment_mode:mode,remarks:rem});
+    if(r&&r[0])PC_IN.unshift(r[0]);
+    toast('✓ Cash In saved / जतन झाले','success');closePCSheet();pcRefresh();
+  }catch(e){toast('Error: '+e.message,'error');}
 }
 
-// ── EXPENSE FORM ────────────────────────────────────────────
 async function pcOpenExpense(){
-  if(!PC_EMPLOYEES.length) await initPettyCash();
-  var empOpts = PC_EMPLOYEES.map(function(e){
-    var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
-    var bal = PC_CASH_IN.filter(function(r){return r.employee_id===e.id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)
-            - PC_EXPENSES.filter(function(r){return r.employee_id===e.id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-    return '<option value="'+e.id+'">'+n+' (Bal: ₹'+Math.round(bal)+')</option>';
-  }).join('');
-  var catOpts = Object.keys(PC_CAT).map(function(c){return '<option value="'+c+'">'+PC_CAT[c].e+' '+c+'</option>';}).join('');
-  var projOpts = PC_PROJECTS.map(function(p){
-    return '<option value="'+p.id+'"'+(PC_ACTIVE_PROJ&&p.id===PC_ACTIVE_PROJ.id?' selected':'')+'>'+p.name+'</option>';
-  }).join('');
-
-  document.getElementById('pc-sheet-title').textContent = '＋ Add Expense / खर्च जोडा';
-  document.getElementById('pc-sheet-body').innerHTML =
-    '<div class="pc-form-card">'+
-      '<div class="pc-ftitle">Basic Info / मूलभूत माहिती</div>'+
-      '<div class="g2">'+
-        '<div><label class="flbl">Date *</label><input id="pc-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
-        '<div><label class="flbl">Payment Mode</label><select id="pc-pay-mode" class="fsel"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI</option><option value="Bank Transfer">🏦 Bank</option></select></div>'+
-      '</div>'+
-      '<label class="flbl">Site / Project *</label>'+
-      '<select id="pc-proj" class="fsel"><option value="">— Select Project —</option>'+projOpts+'</select>'+
-    '</div>'+
-    '<div class="pc-form-card">'+
-      '<div class="pc-ftitle">Party Details / पार्टी तपशील</div>'+
-      '<label class="flbl">Spent By (Employee) *</label>'+
-      '<select id="pc-emp" class="fsel"><option value="">— Select Employee —</option>'+empOpts+'</select>'+
-      '<label class="flbl">Paid To / Party Name</label>'+
-      '<input id="pc-party" class="finp" placeholder="Enter name...">'+
-    '</div>'+
-    '<div class="pc-form-card">'+
-      '<div class="pc-ftitle">Expense Details / खर्च तपशील</div>'+
-      '<label class="flbl">Amount (₹) *</label>'+
-      '<input id="pc-amount" class="finp" type="number" step="0.01" placeholder="0.00" style="font-size:22px;font-weight:900;">'+
-      '<div class="g2">'+
-        '<div><label class="flbl">Category *</label><select id="pc-cat" class="fsel"><option value="" disabled selected>Select...</option>'+catOpts+'</select></div>'+
-        '<div><label class="flbl">Payment Mode</label><select id="pc-pay-mode2" class="fsel"><option value="Cash">💵 Cash</option><option value="UPI">📱 UPI</option></select></div>'+
-      '</div>'+
-      '<label class="flbl">Purpose / Description *</label>'+
-      '<textarea id="pc-purpose" class="finp" rows="2" placeholder="Describe the expense..." style="min-height:60px;resize:none;"></textarea>'+
-      '<label class="flbl">Remarks</label>'+
-      '<input id="pc-remarks" class="finp" placeholder="Optional">'+
-    '</div>';
-  document.getElementById('pc-sheet-foot').innerHTML =
+  if(!PC_EMPS.length)await initPettyCash();
+  var eOpts=PC_EMPS.map(function(e){var n=pcEmpName(e.id);var b=pcEmpBal(e.id);return '<option value="'+e.id+'">'+n+' (Bal: ₹'+Math.round(b)+')</option>';}).join('');
+  var pOpts=PC_PROJS.map(function(p){return '<option value="'+p.id+'"'+(PC_ACTIVE&&p.id===PC_ACTIVE.id?' selected':'')+'>'+p.name+'</option>';}).join('');
+  var cOpts=Object.keys(PC_CAT).map(function(c){return '<option value="'+c+'">'+PC_CAT[c].e+' '+c+' </option>';}).join('');
+  document.getElementById('pc-sheet-title').textContent='＋ Add Expense / खर्च जोडा';
+  document.getElementById('pc-sheet-body').innerHTML=
+    '<div class="g2"><div><label class="flbl">Date *</label><input id="pcf-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+    '<div><label class="flbl">Mode</label><select id="pcf-mode" class="fsel"><option>Cash</option><option>UPI</option><option>Bank Transfer</option></select></div></div>'+
+    '<label class="flbl">Site / Project *</label><select id="pcf-proj" class="fsel"><option value="">— Select —</option>'+pOpts+'</select>'+
+    '<label class="flbl">Spent By (Employee) *</label><select id="pcf-emp" class="fsel"><option value="">— Select —</option>'+eOpts+'</select>'+
+    '<label class="flbl">Paid To / Party Name</label><input id="pcf-party" class="finp" placeholder="Enter full name...">'+
+    '<label class="flbl">Amount (₹) *</label>'+
+    '<div style="position:relative;"><span style="position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:17px;font-weight:900;pointer-events:none;">₹</span>'+
+    '<input id="pcf-amt" class="finp" type="number" placeholder="0.00" style="padding-left:30px;font-size:24px;font-weight:900;" inputmode="decimal"></div>'+
+    '<div class="g2"><div><label class="flbl">Category *</label><select id="pcf-cat" class="fsel"><option value="" disabled selected>Select...</option>'+cOpts+'</select></div>'+
+    '<div><label class="flbl">Mode</label><select id="pcf-mode2" class="fsel"><option>Cash</option><option>UPI</option><option>Bank Transfer</option></select></div></div>'+
+    '<label class="flbl">Purpose / Description *</label><textarea id="pcf-pur" class="finp" style="min-height:70px;resize:none;" placeholder="Describe the expense or payment..."></textarea>'+
+    '<label class="flbl">Remarks</label><input id="pcf-rem" class="finp" placeholder="Optional">';
+  document.getElementById('pc-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closePCSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#E07820;color:white;" onclick="pcSaveExpense()">＋ Save Expense</button>';
+    '<button class="btn" style="background:#E07820;color:#fff;" onclick="pcSaveExpense()">Submit Voucher / जतन करा</button>';
   openPCSheet();
 }
-
 async function pcSaveExpense(){
-  var date    = (document.getElementById('pc-date')||{value:''}).value;
-  var empId   = (document.getElementById('pc-emp')||{value:''}).value;
-  var projSel = document.getElementById('pc-proj');
-  var projId  = projSel?projSel.value:'';
-  var projName= projSel&&projSel.selectedIndex>0?projSel.options[projSel.selectedIndex].text:'';
-  var cat     = (document.getElementById('pc-cat')||{value:''}).value;
-  var party   = (document.getElementById('pc-party')||{value:''}).value.trim()||null;
-  var amount  = parseFloat((document.getElementById('pc-amount')||{value:0}).value)||0;
-  var payMode = (document.getElementById('pc-pay-mode')||{value:'Cash'}).value;
-  var purpose = (document.getElementById('pc-purpose')||{value:''}).value.trim();
-  var remarks = (document.getElementById('pc-remarks')||{value:''}).value.trim()||null;
-  if(!date||!empId||!projId||!cat||!amount||!purpose){ toast('Please fill all required fields','warning'); return; }
-  // Check balance
-  var bal = PC_CASH_IN.filter(function(r){return r.employee_id===empId;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)
-          - PC_EXPENSES.filter(function(r){return r.employee_id===empId;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
-  if(amount > bal){ toast('Insufficient balance! Available: ₹'+Math.round(bal),'warning'); return; }
-  try{
-    toast('Saving...','info');
-    var res = await sbInsert('petty_cash_expense',{
-      date:date, employee_id:empId, project_id:projId, project_name:projName,
-      category:cat, party_name:party, amount:amount,
-      payment_mode:payMode, purpose:purpose, remarks:remarks
-    });
-    if(res&&res[0]) PC_EXPENSES.unshift(res[0]);
-    toast('✓ Expense saved / जतन झाले','success');
-    closePCSheet(); pcRender();
-  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var date=g('pcf-date'),empId=g('pcf-emp'),mode=g('pcf-mode');
+  var projEl=document.getElementById('pcf-proj');
+  var projId=projEl?projEl.value:'',projName=projEl&&projEl.selectedIndex>0?projEl.options[projEl.selectedIndex].text:'';
+  var cat=g('pcf-cat'),party=g('pcf-party').trim()||null,amount=parseFloat(g('pcf-amt'))||0;
+  var purpose=g('pcf-pur').trim(),rem=g('pcf-rem').trim()||null;
+  if(!date||!empId||!projId||!cat||!amount||!purpose){toast('Please fill all required fields','warning');return;}
+  var bal=pcEmpBal(empId);
+  if(amount>bal){toast('Insufficient balance! Available: ₹'+Math.round(bal),'warning');return;}
+  try{toast('Saving...','info');
+    var r=await sbInsert('petty_cash_expense',{date:date,employee_id:empId,project_id:projId,project_name:projName,category:cat,party_name:party,amount:amount,payment_mode:mode,purpose:purpose,remarks:rem});
+    if(r&&r[0])PC_EXP.unshift(r[0]);
+    toast('✓ Voucher Saved / जतन झाले','success');closePCSheet();pcRefresh();
+  }catch(e){toast('Error: '+e.message,'error');}
 }
-
 
 </script>
 
