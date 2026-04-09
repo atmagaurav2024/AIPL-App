@@ -1262,6 +1262,7 @@ input,select,textarea{font-size:16px !important;}
 .drawer-name{font-size:16px;font-weight:900;color:white;}
 .drawer-role{font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;}
 .drawer-body{flex:1;overflow-y:auto;padding:12px 0;}
+.drawer-items{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0;}
 .drawer-section{font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:.8px;padding:12px 20px 6px;}
 .drawer-item{display:flex;align-items:center;gap:14px;padding:13px 20px;cursor:pointer;transition:background .15s;}
 .drawer-item:active{background:#F0F4F8;}
@@ -1565,7 +1566,7 @@ input,select,textarea{font-size:16px !important;}
       </div>
     </div>
   </div>
-  <div class="drawer-items">
+  <div class="drawer-items" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0;">
     <div class="drawer-item" onclick="showApp('dashboard');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E8F5E9;">🏠</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Dashboard</div><div class="drawer-item-sub">Home screen</div></div>
@@ -3042,7 +3043,8 @@ function initRegister(){
   renderRegStep();
 }
 
-function renderRegStep(){
+async function renderRegStep(){
+  if(!(CAT_DATA.role&&CAT_DATA.role.length)) await loadCategories();
   var body=document.getElementById('reg-body');
   var foot=document.getElementById('reg-foot');
 
@@ -4512,213 +4514,8 @@ function editRecord(type,id){
       '<label class="flbl">Date of Joining</label><div class="date-wrap"><input class="finp" type="text" id="e-udoj-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="e-udoj" value="'+(u.doj||'')+'" onchange="updateDateDisplay(this)"></div>'+
       '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="e-urole" class="fsel">'+roleOpts+'</select></div><div><label class="flbl">Status</label><select id="e-ustatus" class="fsel">'+stOpts+'</select></div></div>'+
       '<div class="g2"><div><label class="flbl">Department</label><select id="e-udept" class="fsel">'+deptOpts+'</select></div><div><label class="flbl">Project</label><select id="e-uproject" class="fsel">'+projOpts+'</select></div></div>'+
-      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="e-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location</label><select id="e-ulocation" class="fsel">'+['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'].map(function(l){return '<option'+(u.location===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select></div></div>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #E6510020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div><div style="font-size:11px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
-      '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="e-uphone" class="finp" value="'+esc(u.phone||'')+'"></div><div><label class="flbl">Alternate Mobile</label><input id="e-uphone2" class="finp" value="'+esc(u.phone2||'')+'"></div></div>'+
-      '<label class="flbl">Residential Address</label><textarea id="e-uaddress" class="ftxt" rows="2">'+esc(u.address||'')+'</textarea>'+
-      '<label class="flbl">Permanent Address</label><textarea id="e-upermanent" class="ftxt" rows="2">'+esc(u.permanent||'')+'</textarea>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #6A1B9A20;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#6A1B9A20;display:flex;align-items:center;justify-content:center;font-size:12px;">🪪</div><div style="font-size:11px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.7px;">KYC Details</div></div>'+
-      '<div class="g2"><div><label class="flbl">Aadhar Number</label><input id="e-uaadhar" class="finp" value="'+esc(u.aadhar||'')+'"></div><div><label class="flbl">PAN Number</label><input id="e-upan" class="finp" value="'+esc(u.pan||'')+'"></div></div>'+
-      '<div class="g2"><div><label class="flbl">PF Number</label><input id="e-upf" class="finp" value="'+esc(u.pf||'')+'"></div><div><label class="flbl">ESIC Number</label><input id="e-uesic" class="finp" value="'+esc(u.esic||'')+'"></div></div>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #C6282820;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:12px;">🏦</div><div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Bank Details</div></div>'+
-      '<label class="flbl">Bank Name</label><input id="e-ubank" class="finp" value="'+esc(u.bank||'')+'">'+
-      '<div class="g2"><div><label class="flbl">Account Number</label><input id="e-uaccno" class="finp" value="'+esc(u.accNo||'')+'"></div><div><label class="flbl">IFSC Code</label><input id="e-uifsc" class="finp" value="'+esc(u.ifsc||'')+'"></div></div>'+
-      '<label class="flbl">Account Holder Name</label><input id="e-uaccname" class="finp" value="'+esc(u.accName||'')+'">'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #C6282820;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:12px;">🚨</div><div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Emergency Contact</div></div>'+
-      '<div class="g2"><div><label class="flbl">Contact Name</label><input id="e-uecname" class="finp" value="'+esc(u.ecName||'')+'"></div><div><label class="flbl">Relationship</label><select id="e-uecrel" class="fsel">'+['','Spouse','Father','Mother','Sibling','Other'].map(function(r){return '<option value="'+r+'"'+(u.ecRel===r?' selected':'')+'>'+r+'</option>';}).join('')+'</select></div></div>'+
-      '<label class="flbl">Emergency Mobile</label><input id="e-uecphone" class="finp" value="'+esc(u.ecPhone||'')+'">'+
-'<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #1565C020;margin:12px 0 8px;">'+
-      '<div style="width:24px;height:24px;border-radius:7px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:12px;">📎</div>'+
-      (u.photoUrl||u.aadharUrl||u.panUrl ?
-        '<div style="margin-bottom:10px;"><div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:6px;">UPLOADED DOCUMENTS</div>'+
-        '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">'+
-          (u.photoUrl?'<a href="'+u.photoUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#E3F2FD;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:#1565C0;text-decoration:none;">🖼️ View Photo</a>':'')+
-          (u.aadharUrl?'<a href="'+u.aadharUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#F3E5F5;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:#6A1B9A;text-decoration:none;">🪪 View Aadhar</a>':'')+
-          (u.panUrl?'<a href="'+u.panUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:5px;background:#E8F5E9;border-radius:10px;padding:7px 12px;font-size:12px;font-weight:700;color:#2E7D32;text-decoration:none;">📄 View PAN</a>':'')+
-        '</div></div>'
-      : '') +
-      '<div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Documents & Photo</div></div>'+
-      '<label class="flbl">Passport Photo</label>'+
-      '<div class="upload-box" onclick="document.getElementById(\'e-uphoto\').click()">'+
-        '<div class="photo-preview" id="e-uphoto-prev">📷</div>'+
-        '<input type="file" id="e-uphoto" accept="image/*" onchange="handleFilePreview(\'e-uphoto\',\'e-uphoto-prev\')">'+
-        '<div class="upload-label">Tap to upload passport photo</div>'+
-        '<div class="upload-progress-wrap" id="e-uphoto-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="e-uphoto-prog-name"></span><span class="upload-progress-pct" id="e-uphoto-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="e-uphoto-prog-fill"></div></div></div>'+
-      '</div>'+
-      '<div class="g2">'+
-        '<div><label class="flbl">Aadhar Card</label>'+
-        '<div class="upload-box" onclick="document.getElementById(\'e-uaadhar-doc\').click()">'+
-          '<div id="e-uaadhar-doc-prev" class="upload-preview"></div>'+
-          '<input type="file" id="e-uaadhar-doc" accept="image/*,application/pdf" onchange="handleFilePreview(\'e-uaadhar-doc\',\'e-uaadhar-doc-prev\')">'+
-          '<div class="upload-label">📄 Upload Aadhar</div>'+
-          '<div class="upload-progress-wrap" id="e-uaadhar-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="e-uaadhar-doc-prog-name"></span><span class="upload-progress-pct" id="e-uaadhar-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="e-uaadhar-doc-prog-fill"></div></div></div>'+
-        '</div></div>'+
-        '<div><label class="flbl">PAN Card</label>'+
-        '<div class="upload-box" onclick="document.getElementById(\'e-upan-doc\').click()">'+
-          '<div id="e-upan-doc-prev" class="upload-preview"></div>'+
-          '<input type="file" id="e-upan-doc" accept="image/*,application/pdf" onchange="handleFilePreview(\'e-upan-doc\',\'e-upan-doc-prev\')">'+
-          '<div class="upload-label">📄 Upload PAN</div>'+
-          '<div class="upload-progress-wrap" id="e-upan-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="e-upan-doc-prog-name"></span><span class="upload-progress-pct" id="e-upan-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="e-upan-doc-prog-fill"></div></div></div>'+
-        '</div></div>'+
-      '</div>'+
-      '';
-    saveCall='updateUser(\''+id+'\')'; 
-    setTimeout(function(){
-      ['udob','udoj'].forEach(function(f){
-        var inp=document.getElementById('e-'+f);
-        var disp=document.getElementById('e-'+f+'-display');
-        if(inp&&disp&&inp.value){var p=inp.value.split('-');disp.value=p[2]+' / '+p[1]+' / '+p[0];}
-      });
-    },100);
-  }
-  document.getElementById('add-title').textContent=title;
-  document.getElementById('add-body').innerHTML=html;
-  document.getElementById('add-foot').innerHTML=
-    '<button class="btn btn-outline" onclick="closeSheet(\'ov-add\',\'sh-add\')">Cancel</button>'+
-    '<button class="btn btn-navy" onclick="'+saveCall+'">&#10003; Save Changes</button>';
-  setTimeout(function(){openSheet('ov-add','sh-add');},200);
-}
-
-function esc(s){return s?String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'):''; }
-
-function updateVendor(id){
-  var v=VENDORS.find(function(x){return x.id===id;});if(!v)return;
-  var n=gv('e-vname');if(!n){toast('Name is required','warning');return;}
-  var cat=gv('e-vcat');
-  var catData=CAT_DATA.vendor.find(function(c){return c.name===cat;})||{color:v.col};
-  v.name=n; v.cat=cat.toLowerCase(); v.status=gv('e-vstatus');
-  v.gst=gv('e-vgst'); v.contact=gv('e-vcontact'); v.phone=gv('e-vphone');
-  v.email=gv('e-vemail'); v.address=gv('e-vaddress'); v.brands=gv('e-vbrands');
-  v.payTerms=gv('e-vpay'); v.leadTime=gv('e-vlead'); v.col=catData.color;
-  v.materialRates=vendorMatRates.filter(function(r){return r.matId&&r.rate;}).map(function(r){return {matId:r.matId,rate:parseFloat(r.rate)||0};});
-  renderVendors(); closeSheet('ov-add','sh-add'); toast(v.name+' updated!','success');
-}
-
-function updateMaterial(id){
-  var m=MATERIALS.find(function(x){return x.id===id;});if(!m)return;
-  var n=gv('e-mname');if(!n){toast('Name is required','warning');return;}
-  var cat=gv('e-mcat');
-  var catData=CAT_DATA.material.find(function(c){return c.name===cat;})||{color:m.col};
-  m.name=n; m.cat=cat.toLowerCase();
-  m.uom=gv('e-muom'); m.unit=gv('e-muom');
-  // stdRate removed — rates are per-vendor now
-  m.spec=gv('e-mspec');
-  // vendors removed — linked via vendor materialRates
-  m.col=catData.color;
-  renderMaterials(); closeSheet('ov-add','sh-add'); toast(m.name+' updated!','success');
-}
-
-function updateSC(id){
-  var s=SUBCONTRACTORS.find(function(x){return x.id===id;}); if(!s){ toast('SC not found — try refreshing','warning'); return; }
-  var n=gv('e-scname');if(!n){toast('Name is required','warning');return;}
-  var trade=gv('e-sctrade');
-  var catData=CAT_DATA.sc.find(function(c){return c.name===trade;})||{color:s.col};
-  s.name=n; s.trade=trade.toLowerCase();
-  s.gst=gv('e-scgst'); s.contact=gv('e-sccontact'); s.phone=gv('e-scphone');
-  s.email=gv('e-scemail'); s.address=gv('e-scaddress');
-  s.exp=gv('e-scexp'); s.turnover=gv('e-scturnover');
-  s.workers=parseInt(gv('e-scworkers'))||0; s.speciality=gv('e-scspec');
-  s.pbgAvail=gv('e-scpbg')==='true'; s.emdAvail=gv('e-scemd')==='true';
-  s.col=catData.color;
-  renderSC(); closeSheet('ov-add','sh-add'); toast(s.name+' updated!','success');
-}
-
-function updateUser(id){
-  var u=USERS.find(function(x){return x.id===id;});if(!u)return;
-  var fname=gv('e-ufname'),lname=gv('e-ulname');
-  var name=(fname+' '+lname).trim();
-  if(!name){toast('Name is required','warning');return;}
-  var roleRaw=gv('e-urole');
-  var roleMap={'Admin':'admin','Project Manager':'pm','Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer','Client Viewer':'viewer'};
-  u.name=name; u.phone=gv('e-uphone'); u.phone2=gv('e-uphone2');
-  u.dob=gv('e-udob'); u.gender=gv('e-ugender'); u.marital=gv('e-umarital');
-  u.blood=gv('e-ublood');
-  u.access=roleRaw; u.role=roleMap[roleRaw]||u.role;
-  u.status=gv('e-ustatus'); u.dept=gv('e-udept'); u.project=gv('e-uproject');
-  u.empType=gv('e-uemptype'); u.location=gv('e-ulocation');
-  u.address=gv('e-uaddress'); u.permanent=gv('e-upermanent');
-  u.aadhar=gv('e-uaadhar'); u.pan=gv('e-upan'); u.pf=gv('e-upf'); u.esic=gv('e-uesic');
-  u.bank=gv('e-ubank'); u.accNo=gv('e-uaccno'); u.ifsc=gv('e-uifsc'); u.accName=gv('e-uaccname');
-  u.ecName=gv('e-uecname'); u.ecRel=gv('e-uecrel'); u.ecPhone=gv('e-uecphone');
-  u.col=ROLE_COLORS[u.role]||'#37474F';
-  // Upload files if selected
-  var ePhoto=document.getElementById('e-uphoto')&&document.getElementById('e-uphoto').files[0];
-  var eAadhar=document.getElementById('e-uaadhar-doc')&&document.getElementById('e-uaadhar-doc').files[0];
-  var ePan=document.getElementById('e-upan-doc')&&document.getElementById('e-upan-doc').files[0];
-  Promise.all([
-    ePhoto?uploadToCloudinary(ePhoto,'photos','e-uphoto'):Promise.resolve(u.photoUrl||null),
-    eAadhar?uploadToCloudinary(eAadhar,'kyc','e-uaadhar-doc'):Promise.resolve(u.aadharUrl||null),
-    ePan?uploadToCloudinary(ePan,'kyc','e-upan-doc'):Promise.resolve(u.panUrl||null)
-  ]).then(async function(urls){
-    if(urls[0]) u.photoUrl=urls[0];
-    if(urls[1]) u.aadharUrl=urls[1];
-    if(urls[2]) u.panUrl=urls[2];
-    try{ await sbUpdate('employees',u.id,{profile_photo:u.photoUrl,aadhar_doc_url:u.aadharUrl,pan_doc_url:u.panUrl}); }catch(e){}
-    renderUsers(); closeSheet('ov-add','sh-add'); toast(u.name+' updated!','success');
-  });
-}
-
-// ── DYNAMIC CATEGORY SELECT HELPERS ──
-function catOptions(type){
-  return (CAT_DATA[type]||[]).filter(function(c){return c.active;}).map(function(c){
-    return '<option value="'+c.name+'">'+c.icon+' '+c.name+'</option>';
-  }).join('');
-}
-function uomOptions(){
-  return (CAT_DATA.uom||[]).filter(function(c){return c.active;}).map(function(c){
-    return '<option value="'+c.name+'">'+c.name+' — '+c.desc+'</option>';
-  }).join('');
-}
-
-// ── ADD FORMS ──
-var currentPage='vendors';
-async function openAdd(){
-  if(currentPage==='labour'){ openLabourForm(null); return; }
-  // Ensure categories loaded from DB
-  if(!(CAT_DATA.vendor&&CAT_DATA.vendor.length)||!(CAT_DATA.uom&&CAT_DATA.uom.length)){
-    await loadCategories();
-  }
-  var html='';
-  if(currentPage==='vendors'){
-    html='<div class="section-title">&#127968; New Vendor Registration</div>'+
-      '<div class="g2"><div><label class="flbl">Company Name</label><input id="f-vname" class="finp" placeholder="e.g. JSW Steel Ltd."></div><div><label class="flbl">Vendor ID</label><input class="finp" placeholder="Auto: VND-'+String(VENDORS.length+1).padStart(3,'0')+'" disabled style="opacity:.5;"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Category</label><select id="f-vcat" class="fsel">'+catOptions('vendor')+'</select></div><div><label class="flbl">GST Number</label><input id="f-vgst" class="finp" placeholder="e.g. 27AAAXX0000X1ZX"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Contact Person</label><input id="f-vcontact" class="finp" placeholder="Name"></div><div><label class="flbl">Phone</label><input id="f-vphone" class="finp" type="tel" placeholder="Mobile"></div></div>'+
-      '<label class="flbl">Email</label><input id="f-vemail" class="finp" type="email" placeholder="email@company.com">'+
-      '<label class="flbl">Address</label><textarea id="f-vaddress" class="ftxt" placeholder="Registered office address..."></textarea>'+
-      '<label class="flbl">Products / Brands Supplied</label><input id="f-vbrands" class="finp" placeholder="e.g. Fe-500D TMT Bars, Fe-550D">'+
-      '<div class="g2"><div><label class="flbl">Payment Terms</label><select id="f-vpay" class="fsel"><option>Advance</option><option>15 days</option><option>30 days</option><option>45 days</option><option>60 days</option><option>Monthly billing</option></select></div><div><label class="flbl">Typical Lead Time</label><input id="f-vlead" class="finp" placeholder="e.g. 7 days"></div></div>'+
-      '<label class="flbl">Bank Account</label>'+
-      '<div class="g2"><div><input class="finp" placeholder="Account Number"></div><div><input class="finp" placeholder="IFSC Code"></div></div>'+
-      '<div style="margin-top:4px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><label class="flbl" style="margin:0;">&#129521; Materials &amp; Rates Supplied</label><button onclick="addMatRateRow()" style="border:none;background:#E8F5E9;color:#2E7D32;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">+ Add Material</button></div><div id="mat-rate-rows"><div style="font-size:12px;color:var(--text3);padding:8px 0;">No materials added yet.</div></div></div>';
-  } else if(currentPage==='materials'){
-    html='<div class="section-title">&#129521; New Material Registration</div>'+
-      '<label class="flbl">Material Name</label><input id="f-mname" class="finp" placeholder="e.g. Fe-500D TMT Steel Bars">'+
-      '<div class="g2"><div><label class="flbl">Category</label><select id="f-mcat" class="fsel" oninput="updateMatCodePreview()">'+catOptions('material')+'</select></div><div><label class="flbl">Unit of Measure</label><select id="f-muom" class="fsel">'+uomOptions()+'</select></div></div>'+
-      '<div class="g2"><div><label class="flbl">Material Code</label><input id="f-mcode" class="finp" placeholder="Auto-generated" style="background:#F8F9FA;" readonly></div><div><label class="flbl">Applicable GST (%)</label><select id="f-mgst" class="fsel"><option>5%</option><option selected>12%</option><option>18%</option><option>28%</option></select></div></div>'+
-      '<label class="flbl">Technical Specification / IS Code</label><input id="f-mspec" class="finp" placeholder="e.g. IS:1786 / IS:456">';
-  } else if(currentPage==='subcontractors'){
-    html='<div class="section-title">&#128296; New Subcontractor Registration</div>'+
-      '<div class="g2"><div><label class="flbl">Company Name</label><input id="f-scname" class="finp" placeholder="e.g. Shri Ganesh Civil Works"></div><div><label class="flbl">SC Reg. ID</label><input class="finp" placeholder="Auto: SC-REG-001" disabled style="opacity:.5;"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Primary Trade</label><select id="f-sctrade" class="fsel">'+catOptions('sc')+'</select></div><div><label class="flbl">GST Number</label><input id="f-scgst" class="finp" placeholder="e.g. 27XXXXX0000X1ZX"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Contact Person</label><input id="f-sccontact" class="finp" placeholder="Name & Designation"></div><div><label class="flbl">Phone</label><input id="f-scphone" class="finp" type="tel" placeholder="Mobile"></div></div>'+
-      '<label class="flbl">Email</label><input id="f-scemail" class="finp" type="email" placeholder="email@company.com">'+
-      '<label class="flbl">Registered Address</label><textarea id="f-scaddress" class="ftxt" placeholder="Full address..."></textarea>'+
-      '<div class="g2"><div><label class="flbl">Years of Experience</label><input id="f-scexp" class="finp" placeholder="e.g. 8 years"></div><div><label class="flbl">Annual Turnover</label><input id="f-scturnover" class="finp" placeholder="e.g. ₹2.4Cr"></div></div>'+
-      '<div class="g2"><div><label class="flbl">No. of Workers</label><input id="f-scworkers" class="finp" type="number" placeholder="Typical workforce"></div><div><label class="flbl">Specialisation</label><input id="f-scspec" class="finp" placeholder="e.g. Culvert, retaining walls"></div></div>'+
-      '<div class="g2"><div><label class="flbl">PBG Available?</label><select id="f-scpbg" class="fsel"><option>Yes</option><option>No</option></select></div><div><label class="flbl">EMD Available?</label><select id="f-scemd" class="fsel"><option>Yes</option><option>No</option></select></div></div>';
-  } else if(currentPage==='users'){
-    html=
-      '<div class="section-title">&#128101; Register New Employee</div>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #1565C020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div><div style="font-size:12px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
-      '<div class="g2"><div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Date of Birth</label><div class="date-wrap"><input class="finp" type="text" id="f-udob-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="f-udob" onchange="updateDateDisplay(this)"></div></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option>Male</option><option>Female</option><option>Other</option></select></div></div>'+
-      '<div class="g2"><div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div><div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option><option>Single</option><option>Married</option><option>Other</option></select></div></div>'+
-      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
-      '<label class="flbl">Date of Joining</label><div class="date-wrap"><input class="finp" type="text" id="f-udoj-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="f-udoj" onchange="updateDateDisplay(this)"></div>'+
-      '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
-      '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option>All Projects</option><option>Head Office</option><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option></select>'+
-      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option>Head Office</option><option>NH-48 Bypass Site</option><option>Municipal Office Site</option><option>Riverfront Drain Site</option><option>Bridge Rehab Site</option></select></div></div>'+
+      '<div><label class="flbl">Work Location</label><select id="e-ulocation" class="fsel"><option value="Head Office">Head Office</option>'+(Array.isArray(PROJ_DATA)?PROJ_DATA.map(function(p){return '<option value="'+p.name+'">'+p.name+'</option>';}).join(''):'')+'</select>'+
+      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option value="Head Office">Head Office</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
       '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional"></div></div>'+
       '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address..."></textarea>'+
@@ -4891,6 +4688,122 @@ async function saveSC(){
       toast(name+' registered!','success');
     } else { toast('Failed to save','error'); console.error(result); }
   } catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+
+async function openAdd(){
+  if(currentPage==='labour'){ openLabourForm(null); return; }
+  if(!(CAT_DATA.vendor&&CAT_DATA.vendor.length)||!(CAT_DATA.uom&&CAT_DATA.uom.length)){
+    await loadCategories();
+  }
+  var html='';
+  if(currentPage==='vendors'){
+    html='<div class="section-title">&#127968; New Vendor Registration</div>'+
+      '<div class="g2"><div><label class="flbl">Company Name</label><input id="f-vname" class="finp" placeholder="e.g. JSW Steel Ltd."></div><div><label class="flbl">Vendor ID</label><input class="finp" placeholder="Auto: VND-'+String(VENDORS.length+1).padStart(3,'0')+'" disabled style="opacity:.5;"></div></div>'+
+      '<div class="g2"><div><label class="flbl">Category</label><select id="f-vcat" class="fsel">'+catOptions('vendor')+'</select></div><div><label class="flbl">GST Number</label><input id="f-vgst" class="finp" placeholder="e.g. 27AAAXX0000X1ZX"></div></div>'+
+      '<div class="g2"><div><label class="flbl">Contact Person</label><input id="f-vcontact" class="finp" placeholder="Name"></div><div><label class="flbl">Phone</label><input id="f-vphone" class="finp" type="tel" placeholder="Mobile"></div></div>'+
+      '<label class="flbl">Email</label><input id="f-vemail" class="finp" type="email" placeholder="email@company.com">'+
+      '<label class="flbl">Address</label><textarea id="f-vaddress" class="ftxt" placeholder="Registered office address..."></textarea>'+
+      '<label class="flbl">Products / Brands Supplied</label><input id="f-vbrands" class="finp" placeholder="e.g. Fe-500D TMT Bars, Fe-550D">'+
+      '<div class="g2"><div><label class="flbl">Payment Terms</label><select id="f-vpay" class="fsel"><option>Advance</option><option>15 days</option><option>30 days</option><option>45 days</option><option>60 days</option><option>Monthly billing</option></select></div><div><label class="flbl">Typical Lead Time</label><input id="f-vlead" class="finp" placeholder="e.g. 7 days"></div></div>'+
+      '<div style="margin-top:4px;"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;"><label class="flbl" style="margin:0;">&#129521; Materials &amp; Rates Supplied</label><button onclick="addMatRateRow()" style="border:none;background:#E8F5E9;color:#2E7D32;border-radius:8px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">+ Add Material</button></div><div id="mat-rate-rows"><div style="font-size:12px;color:var(--text3);padding:8px 0;">No materials added yet.</div></div></div>';
+  } else if(currentPage==='materials'){
+    html='<div class="section-title">&#129521; New Material Registration</div>'+
+      '<label class="flbl">Material Name</label><input id="f-mname" class="finp" placeholder="e.g. Fe-500D TMT Steel Bars">'+
+      '<div class="g2"><div><label class="flbl">Category</label><select id="f-mcat" class="fsel" oninput="updateMatCodePreview()">'+catOptions('material')+'</select></div><div><label class="flbl">Unit of Measure</label><select id="f-muom" class="fsel">'+uomOptions()+'</select></div></div>'+
+      '<div class="g2"><div><label class="flbl">Material Code</label><input id="f-mcode" class="finp" placeholder="Auto-generated" style="background:#F8F9FA;" readonly></div><div><label class="flbl">Applicable GST (%)</label><select id="f-mgst" class="fsel"><option>5%</option><option selected>12%</option><option>18%</option><option>28%</option></select></div></div>'+
+      '<label class="flbl">Technical Specification / IS Code</label><input id="f-mspec" class="finp" placeholder="e.g. IS:1786 / IS:456">';
+  } else if(currentPage==='subcontractors'){
+    html='<div class="section-title">&#128296; New Subcontractor Registration</div>'+
+      '<div class="g2"><div><label class="flbl">Company Name</label><input id="f-scname" class="finp" placeholder="e.g. Shri Ganesh Civil Works"></div><div><label class="flbl">SC Reg. ID</label><input class="finp" placeholder="Auto: SC-REG-001" disabled style="opacity:.5;"></div></div>'+
+      '<div class="g2"><div><label class="flbl">Primary Trade</label><select id="f-sctrade" class="fsel">'+catOptions('sc')+'</select></div><div><label class="flbl">GST Number</label><input id="f-scgst" class="finp" placeholder="e.g. 27XXXXX0000X1ZX"></div></div>'+
+      '<div class="g2"><div><label class="flbl">Contact Person</label><input id="f-sccontact" class="finp" placeholder="Name & Designation"></div><div><label class="flbl">Phone</label><input id="f-scphone" class="finp" type="tel" placeholder="Mobile"></div></div>'+
+      '<label class="flbl">Email</label><input id="f-scemail" class="finp" type="email" placeholder="email@company.com">'+
+      '<label class="flbl">Registered Address</label><textarea id="f-scaddress" class="ftxt" placeholder="Full address..."></textarea>'+
+      '<div class="g2"><div><label class="flbl">Years of Experience</label><input id="f-scexp" class="finp" placeholder="e.g. 8 years"></div><div><label class="flbl">Annual Turnover</label><input id="f-scturnover" class="finp" placeholder="e.g. ₹2.4Cr"></div></div>'+
+      '<div class="g2"><div><label class="flbl">No. of Workers</label><input id="f-scworkers" class="finp" type="number" placeholder="Typical workforce"></div><div><label class="flbl">Specialisation</label><input id="f-scspec" class="finp" placeholder="e.g. Culvert, retaining walls"></div></div>'+
+      '<div class="g2"><div><label class="flbl">PBG Available?</label><select id="f-scpbg" class="fsel"><option>Yes</option><option>No</option></select></div><div><label class="flbl">EMD Available?</label><select id="f-scemd" class="fsel"><option>Yes</option><option>No</option></select></div></div>';
+  } else if(currentPage==='users'){
+    // Fetch role and dept directly from DB to avoid loading issues
+    var roleOpts = '<option value="">-- Select --</option>';
+    var deptOpts = '<option value="">-- Select --</option>';
+    var projOpts = '<option value="All Projects">All Projects</option><option value="Head Office">Head Office</option>';
+    try{
+      var roles = await sbFetch('categories',{select:'name',filter:'type=eq.role&active=eq.true',order:'name.asc'});
+      if(Array.isArray(roles)&&roles.length) roleOpts='<option value="">-- Select --</option>'+roles.map(function(r){return '<option value="'+r.name+'">'+r.name+'</option>';}).join('');
+    }catch(e){}
+    try{
+      var depts = await sbFetch('categories',{select:'name',filter:'type=eq.dept&active=eq.true',order:'name.asc'});
+      if(Array.isArray(depts)&&depts.length) deptOpts='<option value="">-- Select --</option>'+depts.map(function(d){return '<option value="'+d.name+'">'+d.name+'</option>';}).join('');
+    }catch(e){}
+    try{
+      var _pd=await sbFetch('projects',{select:'id,name',order:'name.asc'});
+      if(Array.isArray(_pd)) projOpts+= _pd.map(function(p){return '<option value="'+p.name+'">'+p.name+'</option>';}).join('');
+    }catch(e){}
+    html=
+      '<div class="section-title">&#128101; Register New Employee</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #1565C020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div><div style="font-size:12px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
+      '<div class="g2"><div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name"></div></div>'+
+      '<div class="g2"><div><label class="flbl">Date of Birth</label><div class="date-wrap"><input class="finp" type="text" id="f-udob-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="f-udob" onchange="updateDateDisplay(this)"></div></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option>Male</option><option>Female</option><option>Other</option></select></div></div>'+
+      '<div class="g2"><div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div><div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option><option>Single</option><option>Married</option><option>Other</option></select></div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
+      '<label class="flbl">Date of Joining</label><div class="date-wrap"><input class="finp" type="text" id="f-udoj-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="f-udoj" onchange="updateDateDisplay(this)"></div>'+
+      '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+roleOpts+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+deptOpts+'</select></div></div>'+
+      '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel">'+projOpts+'</select>'+
+      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option value="Head Office">Head Office</option>'+
+      (Array.isArray(PROJ_DATA)?PROJ_DATA.map(function(p){return '<option value="'+p.name+'">'+p.name+'</option>';}).join(''):'')+'</select></div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
+      '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional"></div></div>'+
+      '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address..."></textarea>'+
+      '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)..."></textarea>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #6A1B9A20;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#6A1B9A20;display:flex;align-items:center;justify-content:center;font-size:14px;">🪪</div><div style="font-size:12px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.7px;">KYC Details</div></div>'+
+      '<div class="g2"><div><label class="flbl">Aadhar Number</label><input id="f-uaadhar" class="finp" placeholder="XXXX XXXX XXXX"></div><div><label class="flbl">PAN Number</label><input id="f-upan" class="finp" placeholder="ABCDE1234F"></div></div>'+
+      '<div class="g2"><div><label class="flbl">PF Number</label><input id="f-upf" class="finp" placeholder="Optional"></div><div><label class="flbl">ESIC Number</label><input id="f-uesic" class="finp" placeholder="Optional"></div></div>'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #C6282820;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:14px;">🏦</div><div style="font-size:12px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Bank Details</div></div>'+
+      '<label class="flbl">Bank Name</label><input id="f-ubank" class="finp" placeholder="e.g. State Bank of India">'+
+      '<div class="g2"><div><label class="flbl">Account Number</label><input id="f-uaccno" class="finp" placeholder="Bank account number"></div><div><label class="flbl">IFSC Code</label><input id="f-uifsc" class="finp" placeholder="e.g. SBIN0001234"></div></div>'+
+      '<label class="flbl">Account Holder Name</label><input id="f-uaccname" class="finp" placeholder="As per bank records">'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #C6282820;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:14px;">🚨</div><div style="font-size:12px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Emergency Contact</div></div>'+
+      '<div class="g2"><div><label class="flbl">Contact Name</label><input id="f-uecname" class="finp" placeholder="Full name"></div><div><label class="flbl">Relationship</label><select id="f-uecrel" class="fsel"><option value="">-- Select --</option><option>Spouse</option><option>Father</option><option>Mother</option><option>Sibling</option><option>Other</option></select></div></div>'+
+      '<label class="flbl">Emergency Mobile</label><input id="f-uecphone" class="finp" type="tel" placeholder="10-digit mobile">'+
+      '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #1565C020;margin:12px 0 8px;">'+
+      '<div style="width:24px;height:24px;border-radius:7px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:12px;">📎</div>'+
+      '<div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Documents & Photo</div></div>'+
+      '<label class="flbl">Passport Photo</label>'+
+      '<div class="upload-box" onclick="document.getElementById(\'f-uphoto\').click()">'+
+        '<div class="photo-preview" id="f-uphoto-prev">📷</div>'+
+        '<input type="file" id="f-uphoto" accept="image/*" onchange="handleFilePreview(\'f-uphoto\',\'f-uphoto-prev\')">'+
+        '<div class="upload-label">Tap to upload passport photo</div>'+
+        '<div class="upload-progress-wrap" id="f-uphoto-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-uphoto-prog-name"></span><span class="upload-progress-pct" id="f-uphoto-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-uphoto-prog-fill"></div></div></div>'+
+      '</div>'+
+      '<div class="g2">'+
+        '<div><label class="flbl">Aadhar Card</label>'+
+        '<div class="upload-box" onclick="document.getElementById(\'f-uaadhar-doc\').click()">'+
+          '<div id="f-uaadhar-doc-prev" class="upload-preview"></div>'+
+          '<input type="file" id="f-uaadhar-doc" accept="image/*,application/pdf" onchange="handleFilePreview(\'f-uaadhar-doc\',\'f-uaadhar-doc-prev\')">'+
+          '<div class="upload-label">📄 Upload Aadhar</div>'+
+          '<div class="upload-progress-wrap" id="f-uaadhar-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-uaadhar-doc-prog-name"></span><span class="upload-progress-pct" id="f-uaadhar-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-uaadhar-doc-prog-fill"></div></div></div>'+
+        '</div></div>'+
+        '<div><label class="flbl">PAN Card</label>'+
+        '<div class="upload-box" onclick="document.getElementById(\'f-upan-doc\').click()">'+
+          '<div id="f-upan-doc-prev" class="upload-preview"></div>'+
+          '<input type="file" id="f-upan-doc" accept="image/*,application/pdf" onchange="handleFilePreview(\'f-upan-doc\',\'f-upan-doc-prev\')">'+
+          '<div class="upload-label">📄 Upload PAN</div>'+
+          '<div class="upload-progress-wrap" id="f-upan-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-upan-doc-prog-name"></span><span class="upload-progress-pct" id="f-upan-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-upan-doc-prog-fill"></div></div></div>'+
+        '</div></div>'+
+      '</div>';
+  }
+  var titles={vendors:'Register New Vendor',materials:'Register New Material',subcontractors:'Register New Subcontractor',users:'Register New Employee'};
+  var btnCols={vendors:'btn-teal',materials:'btn-green',subcontractors:'btn-purple',users:'btn-indigo'};
+  var saveFunc={vendors:'saveVendor()',materials:'saveMaterial()',subcontractors:'saveSC()',users:'saveUser()'};
+  document.getElementById('add-title').textContent=titles[currentPage]||'Add New';
+  document.getElementById('add-body').innerHTML=html;
+  document.getElementById('add-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeSheet(\'ov-add\',\'sh-add\')">Cancel</button>'+
+    '<button class="btn '+(btnCols[currentPage]||'btn-navy')+'" onclick="'+(saveFunc[currentPage]||'')+'" style="flex:1;">&#10003; Register</button>';
+  if(currentPage==='vendors'){vendorMatRates=[];renderMatRateRows();}
+  if(currentPage==='materials'){setTimeout(updateMatCodePreview,50);}
+  openSheet('ov-add','sh-add');
 }
 
 async function saveUser(){
