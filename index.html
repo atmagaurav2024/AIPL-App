@@ -7664,7 +7664,12 @@ async function pcSaveExpense(){
 var PC_REP_PERIOD = 'week';
 var PC_REP_FROM = null, PC_REP_TO = null;
 
-function pcOpenReports(){
+async function pcOpenReports(){
+  // Ensure data is loaded
+  if(!PC_IN.length && !PC_EXP.length){
+    await initPettyCash();
+  }
+  PC_REP_PERIOD = 'week'; // reset to default
   document.getElementById('pc-sheet-title').textContent = '📄 Reports / अहवाल';
   document.getElementById('pc-sheet-body').innerHTML = pcReportHTML();
   document.getElementById('pc-sheet-foot').innerHTML =
@@ -7767,9 +7772,9 @@ function pcReportHTML(){
 }
 
 function pcGetFiltered(){
-  var p = PC_ACTIVE;
-  var pIn  = PC_IN.filter(function(r){return !p||(r.project_id===p.id||!r.project_id);}).map(function(r){return Object.assign({},r,{_type:'in'});});
-  var pExp = PC_EXP.filter(function(r){return !p||r.project_id===p.id;}).map(function(r){return Object.assign({},r,{_type:'out'});});
+  // Reports show ALL data across all projects
+  var pIn  = PC_IN.map(function(r){return Object.assign({},r,{_type:'in'});});
+  var pExp = PC_EXP.map(function(r){return Object.assign({},r,{_type:'out'});});
   var all  = pIn.concat(pExp);
   var now  = new Date(), tod = now.toISOString().split('T')[0];
   var from, to = tod;
