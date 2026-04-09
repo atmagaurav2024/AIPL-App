@@ -15,7 +15,7 @@
 html,body{height:100%;overflow:hidden;}
 
 /* App-level screens */
-.app-screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:10;}
+.app-screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:10;background:var(--bg,#F0F4F8);}
 .app-screen.on{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .app-screen.on{animation:fadeIn .25s ease;}
@@ -8214,7 +8214,7 @@ async function acLoadEmployees(){
   }catch(e){ console.error(e); }
 }
 
-function acSwitchTab(tab){
+async function acSwitchTab(tab){
   AC_TAB = tab;
   AC_TARGET = null;
   AC_PERMISSIONS = {};
@@ -8232,10 +8232,19 @@ function acSwitchTab(tab){
   } else {
     if(roleBtn){ roleBtn.style.background='var(--navy)'; roleBtn.style.color='white'; roleBtn.style.border='none'; }
     if(empBtn){ empBtn.style.background='white'; empBtn.style.color='var(--text2)'; empBtn.style.border='1.5px solid var(--border)'; }
-    selDiv.innerHTML = '<select id="ac-role-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()">'+
-      '<option value="">— Select Role —</option>'+
-      AC_ROLES.map(function(r){return '<option value="'+r+'">'+AC_ROLE_LABELS[r]+'</option>';}).join('')+
-      '</select>';
+    // Fetch roles from DB
+    var roleOptHtml = '<option value="">— Select Role —</option>';
+    try{
+      var dbRoles = await sbFetch('categories',{select:'name',filter:'type=eq.role&active=eq.true',order:'name.asc'});
+      if(Array.isArray(dbRoles)&&dbRoles.length){
+        roleOptHtml += dbRoles.map(function(r){return '<option value="'+r.name+'">'+r.name+'</option>';}).join('');
+      } else {
+        roleOptHtml += AC_ROLES.map(function(r){return '<option value="'+r+'">'+AC_ROLE_LABELS[r]+'</option>';}).join('');
+      }
+    }catch(e){
+      roleOptHtml += AC_ROLES.map(function(r){return '<option value="'+r+'">'+AC_ROLE_LABELS[r]+'</option>';}).join('');
+    }
+    selDiv.innerHTML = '<select id="ac-role-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()">'+roleOptHtml+'</select>';
   }
 
   document.getElementById('ac-modules-list').innerHTML =
