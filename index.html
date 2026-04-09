@@ -7605,12 +7605,12 @@ async function pcOpenCashIn(){
     '<label class="flbl">Remarks</label><input id="pcf-rem" class="finp" placeholder="Optional">'+
         '<div style="margin-top:12px;">'+
     '<div style="font-size:10px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📷 Upload Photo / फोटो</div>'+
-    '<div id="pc-photo-box" onclick="document.getElementById(\"pc-photo-input\").click()" style="border:2px dashed #E2DDD5;border-radius:13px;padding:18px 14px;text-align:center;cursor:pointer;background:#EFEBE4;transition:border-color .2s;">'+
+    '<label for="pc-photo-input" id="pc-photo-box" style="border:2px dashed #E2DDD5;border-radius:13px;padding:18px 14px;text-align:center;cursor:pointer;background:#EFEBE4;transition:border-color .2s;display:block;">'+
       '<input type="file" id="pc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="pcHandlePhoto(this)">'+
       '<div id="pc-photo-icon" style="font-size:28px;margin-bottom:6px;">📷</div>'+
       '<div id="pc-photo-txt" style="font-size:13px;font-weight:700;color:#1E2547;">Tap to take photo or upload</div>'+
       '<div id="pc-photo-sub" style="font-size:11px;color:#9CA3AF;margin-top:3px;">Capture voucher / bill</div>'+
-    '</div>'+
+    '</label>'+
     '<img id="pc-photo-prev" style="display:none;width:100%;border-radius:10px;margin-top:10px;max-height:200px;object-fit:cover;border:1.5px solid #E2DDD5;">'+
     '</div>'+
     '<div style="margin-top:12px;">'+
@@ -7709,12 +7709,12 @@ async function pcOpenExpense(){
     '<label class="flbl">Remarks</label><input id="pcf-rem" class="finp" placeholder="Optional">'+
         '<div style="margin-top:12px;">'+
     '<div style="font-size:10px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📷 Upload Photo / फोटो</div>'+
-    '<div id="pc-photo-box" onclick="document.getElementById(\"pc-photo-input\").click()" style="border:2px dashed #E2DDD5;border-radius:13px;padding:18px 14px;text-align:center;cursor:pointer;background:#EFEBE4;transition:border-color .2s;">'+
+    '<label for="pc-photo-input" id="pc-photo-box" style="border:2px dashed #E2DDD5;border-radius:13px;padding:18px 14px;text-align:center;cursor:pointer;background:#EFEBE4;transition:border-color .2s;display:block;">'+
       '<input type="file" id="pc-photo-input" accept="image/*" capture="environment" style="display:none;" onchange="pcHandlePhoto(this)">'+
       '<div id="pc-photo-icon" style="font-size:28px;margin-bottom:6px;">📷</div>'+
       '<div id="pc-photo-txt" style="font-size:13px;font-weight:700;color:#1E2547;">Tap to take photo or upload</div>'+
       '<div id="pc-photo-sub" style="font-size:11px;color:#9CA3AF;margin-top:3px;">Capture voucher / bill</div>'+
-    '</div>'+
+    '</label>'+
     '<img id="pc-photo-prev" style="display:none;width:100%;border-radius:10px;margin-top:10px;max-height:200px;object-fit:cover;border:1.5px solid #E2DDD5;">'+
     '</div>'+
     '<div style="margin-top:12px;">'+
