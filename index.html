@@ -3089,11 +3089,18 @@ async function renderRegStep(){
       '<div class="card">'+
         '<div class="card-title">Work Details</div>'+
         (regData.category==='employee'?
-          '<label class="flbl">Department</label><select id="r-dept" class="fsel" style="margin-bottom:10px;"><option>Engineering</option><option>QHSE</option><option>Finance</option><option>HR / Admin</option><option>Management</option></select>'+
-          '<label class="flbl">Designation / Role</label><select id="r-role" class="fsel" style="margin-bottom:10px;"><option>Site Engineer</option><option>Junior Engineer</option><option>QC Engineer</option><option>Safety Officer</option><option>Finance / Accounts</option><option>HR / Admin</option><option>Viewer (Read Only)</option></select>':
+          '<label class="flbl">Department</label><select id="r-dept" class="fsel" style="margin-bottom:10px;">'+
+          (CAT_DATA.dept&&CAT_DATA.dept.length?CAT_DATA.dept.filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join(''):('<option>Engineering</option><option>QHSE</option><option>Finance</option><option>HR / Admin</option><option>Management</option>'))+
+          '</select>'+
+          '<label class="flbl">Designation / Role</label><select id="r-role" class="fsel" style="margin-bottom:10px;">'+
+          (CAT_DATA.role&&CAT_DATA.role.length?CAT_DATA.role.filter(function(c){return c.active;}).map(function(c){return '<option value="'+c.name+'">'+c.name+'</option>';}).join(''):('<option>Site Engineer</option><option>Junior Engineer</option><option>QC Engineer</option><option>Safety Officer</option><option>Finance / Accounts</option><option>HR / Admin</option><option>Viewer (Read Only)</option>'))+
+          '</select>':
           '<label class="flbl">Trade / Speciality</label><input id="r-trade" class="finp" placeholder="e.g. Civil Works, MEP, Finishing" style="margin-bottom:10px;">'
         )+
-        '<label class="flbl">Project Applying For</label><select id="r-project" class="fsel"><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option><option>All Projects</option></select>'+
+        '<label class="flbl">Project Applying For</label><select id="r-project" class="fsel">'+
+        (Array.isArray(PROJ_DATA)&&PROJ_DATA.length?PROJ_DATA.map(function(p){return '<option value="'+p.name+'">'+p.name+'</option>';}).join('')+
+        '<option value="All Projects">All Projects</option>':('<option>All Projects</option>'))+
+        '</select>'+
       '</div>'+
       (regData.category==='employee' ?
         '<div class="card"><div class="card-title">📎 Documents & Photo</div>'+
