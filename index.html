@@ -7534,15 +7534,18 @@ function pcRefresh(){
     '</div>';
   }).join('');
   var txns=pEx.map(function(r){return Object.assign({},r,{_in:false});}).concat(pIn.map(function(r){return Object.assign({},r,{_in:true});})).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,15);
-  var txnHtml=txns.map(function(t){
+  // Store transactions in window for voucher detail lookup
+  window._pcTxns = txns;
+  var txnHtml=txns.map(function(t,idx){
     var cfg=PC_CAT[t.category]||{e:'📦',c:'#9CA3AF'};var n=pcEmpName(t.employee_id);
-    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+
+    return '<div onclick="pcViewVoucher('+idx+')" style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;cursor:pointer;-webkit-tap-highlight-color:rgba(224,120,32,.1);">'+
       '<div style="width:38px;height:38px;border-radius:10px;background:'+(t._in?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(t._in?'💰':cfg.e)+'</div>'+
       '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(t._in?(n||'Cash In'):(t.party_name||t.purpose||'—'))+'</div>'+
       '<div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(t._in?'Payment In':t.category)+(n&&!t._in?' · '+n:'')+'</div>'+
       '<div style="font-size:11px;color:#9CA3AF;">'+(t.purpose||'')+'</div></div>'+
       '<div style="text-align:right;flex-shrink:0;"><div style="font-size:15px;font-weight:900;color:'+(t._in?'#2DAE6A':'#E53E3E')+'">'+(t._in?'+':'−')+pcFmt(t.amount)+'</div>'+
-      '<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div></div></div>';
+      '<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div>'+
+      '<div style="font-size:10px;color:#E2DDD5;margin-top:2px;">tap to view ›</div></div></div>';
   }).join('')||'<div style="text-align:center;padding:30px;color:#9CA3AF;"><div style="font-size:40px;margin-bottom:10px;">🧾</div><p style="font-weight:600;">No transactions yet</p></div>';
   el.innerHTML=
     '<div style="margin:0 18px 16px;background:#1E2547;border-radius:18px;padding:20px 22px 22px;position:relative;overflow:hidden;">'+
@@ -7922,6 +7925,61 @@ function pcDlCSV(){
   a.download = 'AIPL_PettyCash_'+new Date().toISOString().split('T')[0]+'.csv';
   a.click();
   toast('✓ CSV downloaded','success');
+}
+
+
+// ── VIEW VOUCHER ─────────────────────────────────────────────
+function pcViewVoucher(idx){
+  var t = (window._pcTxns||[])[idx]; if(!t) return;
+  var isIn = t._type==='in';
+  var cfg  = PC_CAT[t.category]||{e:'📦',c:'#9CA3AF'};
+  var n    = pcEmpName(t.employee_id);
+  var proj = PC_PROJS.find(function(p){return p.id===t.project_id;})||{};
+
+  function row(lbl, val){
+    if(!val||val==='—') return '';
+    return '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:10px 0;border-bottom:1px solid #F0EDE8;">'+
+      '<div style="font-size:12px;color:#9CA3AF;font-weight:600;flex-shrink:0;width:110px;">'+lbl+'</div>'+
+      '<div style="font-size:13px;font-weight:700;text-align:right;flex:1;">'+val+'</div>'+
+    '</div>';
+  }
+
+  document.getElementById('pc-sheet-title').textContent = isIn ? '💰 Cash In Voucher' : '🧾 Expense Voucher';
+  document.getElementById('pc-sheet-body').innerHTML =
+    // Amount hero
+    '<div style="background:'+(isIn?'#1B5E20':'#1E2547')+';border-radius:14px;padding:20px;margin-bottom:14px;text-align:center;">'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:6px;">'+(isIn?'Cash Received':'Expense Amount')+'</div>'+
+      '<div style="font-size:38px;font-weight:900;color:#fff;letter-spacing:-1px;">'+(isIn?'+':'−')+pcFmt(t.amount)+'</div>'+
+      '<div style="font-size:12px;color:rgba(255,255,255,.5);margin-top:6px;">'+pcFmtD(t.date)+'</div>'+
+    '</div>'+
+    // Details
+    '<div style="background:#fff;border-radius:14px;padding:4px 14px;margin-bottom:12px;box-shadow:0 2px 8px rgba(0,0,0,.06);">'+
+      row('Employee', n||'—') +
+      row('Given By', t.given_by||'—') +
+      row('Project',  proj.name||t.project_name||'—') +
+      row('Category', t.category||(isIn?'Cash In':'—')) +
+      row('Paid To',  t.party_name||'—') +
+      row('Purpose',  t.purpose||'—') +
+      row('Mode',     t.payment_mode||'—') +
+      row('Remarks',  t.remarks||'—') +
+      (t.lat&&t.lng ? row('GPS', t.lat+', '+t.lng) : '') +
+    '</div>'+
+    // Photo
+    (t.photo_url ?
+      '<div style="margin-bottom:12px;">'+
+        '<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">📷 Voucher Photo</div>'+
+        '<a href="'+t.photo_url+'" target="_blank" style="display:block;">'+
+          '<img src="'+t.photo_url+'" style="width:100%;border-radius:12px;border:1.5px solid #E2DDD5;cursor:pointer;"></a>'+
+        '<div style="font-size:11px;color:#9CA3AF;text-align:center;margin-top:4px;">Tap photo to open full size</div>'+
+      '</div>'
+    : '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">No photo attached</div>');
+
+  document.getElementById('pc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closePCSheet()">Close</button>'+
+    (t.photo_url ?
+      '<a href="'+t.photo_url+'" target="_blank" style="flex:1;"><button class="btn" style="background:#E07820;color:#fff;width:100%;">🔍 View Photo</button></a>'
+    : '');
+  openPCSheet();
 }
 
 </script>
