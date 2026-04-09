@@ -7692,15 +7692,30 @@ async function pcSaveCashIn(){
 
 async function pcOpenExpense(){
   if(!PC_EMPS.length)await initPettyCash();
-  var eOpts=PC_EMPS.map(function(e){var n=pcEmpName(e.id);var b=pcEmpBal(e.id);return '<option value="'+e.id+'">'+n+' (Bal: ₹'+Math.round(b)+')</option>';}).join('');
+  var isAdmin = currentUser&&(currentUser.role==='admin'||currentUser.role==='pm');
+  // Find logged-in employee record
+  var loggedEmp = PC_EMPS.find(function(e){
+    var n = pcEmpName(e.id);
+    return currentUser && (n.toLowerCase()===((currentUser.name||'').toLowerCase()) || e.emp_id===currentUser.empId);
+  });
+  var loggedEmpId = loggedEmp ? loggedEmp.id : '';
+  var loggedEmpName = loggedEmp ? pcEmpName(loggedEmp.id) : (currentUser&&currentUser.name||'');
+  var loggedBal = loggedEmpId ? Math.round(pcEmpBal(loggedEmpId)) : 0;
+  var eOpts=PC_EMPS.map(function(e){var n=pcEmpName(e.id);var b=pcEmpBal(e.id);return '<option value="'+e.id+'"'+(e.id===loggedEmpId?' selected':'')+'>'+n+' (Bal: ₹'+Math.round(b)+')</option>';}).join('');
   var pOpts=PC_PROJS.map(function(p){return '<option value="'+p.id+'"'+(PC_ACTIVE&&p.id===PC_ACTIVE.id?' selected':'')+'>'+p.name+'</option>';}).join('');
   var cOpts=Object.keys(PC_CAT).map(function(c){return '<option value="'+c+'">'+PC_CAT[c].e+' '+c+' </option>';}).join('');
+  // Spent By field: fixed for non-admin, dropdown for admin
+  var empField = isAdmin
+    ? '<label class="flbl">Spent By (Employee) *</label><select id="pcf-emp" class="fsel">'+eOpts+'</select>'
+    : '<label class="flbl">Spent By / खर्च कर्ता</label>'+
+      '<input id="pcf-emp-display" class="finp" value="'+loggedEmpName+' (Bal: ₹'+loggedBal+')" readonly style="background:#F8FAFC;opacity:.8;">'+
+      '<input type="hidden" id="pcf-emp" value="'+loggedEmpId+'">';
   document.getElementById('pc-sheet-title').textContent='＋ Add Expense / खर्च जोडा';
   document.getElementById('pc-sheet-body').innerHTML=
     '<div class="g2"><div><label class="flbl">Date *</label><input id="pcf-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
     '<div><label class="flbl">Mode</label><select id="pcf-mode" class="fsel"><option>Cash</option><option>UPI</option><option>Bank Transfer</option></select></div></div>'+
     '<label class="flbl">Site / Project *</label><select id="pcf-proj" class="fsel"><option value="">— Select —</option>'+pOpts+'</select>'+
-    '<label class="flbl">Spent By (Employee) *</label><select id="pcf-emp" class="fsel"><option value="">— Select —</option>'+eOpts+'</select>'+
+    empField+
     '<label class="flbl">Paid To / Party Name</label><input id="pcf-party" class="finp" placeholder="Enter full name...">'+
     '<label class="flbl">Amount (₹) *</label>'+
     '<input id="pcf-amt" class="finp" type="number" placeholder="0.00" style="font-size:24px;font-weight:900;" inputmode="decimal">'+
@@ -7828,11 +7843,13 @@ function pcReportHTML(){
   }).join('');
 
   // Transactions list
-  var txnRows = filtered.sort(function(a,b){return new Date(b.date)-new Date(a.date);}).map(function(t){
+  var sortedFiltered = filtered.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  window._pcRepTxns = sortedFiltered;
+  var txnRows = sortedFiltered.map(function(t,idx){
     var isIn = t._type==='in';
     var cfg  = PC_CAT[t.category]||{e:isIn?'💰':'📦',c:isIn?'#2DAE6A':'#9CA3AF'};
     var n = pcEmpName(t.employee_id);
-    return '<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E2DDD5;">'+
+    return '<div onclick="pcViewRepVoucher('+idx+')" style="display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid #E2DDD5;cursor:pointer;">'+
       '<div style="width:36px;height:36px;border-radius:10px;background:'+(isIn?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">'+(isIn?'💰':cfg.e)+'</div>'+
       '<div style="flex:1;min-width:0;">'+
         '<div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(isIn?(n||'Cash In'):(t.party_name||t.purpose||'—'))+'</div>'+
@@ -7842,6 +7859,7 @@ function pcReportHTML(){
       '<div style="text-align:right;flex-shrink:0;">'+
         '<div style="font-size:14px;font-weight:900;color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'−')+pcFmt(t.amount)+'</div>'+
         '<div style="font-size:10px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div>'+
+        '<div style="font-size:10px;color:#E2DDD5;margin-top:1px;">tap ›</div>'+
       '</div>'+
     '</div>';
   }).join('') || '<div style="text-align:center;padding:20px;color:#9CA3AF;font-size:13px;">No transactions</div>';
@@ -7982,6 +8000,16 @@ function pcViewVoucher(idx){
   openPCSheet();
 }
 
+
+function pcViewRepVoucher(idx){
+  var t = (window._pcRepTxns||[])[idx]; if(!t) return;
+  // Temporarily store in _pcTxns at position 0 for reuse
+  window._pcTxns = window._pcTxns || [];
+  window._pcTxns.unshift(t);
+  pcViewVoucher(0);
+  // Restore after slight delay
+  setTimeout(function(){ window._pcTxns.shift(); }, 500);
+}
 </script>
 
 </body>
