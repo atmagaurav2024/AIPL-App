@@ -1602,6 +1602,10 @@ input,select,textarea{font-size:16px !important;}
       <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
     </div>
+    <div class="drawer-item" onclick="showApp('access');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">🔐</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Access Control</div><div class="drawer-item-sub">Manage module permissions</div></div>
+    </div>
     <div id="drawer-pending-item" class="drawer-item" style="display:none;" onclick="showPendingApprovals();closeDrawer();">
       <div class="drawer-item-ic" style="background:#FFF3E0;">⏳</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Pending Approvals <span id="drawer-pending-badge" style="background:#C62828;color:white;border-radius:99px;padding:1px 6px;font-size:10px;margin-left:4px;"></span></div><div class="drawer-item-sub">Employee registrations</div></div>
@@ -2401,6 +2405,37 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="pc-sheet-foot"></div>
 </div>
 
+
+<!-- ACCESS CONTROL SCREEN -->
+<div class="app-screen" id="app-access">
+  <div class="boq-topbar" style="background:var(--navy);">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">🔐 Access Control</div>
+    <div style="flex:1;"></div>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
+    <!-- Tab: Employee / Role -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
+      <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
+    </div>
+    <!-- Selector -->
+    <div id="ac-selector" style="margin-bottom:14px;">
+      <select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()">
+        <option value="">— Select Employee —</option>
+      </select>
+    </div>
+    <!-- Permissions list -->
+    <div id="ac-modules-list">
+      <div style="text-align:center;padding:40px;color:var(--text3);">Select an employee or role to manage permissions</div>
+    </div>
+  </div>
+  <!-- Save button -->
+  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
+    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">💾 Save Permissions</button>
+  </div>
+</div>
+
 <div class="app-screen" id="app-registry">
   
 
@@ -2762,7 +2797,7 @@ function showApp(name){
   document.getElementById('app-'+name).classList.add('on');
   currentApp=name;
   // Hide bottom nav for full-screen modules
-  var noNav = ['boq','jm','planning','execution','projects','attendance','petty-cash'];
+  var noNav = ['boq','jm','planning','execution','projects','attendance','petty-cash','access'];
   document.getElementById('app-nav').style.display = noNav.indexOf(name)>-1 ? 'none' : 'flex';
   // Update nav highlight
   ['home','attendance','registry','profile'].forEach(function(n){
@@ -2778,6 +2813,7 @@ function showApp(name){
   else if(name==='planning'){initPlan();stopSync();}
   else if(name==='execution'){initExec();stopSync();}
   else if(name==='petty-cash'){initPettyCash();stopSync();}
+  else if(name==='access'){initAccess();stopSync();}
   else {stopSync();}
 }
 
@@ -8197,6 +8233,281 @@ async function pcSaveEdit(){
     pcRefresh();
   }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
 }
+
+// ═══════════════════════════════════════════════════════════
+// ACCESS CONTROL MODULE
+// ═══════════════════════════════════════════════════════════
+
+var AC_TAB = 'emp'; // 'emp' or 'role'
+var AC_TARGET = null; // selected employee id or role name
+var AC_PERMISSIONS = {}; // loaded permissions
+var AC_DIRTY = false;
+
+var AC_MODULES = [
+  {key:'projects',    label:'Projects',       icon:'🏗️',  params:['view','edit','delete']},
+  {key:'boq',         label:'BOQ Items',      icon:'📋',  params:['view','edit','delete']},
+  {key:'jm',          label:'Joint Measurements', icon:'📐', params:['view','edit','delete']},
+  {key:'planning',    label:'Planning',       icon:'📦',  params:['view','edit','delete']},
+  {key:'execution',   label:'Work Allotment', icon:'📝',  params:['view','edit','delete']},
+  {key:'petty-cash',  label:'Petty Cash',     icon:'💵',  params:['view','edit','delete','cash_in','expense','reports']},
+  {key:'registry',    label:'Master Registry',icon:'📚',  params:['view','edit','delete']},
+  {key:'attendance',  label:'Attendance',     icon:'📋',  params:['view','mark','reports']},
+];
+
+var AC_PARAM_LABELS = {
+  view:'View', edit:'Edit', delete:'Delete',
+  cash_in:'Cash In', expense:'Add Expense',
+  reports:'Reports', mark:'Mark Attendance'
+};
+
+var AC_PARAM_COLORS = {
+  view:'#1565C0', edit:'#E65100', delete:'#C62828',
+  cash_in:'#2E7D32', expense:'#E07820', reports:'#6A1B9A', mark:'#00838F'
+};
+
+var AC_ROLES = ['admin','pm','engineer','qhse','finance','viewer'];
+var AC_ROLE_LABELS = {admin:'Admin',pm:'Project Manager',engineer:'Engineer',qhse:'QC / Safety',finance:'Finance',viewer:'Viewer'};
+
+async function initAccess(){
+  // Only admin can access this module
+  if(!currentUser||(currentUser.role!=='admin')){
+    document.getElementById('ac-modules-list').innerHTML =
+      '<div style="text-align:center;padding:40px;"><div style="font-size:40px;margin-bottom:10px;">🔒</div>'+
+      '<div style="font-weight:800;color:var(--navy);">Admin Only</div>'+
+      '<div style="font-size:13px;color:var(--text3);margin-top:6px;">Only administrators can manage access permissions</div></div>';
+    return;
+  }
+  await acLoadEmployees();
+}
+
+async function acLoadEmployees(){
+  try{
+    var emps = await sbFetch('employees',{select:'id,first_name,last_name,emp_id,role',filter:'status=eq.active',order:'first_name.asc'});
+    var sel = document.getElementById('ac-emp-sel');
+    if(sel && Array.isArray(emps)){
+      sel.innerHTML = '<option value="">— Select Employee —</option>'+
+        emps.map(function(e){
+          var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+          return '<option value="'+e.id+'">'+n+(e.emp_id?' ('+e.emp_id+')':'')+'</option>';
+        }).join('');
+    }
+  }catch(e){ console.error(e); }
+}
+
+function acSwitchTab(tab){
+  AC_TAB = tab;
+  AC_TARGET = null;
+  AC_PERMISSIONS = {};
+
+  var empBtn  = document.getElementById('ac-tab-emp');
+  var roleBtn = document.getElementById('ac-tab-role');
+  var selDiv  = document.getElementById('ac-selector');
+
+  if(tab==='emp'){
+    if(empBtn){ empBtn.style.background='var(--navy)'; empBtn.style.color='white'; empBtn.style.border='none'; }
+    if(roleBtn){ roleBtn.style.background='white'; roleBtn.style.color='var(--text2)'; roleBtn.style.border='1.5px solid var(--border)'; }
+    selDiv.innerHTML = '<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()">'+
+      '<option value="">— Select Employee —</option></select>';
+    acLoadEmployees();
+  } else {
+    if(roleBtn){ roleBtn.style.background='var(--navy)'; roleBtn.style.color='white'; roleBtn.style.border='none'; }
+    if(empBtn){ empBtn.style.background='white'; empBtn.style.color='var(--text2)'; empBtn.style.border='1.5px solid var(--border)'; }
+    selDiv.innerHTML = '<select id="ac-role-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()">'+
+      '<option value="">— Select Role —</option>'+
+      AC_ROLES.map(function(r){return '<option value="'+r+'">'+AC_ROLE_LABELS[r]+'</option>';}).join('')+
+      '</select>';
+  }
+
+  document.getElementById('ac-modules-list').innerHTML =
+    '<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee or role to manage permissions</div>';
+}
+
+async function acLoadPermissions(){
+  var selId = AC_TAB==='emp' ? 'ac-emp-sel' : 'ac-role-sel';
+  var sel   = document.getElementById(selId);
+  if(!sel||!sel.value){
+    document.getElementById('ac-modules-list').innerHTML =
+      '<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee or role</div>';
+    return;
+  }
+  AC_TARGET = sel.value;
+  var listEl = document.getElementById('ac-modules-list');
+  listEl.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);">⏳ Loading...</div>';
+
+  // Load from DB
+  try{
+    var filter = AC_TAB==='emp' ? 'employee_id=eq.'+AC_TARGET : 'role=eq.'+AC_TARGET;
+    var rows = await sbFetch('access_permissions',{select:'*',filter:filter});
+    AC_PERMISSIONS = {};
+    if(Array.isArray(rows)){
+      rows.forEach(function(r){
+        if(!AC_PERMISSIONS[r.module]) AC_PERMISSIONS[r.module]={};
+        AC_PERMISSIONS[r.module][r.permission] = r.granted;
+      });
+    }
+  }catch(e){ AC_PERMISSIONS = {}; console.warn('access_permissions table may not exist yet'); }
+
+  acRenderModules();
+}
+
+function acRenderModules(){
+  var listEl = document.getElementById('ac-modules-list'); if(!listEl) return;
+  var selId = AC_TAB==='emp' ? 'ac-emp-sel' : 'ac-role-sel';
+  var sel = document.getElementById(selId);
+  var targetLabel = sel ? sel.options[sel.selectedIndex].text : '';
+
+  listEl.innerHTML =
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:12px;">'+
+      'Setting permissions for: <strong style="color:var(--navy);">'+targetLabel+'</strong>'+
+    '</div>'+
+    AC_MODULES.map(function(mod){
+      var modPerms = AC_PERMISSIONS[mod.key]||{};
+      // Default: view=true for all if no record exists
+      var hasAny = Object.keys(AC_PERMISSIONS).length > 0;
+
+      var paramBoxes = mod.params.map(function(p){
+        var checked = hasAny ? (modPerms[p]===true) : (p==='view');
+        var col = AC_PARAM_COLORS[p]||'#37474F';
+        return '<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;cursor:pointer;border:1.5px solid '+(checked?col:'var(--border)')+';background:'+(checked?col+'15':'transparent')+';transition:all .2s;" '+
+          'id="ac-lbl-'+mod.key+'-'+p+'">'+
+          '<input type="checkbox" id="ac-'+mod.key+'-'+p+'" '+(checked?'checked':'')+
+          ' onchange="acToggle(\''+mod.key+'\',\''+p+'\',this)" '+
+          'style="width:16px;height:16px;accent-color:'+col+';flex-shrink:0;">'+
+          '<span style="font-size:12px;font-weight:700;color:'+(checked?col:'var(--text3)')+';">'+AC_PARAM_LABELS[p]+'</span>'+
+        '</label>';
+      }).join('');
+
+      return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+        // Module header
+        '<div style="padding:12px 14px;background:#F8FAFC;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);">'+
+          '<div style="display:flex;align-items:center;gap:8px;">'+
+            '<span style="font-size:18px;">'+mod.icon+'</span>'+
+            '<span style="font-size:14px;font-weight:800;color:var(--navy);">'+mod.label+'</span>'+
+          '</div>'+
+          '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:700;color:var(--text3);">'+
+            '<input type="checkbox" onchange="acToggleAll(\''+mod.key+'\',this)" '+
+            (mod.params.every(function(p){return (AC_PERMISSIONS[mod.key]||{})[p]===true||(Object.keys(AC_PERMISSIONS).length===0&&p==='view');}) ? 'checked' : '')+
+            ' style="width:15px;height:15px;accent-color:var(--navy);">'+
+            'All'+
+          '</label>'+
+        '</div>'+
+        // Permissions checkboxes
+        '<div style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;">'+
+          paramBoxes+
+        '</div>'+
+      '</div>';
+    }).join('');
+}
+
+function acToggle(modKey, param, chk){
+  if(!AC_PERMISSIONS[modKey]) AC_PERMISSIONS[modKey]={};
+  AC_PERMISSIONS[modKey][param] = chk.checked;
+  // Update label styling
+  var lbl = document.getElementById('ac-lbl-'+modKey+'-'+param);
+  var col = AC_PARAM_COLORS[param]||'#37474F';
+  if(lbl){
+    lbl.style.borderColor   = chk.checked ? col : 'var(--border)';
+    lbl.style.background    = chk.checked ? col+'15' : 'transparent';
+    var span = lbl.querySelector('span');
+    if(span) span.style.color = chk.checked ? col : 'var(--text3)';
+  }
+  AC_DIRTY = true;
+}
+
+function acToggleAll(modKey, chk){
+  var mod = AC_MODULES.find(function(m){return m.key===modKey;});
+  if(!mod) return;
+  mod.params.forEach(function(p){
+    if(!AC_PERMISSIONS[modKey]) AC_PERMISSIONS[modKey]={};
+    AC_PERMISSIONS[modKey][p] = chk.checked;
+    var cb = document.getElementById('ac-'+modKey+'-'+p);
+    if(cb) cb.checked = chk.checked;
+    // Update label
+    var lbl = document.getElementById('ac-lbl-'+modKey+'-'+p);
+    var col = AC_PARAM_COLORS[p]||'#37474F';
+    if(lbl){
+      lbl.style.borderColor = chk.checked ? col : 'var(--border)';
+      lbl.style.background  = chk.checked ? col+'15' : 'transparent';
+      var span = lbl.querySelector('span');
+      if(span) span.style.color = chk.checked ? col : 'var(--text3)';
+    }
+  });
+  AC_DIRTY = true;
+}
+
+async function acSavePermissions(){
+  if(!AC_TARGET){ toast('Select an employee or role first','warning'); return; }
+  toast('Saving...','info');
+  try{
+    var inserts = [];
+    AC_MODULES.forEach(function(mod){
+      var modPerms = AC_PERMISSIONS[mod.key]||{};
+      mod.params.forEach(function(p){
+        inserts.push({
+          target_type: AC_TAB,
+          employee_id: AC_TAB==='emp' ? AC_TARGET : null,
+          role:        AC_TAB==='role' ? AC_TARGET : null,
+          module:      mod.key,
+          permission:  p,
+          granted:     modPerms[p]===true
+        });
+      });
+    });
+
+    // Upsert — delete existing then insert
+    var filter = AC_TAB==='emp' ? 'employee_id=eq.'+AC_TARGET : 'role=eq.'+AC_TARGET;
+    await fetch(SUPABASE_URL+'/rest/v1/access_permissions?'+filter, {
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    // Insert all
+    await fetch(SUPABASE_URL+'/rest/v1/access_permissions', {
+      method:'POST',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body: JSON.stringify(inserts)
+    });
+
+    AC_DIRTY = false;
+    toast('✓ Permissions saved!','success');
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+// ── PERMISSION CHECK HELPER (use anywhere in app) ────────────
+// Usage: acCan('boq','edit') → true/false
+function acCan(module, action){
+  // Admin can always do everything
+  if(!currentUser) return false;
+  if(currentUser.role==='admin') return true;
+  // Check cached permissions (loaded at login)
+  var perms = window._acPerms||{};
+  var modPerms = perms[module]||{};
+  return modPerms[action]===true;
+}
+
+async function acLoadUserPermissions(){
+  // Called at login to cache current user's permissions
+  if(!currentUser) return;
+  if(currentUser.role==='admin'){ window._acPerms={}; return; }
+  try{
+    // Check employee-specific first, then role
+    var rows = [];
+    if(currentUser.id){
+      var r1 = await sbFetch('access_permissions',{select:'*',filter:'employee_id=eq.'+currentUser.id});
+      if(Array.isArray(r1)&&r1.length) rows = r1;
+    }
+    if(!rows.length && currentUser.role){
+      var r2 = await sbFetch('access_permissions',{select:'*',filter:'role=eq.'+currentUser.role});
+      if(Array.isArray(r2)) rows = r2;
+    }
+    var perms = {};
+    rows.forEach(function(r){
+      if(!perms[r.module]) perms[r.module]={};
+      perms[r.module][r.permission] = r.granted;
+    });
+    window._acPerms = perms;
+  }catch(e){ window._acPerms={}; }
+}
+
 
 </script>
 
