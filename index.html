@@ -2330,32 +2330,35 @@ input,select,textarea{font-size:16px !important;}
 </div>
 
 <!-- PETTY CASH MODULE SCREEN -->
-<div class="app-screen" id="app-petty-cash">
-  <div class="boq-topbar">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div class="tb-title">💵 Petty Cash</div>
-    <div style="flex:1;"></div>
+<div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;flex-direction:column;overflow:hidden;">
+
+  <div style="display:flex;align-items:center;padding:18px 18px 10px;background:#EFEBE4;flex-shrink:0;">
+    <span onclick="showApp('dashboard')" style="font-size:28px;color:#1E2547;cursor:pointer;margin-right:10px;line-height:1;">&#8249;</span>
+    <div style="flex:1;">
+      <div style="font-size:20px;font-weight:900;color:#1E2547;">Site Cash Manager</div>
+      <div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:1px;">Atmagaurav Infra Pvt Ltd</div>
+    </div>
+    <div onclick="pcOpenManageProjects()" style="cursor:pointer;font-size:22px;color:#6B7280;">&#9881;</div>
   </div>
-  <!-- Project selector -->
-  <div style="padding:8px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="pc-proj-sel" class="fsel" style="width:100%;" onchange="pcRender()">
-      <option value="">— All Projects —</option>
-    </select>
+
+  <div id="pc-site-tabs" style="display:flex;gap:10px;padding:2px 18px 14px;overflow-x:auto;scrollbar-width:none;align-items:center;flex-shrink:0;-webkit-overflow-scrolling:touch;"></div>
+
+  <div id="pc-main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;">
+    <div style="text-align:center;padding:40px;color:#9CA3AF;">Loading...</div>
   </div>
-  <div class="boq-scroll" id="pc-content">
-    <div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div>
-  </div>
+
+  <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;right:calc(50% - 215px);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
 </div>
 
 <!-- PETTY CASH SHEET -->
 <div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
-<div class="sheet" id="sh-pc">
+<div class="sheet" id="sh-pc" style="max-height:92vh;">
   <div class="sh-handle"></div>
   <div class="sh-head">
-    <div class="sh-title" id="pc-sheet-title">Add Entry</div>
+    <div class="sh-title" id="pc-sheet-title">Entry</div>
     <span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span>
   </div>
-  <div class="sh-body" id="pc-sheet-body"></div>
+  <div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div>
   <div class="sh-foot" id="pc-sheet-foot"></div>
 </div>
 
