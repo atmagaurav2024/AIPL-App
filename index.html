@@ -1626,6 +1626,32 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="profile-foot"></div>
 </div>
 
+
+<!-- PENDING APPROVALS SHEET -->
+<div class="sh-overlay" id="ov-pending" onclick="closeSheet('ov-pending','sh-pending')"></div>
+<div class="sheet" id="sh-pending" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title">⏳ Pending Approvals</div>
+    <span class="sh-close" onclick="closeSheet('ov-pending','sh-pending')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="pending-list-body">
+    <div style="text-align:center;padding:30px;color:var(--text3);">Loading...</div>
+  </div>
+</div>
+
+<!-- EMPLOYEE APPROVAL DETAIL SHEET -->
+<div class="sh-overlay" id="ov-approval-det" onclick="closeSheet('ov-approval-det','sh-approval-det')"></div>
+<div class="sheet" id="sh-approval-det" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title">&#128101; Employee Profile</div>
+    <span class="sh-close" onclick="closeSheet('ov-approval-det','sh-approval-det')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="approval-det-body"></div>
+  <div class="sh-foot" id="approval-det-foot"></div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 
@@ -2639,6 +2665,32 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="profile-foot"></div>
 </div>
 
+
+<!-- PENDING APPROVALS SHEET -->
+<div class="sh-overlay" id="ov-pending" onclick="closeSheet('ov-pending','sh-pending')"></div>
+<div class="sheet" id="sh-pending" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title">⏳ Pending Approvals</div>
+    <span class="sh-close" onclick="closeSheet('ov-pending','sh-pending')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="pending-list-body">
+    <div style="text-align:center;padding:30px;color:var(--text3);">Loading...</div>
+  </div>
+</div>
+
+<!-- EMPLOYEE APPROVAL DETAIL SHEET -->
+<div class="sh-overlay" id="ov-approval-det" onclick="closeSheet('ov-approval-det','sh-approval-det')"></div>
+<div class="sheet" id="sh-approval-det" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title">&#128101; Employee Profile</div>
+    <span class="sh-close" onclick="closeSheet('ov-approval-det','sh-approval-det')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="approval-det-body"></div>
+  <div class="sh-foot" id="approval-det-foot"></div>
+</div>
+
 <div class="toast-wrap" id="toast-wrap"></div>
 
 
@@ -2667,6 +2719,32 @@ input,select,textarea{font-size:16px !important;}
   </div>
   <div class="sh-body" id="profile-body"></div>
   <div class="sh-foot" id="profile-foot"></div>
+</div>
+
+
+<!-- PENDING APPROVALS SHEET -->
+<div class="sh-overlay" id="ov-pending" onclick="closeSheet('ov-pending','sh-pending')"></div>
+<div class="sheet" id="sh-pending" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title">⏳ Pending Approvals</div>
+    <span class="sh-close" onclick="closeSheet('ov-pending','sh-pending')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="pending-list-body">
+    <div style="text-align:center;padding:30px;color:var(--text3);">Loading...</div>
+  </div>
+</div>
+
+<!-- EMPLOYEE APPROVAL DETAIL SHEET -->
+<div class="sh-overlay" id="ov-approval-det" onclick="closeSheet('ov-approval-det','sh-approval-det')"></div>
+<div class="sheet" id="sh-approval-det" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title">&#128101; Employee Profile</div>
+    <span class="sh-close" onclick="closeSheet('ov-approval-det','sh-approval-det')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="approval-det-body"></div>
+  <div class="sh-foot" id="approval-det-foot"></div>
 </div>
 
 <div class="toast-wrap" id="toast-wrap"></div>
@@ -7992,11 +8070,19 @@ function pcViewVoucher(idx){
       '</div>'
     : '<div style="text-align:center;padding:16px;color:#9CA3AF;font-size:12px;">No photo attached</div>');
 
+  var isAdmin = currentUser&&(currentUser.role==='admin'||currentUser.role==='pm');
+  var tbl = t._in ? 'petty_cash_in' : 'petty_cash_expense';
+
   document.getElementById('pc-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closePCSheet()">Close</button>'+
-    (t.photo_url ?
-      '<a href="'+t.photo_url+'" target="_blank" style="flex:1;"><button class="btn" style="background:#E07820;color:#fff;width:100%;">🔍 View Photo</button></a>'
+    (t.photo_url ? '<a href="'+t.photo_url+'" target="_blank" style="flex:1;"><button class="btn" style="background:#1E2547;color:#fff;width:100%;">🔍 Photo</button></a>' : '')+
+    (isAdmin ?
+      '<button class="btn" style="background:#1565C0;color:#fff;" onclick="pcEditVoucher()">✏️ Edit</button>'+
+      '<button class="btn" style="background:#C62828;color:#fff;" onclick="pcDeleteVoucher()">🗑 Delete</button>'
     : '');
+
+  // Store current voucher for edit/delete
+  window._pcCurrentVoucher = t;
   openPCSheet();
 }
 
@@ -8010,6 +8096,108 @@ function pcViewRepVoucher(idx){
   // Restore after slight delay
   setTimeout(function(){ window._pcTxns.shift(); }, 500);
 }
+
+// ── EDIT / DELETE VOUCHER (Admin only) ─────────────────────
+async function pcDeleteVoucher(){
+  var t = window._pcCurrentVoucher; if(!t) return;
+  if(!confirm('Delete this voucher? This cannot be undone.')) return;
+  var tbl = t._in ? 'petty_cash_in' : 'petty_cash_expense';
+  try{
+    toast('Deleting...','info');
+    await sbDelete(tbl, t.id);
+    if(t._in){ PC_IN = PC_IN.filter(function(r){return r.id!==t.id;}); }
+    else { PC_EXP = PC_EXP.filter(function(r){return r.id!==t.id;}); }
+    toast('✓ Voucher deleted','success');
+    closePCSheet();
+    pcRefresh();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+async function pcEditVoucher(){
+  var t = window._pcCurrentVoucher; if(!t) return;
+  var isIn = t._in;
+  var cOpts = Object.keys(PC_CAT).map(function(c){return '<option value="'+c+'"'+(t.category===c?' selected':'')+'>'+PC_CAT[c].e+' '+c+'</option>';}).join('');
+  var eOpts = PC_EMPS.map(function(e){var n=pcEmpName(e.id);return '<option value="'+e.id+'"'+(t.employee_id===e.id?' selected':'')+'>'+n+'</option>';}).join('');
+  var pOpts = PC_PROJS.map(function(p){return '<option value="'+p.id+'"'+(t.project_id===p.id?' selected':'')+'>'+p.name+'</option>';}).join('');
+
+  document.getElementById('pc-sheet-title').textContent = '✏️ Edit Voucher';
+  document.getElementById('pc-sheet-body').innerHTML =
+    '<label class="flbl">Date *</label>'+
+    '<input id="pce-date" class="finp" type="date" value="'+(t.date||'')+'">'+
+    '<label class="flbl">Employee *</label>'+
+    '<select id="pce-emp" class="fsel">'+eOpts+'</select>'+
+    (isIn ?
+      '<label class="flbl">Given By</label>'+
+      '<input id="pce-givenby" class="finp" value="'+(t.given_by||'')+'">'+
+      '<label class="flbl">Amount (₹) *</label>'+
+      '<input id="pce-amt" class="finp" type="number" value="'+(t.amount||0)+'" style="font-size:22px;font-weight:900;">'+
+      '<label class="flbl">Payment Mode</label>'+
+      '<select id="pce-mode" class="fsel"><option'+(t.payment_mode==='Cash'?' selected':'')+'>Cash</option><option'+(t.payment_mode==='UPI'?' selected':'')+'>UPI</option><option'+(t.payment_mode==='Bank Transfer'?' selected':'')+'>Bank Transfer</option></select>'+
+      '<label class="flbl">Remarks</label>'+
+      '<input id="pce-rem" class="finp" value="'+(t.remarks||'')+'">'
+    :
+      '<label class="flbl">Project *</label>'+
+      '<select id="pce-proj" class="fsel">'+pOpts+'</select>'+
+      '<label class="flbl">Category *</label>'+
+      '<select id="pce-cat" class="fsel">'+cOpts+'</select>'+
+      '<label class="flbl">Paid To / Party Name</label>'+
+      '<input id="pce-party" class="finp" value="'+(t.party_name||'')+'">'+
+      '<label class="flbl">Amount (₹) *</label>'+
+      '<input id="pce-amt" class="finp" type="number" value="'+(t.amount||0)+'" style="font-size:22px;font-weight:900;">'+
+      '<label class="flbl">Payment Mode</label>'+
+      '<select id="pce-mode" class="fsel"><option'+(t.payment_mode==='Cash'?' selected':'')+'>Cash</option><option'+(t.payment_mode==='UPI'?' selected':'')+'>UPI</option><option'+(t.payment_mode==='Bank Transfer'?' selected':'')+'>Bank Transfer</option></select>'+
+      '<label class="flbl">Purpose *</label>'+
+      '<textarea id="pce-pur" class="finp" style="min-height:60px;resize:none;">'+(t.purpose||'')+'</textarea>'+
+      '<label class="flbl">Remarks</label>'+
+      '<input id="pce-rem" class="finp" value="'+(t.remarks||'')+'">'
+    );
+  document.getElementById('pc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closePCSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#E07820;color:#fff;" onclick="pcSaveEdit()">💾 Save Changes</button>';
+  openPCSheet();
+}
+
+async function pcSaveEdit(){
+  var t = window._pcCurrentVoucher; if(!t) return;
+  var isIn = t._in;
+  var g = function(id){ return (document.getElementById(id)||{value:''}).value; };
+  var date   = g('pce-date');
+  var empId  = g('pce-emp');
+  var amount = parseFloat(g('pce-amt'))||0;
+  var mode   = g('pce-mode');
+  var rem    = g('pce-rem').trim()||null;
+  if(!date||!empId||!amount){ toast('Fill required fields','warning'); return; }
+
+  var data = {date:date, employee_id:empId, amount:amount, payment_mode:mode, remarks:rem};
+  if(isIn){
+    data.given_by = g('pce-givenby').trim()||null;
+  } else {
+    var projEl = document.getElementById('pce-proj');
+    data.project_id   = projEl ? projEl.value : t.project_id;
+    data.project_name = projEl&&projEl.selectedIndex>=0 ? projEl.options[projEl.selectedIndex].text : t.project_name;
+    data.category     = g('pce-cat')||t.category;
+    data.party_name   = g('pce-party').trim()||null;
+    data.purpose      = g('pce-pur').trim();
+  }
+
+  var tbl = isIn ? 'petty_cash_in' : 'petty_cash_expense';
+  try{
+    toast('Saving...','info');
+    await sbUpdate(tbl, t.id, data);
+    // Update local array
+    if(isIn){
+      var idx = PC_IN.findIndex(function(r){return r.id===t.id;});
+      if(idx>-1) PC_IN[idx] = Object.assign(PC_IN[idx], data);
+    } else {
+      var idx = PC_EXP.findIndex(function(r){return r.id===t.id;});
+      if(idx>-1) PC_EXP[idx] = Object.assign(PC_EXP[idx], data);
+    }
+    toast('✓ Voucher updated','success');
+    closePCSheet();
+    pcRefresh();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
 </script>
 
 </body>
