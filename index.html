@@ -1347,6 +1347,42 @@ input,select,textarea{font-size:16px !important;}
 .pc-proj-row{padding:6px 14px 6px 42px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:11px;}
 .pc-badge-in{background:#E8F5E9;color:#2E7D32;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;}
 .pc-badge-out{background:#FFEBEE;color:#C62828;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;}
+
+/* ── ACCOUNTS MODULE ─────────────────────── */
+.acc-tab{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Nunito',sans-serif;color:rgba(255,255,255,.6);background:transparent;white-space:nowrap;}
+.acc-tab.active{background:rgba(255,255,255,.2);color:white;}
+.acc-card{background:white;border-radius:14px;border:1px solid var(--border);padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+.acc-card-title{font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:10px;}
+.voucher-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.voucher-row:last-child{border-bottom:none;}
+.v-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;}
+.v-pmt{background:#FFEBEE;color:#C62828;}
+.v-rct{background:#E8F5E9;color:#2E7D32;}
+.v-pur{background:#E3F2FD;color:#1565C0;}
+.v-jnl{background:#F3E5F5;color:#6A1B9A;}
+.v-ctr{background:#FFF3E0;color:#E65100;}
+.ledger-row{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;}
+.ledger-row:last-child{border-bottom:none;}
+
+/* ── ACCOUNTS MODULE ────────────────────────── */
+#app-accounts{background:#F0F4F8;overflow:hidden;display:none;flex-direction:column;}
+#app-accounts.on{display:flex;height:100%;}
+.acc-tab-bar{display:flex;overflow-x:auto;background:white;border-bottom:1px solid var(--border);flex-shrink:0;scrollbar-width:none;}
+.acc-tab-bar::-webkit-scrollbar{display:none;}
+.acc-tab{padding:12px 16px;font-size:12px;font-weight:800;color:var(--text3);cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent;transition:all .2s;}
+.acc-tab.on{color:var(--navy);border-bottom-color:var(--navy);}
+.acc-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;}
+.acc-card{background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;padding:14px;}
+.acc-stat{background:white;border-radius:14px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.acc-stat-val{font-size:20px;font-weight:900;margin-top:4px;}
+.vou-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;}
+.vou-row:last-child{border-bottom:none;}
+.vou-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;}
+.vou-payment{background:#FFEBEE;color:#C62828;}
+.vou-receipt{background:#E8F5E9;color:#2E7D32;}
+.vou-purchase{background:#E3F2FD;color:#1565C0;}
+.vou-journal{background:#F3E5F5;color:#6A1B9A;}
+.vou-contra{background:#FFF3E0;color:#E65100;}
 </style>
 </head>
 <body>
@@ -1602,6 +1638,14 @@ input,select,textarea{font-size:16px !important;}
     <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
       <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('accounts');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8EAF6;">💰</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Accounts</div><div class="drawer-item-sub">Vouchers, Ledger, GST, TDS</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('accounts');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">💰</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Accounts</div><div class="drawer-item-sub">Vouchers, Ledger, GST & TDS</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('access');closeDrawer();">
       <div class="drawer-item-ic" style="background:#EDE7F6;">🔐</div>
@@ -2437,6 +2481,89 @@ input,select,textarea{font-size:16px !important;}
   </div>
 </div>
 
+
+<!-- ACCOUNTS MODULE SCREEN -->
+<div class="app-screen" id="app-accounts">
+  <div class="boq-topbar" style="background:#1A237E;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">💰 Accounts</div>
+    <div style="flex:1;"></div>
+    <button class="tb-btn" id="acc-add-btn" onclick="accOpenVoucher(null)" style="font-size:20px;">＋</button>
+  </div>
+  <!-- Sub-tabs -->
+  <div id="acc-tabs" style="display:flex;gap:0;background:#1A237E;padding:0 14px 10px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;">
+    <button onclick="accTab('dash')" id="acc-t-dash" class="acc-tab active">📊 Dashboard</button>
+    <button onclick="accTab('entry')" id="acc-t-entry" class="acc-tab">📝 Vouchers</button>
+    <button onclick="accTab('party')" id="acc-t-party" class="acc-tab">👤 Party</button>
+    <button onclick="accTab('books')" id="acc-t-books" class="acc-tab">📒 Books</button>
+    <button onclick="accTab('reports')" id="acc-t-reports" class="acc-tab">📈 Reports</button>
+    <button onclick="accTab('gst')" id="acc-t-gst" class="acc-tab">🧾 GST/TDS</button>
+  </div>
+  <!-- Content -->
+  <div id="acc-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;background:#F0F4F8;">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div>
+  </div>
+</div>
+
+<!-- VOUCHER SHEET -->
+<div class="sh-overlay" id="ov-voucher" onclick="closeSheet('ov-voucher','sh-voucher')"></div>
+<div class="sheet" id="sh-voucher" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title" id="voucher-sheet-title">New Voucher</div>
+    <span class="sh-close" onclick="closeSheet('ov-voucher','sh-voucher')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="voucher-sheet-body"></div>
+  <div class="sh-foot" id="voucher-sheet-foot"></div>
+</div>
+
+<!-- ACCOUNT SHEET -->
+<div class="sh-overlay" id="ov-account" onclick="closeSheet('ov-account','sh-account')"></div>
+<div class="sheet" id="sh-account" style="max-height:80vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title" id="account-sheet-title">Ledger Account</div>
+    <span class="sh-close" onclick="closeSheet('ov-account','sh-account')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="account-sheet-body"></div>
+  <div class="sh-foot" id="account-sheet-foot"></div>
+</div>
+
+
+<!-- ACCOUNTS MODULE SCREEN -->
+<div class="app-screen" id="app-accounts">
+  <div class="boq-topbar" style="background:var(--navy);">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">💰 Accounts</div>
+    <div style="flex:1;"></div>
+    <button class="tb-btn" onclick="accOpenVoucher(null)" style="font-size:18px;">&#43;</button>
+  </div>
+  <div class="acc-tab-bar" id="acc-tab-bar">
+    <div class="acc-tab on" onclick="accSwitchTab('dash',this)">Dashboard</div>
+    <div class="acc-tab" onclick="accSwitchTab('entry',this)">Entry</div>
+    <div class="acc-tab" onclick="accSwitchTab('ledger',this)">Party Ledger</div>
+    <div class="acc-tab" onclick="accSwitchTab('books',this)">Books</div>
+    <div class="acc-tab" onclick="accSwitchTab('reports',this)">Reports</div>
+    <div class="acc-tab" onclick="accSwitchTab('gst',this)">GST / TDS</div>
+    <div class="acc-tab" onclick="accSwitchTab('coa',this)">Accounts</div>
+  </div>
+  <div class="acc-scroll" id="acc-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">⏳ Loading...</div>
+  </div>
+</div>
+
+<!-- ACCOUNTS SHEET -->
+<div class="sh-overlay" id="ov-acc" onclick="closeSheet('ov-acc','sh-acc')"></div>
+<div class="sheet" id="sh-acc" style="max-height:95vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head">
+    <div class="sh-title" id="acc-sheet-title">New Voucher</div>
+    <span class="sh-close" onclick="closeSheet('ov-acc','sh-acc')">&#10005;</span>
+  </div>
+  <div class="sh-body" id="acc-sheet-body"></div>
+  <div class="sh-foot" id="acc-sheet-foot"></div>
+</div>
+
 <div class="app-screen" id="app-registry">
   
 
@@ -2798,7 +2925,7 @@ function showApp(name){
   document.getElementById('app-'+name).classList.add('on');
   currentApp=name;
   // Hide bottom nav for full-screen modules
-  var noNav = ['boq','jm','planning','execution','projects','attendance','petty-cash','access'];
+  var noNav = ['boq','jm','planning','execution','projects','attendance','petty-cash','access','accounts'];
   document.getElementById('app-nav').style.display = noNav.indexOf(name)>-1 ? 'none' : 'flex';
   // Update nav highlight
   ['home','attendance','registry','profile'].forEach(function(n){
@@ -2815,6 +2942,8 @@ function showApp(name){
   else if(name==='execution'){initExec();stopSync();}
   else if(name==='petty-cash'){initPettyCash();stopSync();}
   else if(name==='access'){initAccess();stopSync();}
+  else if(name==='accounts'){initAccounts();stopSync();}
+  else if(name==='accounts'){initAccounts();stopSync();}
   else {stopSync();}
 }
 
@@ -8435,6 +8564,1779 @@ async function acLoadUserPermissions(){
     });
     window._acPerms = perms;
   }catch(e){ window._acPerms={}; }
+}
+
+
+
+// ═══════════════════════════════════════════════════════════
+// ACCOUNTS MODULE
+// ═══════════════════════════════════════════════════════════
+
+var ACC_TAB = 'dash';
+var ACC_ACCOUNTS = [];   // chart of accounts
+var ACC_VOUCHERS = [];   // vouchers
+var ACC_ITEMS    = [];   // voucher line items
+var ACC_GST      = [];   // gst entries
+var ACC_TDS      = [];   // tds entries
+var ACC_PROJECTS = [];   // from projects table
+var _accVoucherLines = []; // temp lines for voucher form
+
+// Voucher type config
+var ACC_VTYPES = {
+  payment: {label:'Payment',    icon:'💸', badge:'v-pmt', desc:'Cash/Bank payment to party'},
+  receipt: {label:'Receipt',    icon:'💰', badge:'v-rct', desc:'Cash/Bank received from party'},
+  purchase:{label:'Purchase',   icon:'🧾', badge:'v-pur', desc:'Bill/Invoice received with GST'},
+  journal: {label:'Journal',    icon:'📔', badge:'v-jnl', desc:'Internal adjustments'},
+  contra:  {label:'Contra',     icon:'🔄', badge:'v-ctr', desc:'Cash to/from Bank transfer'}
+};
+
+function fmtAmt(n){ return '₹'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
+function fmtD(d){ if(!d) return '—'; return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
+function openVoucherSheet(){ openSheet('ov-voucher','sh-voucher'); }
+function closeVoucherSheet(){ closeSheet('ov-voucher','sh-voucher'); }
+function openAccountSheet(){ openSheet('ov-account','sh-account'); }
+function closeAccountSheet(){ closeSheet('ov-account','sh-account'); }
+
+async function initAccounts(){
+  var el = document.getElementById('acc-content');
+  if(el) el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">⏳ Loading...</div>';
+  try{ var r=await sbFetch('accounts',{select:'*',filter:'active=eq.true',order:'code.asc'}); ACC_ACCOUNTS=Array.isArray(r)?r:[]; }catch(e){ ACC_ACCOUNTS=[]; }
+  try{ var r=await sbFetch('vouchers',{select:'*',order:'date.desc,created_at.desc'}); ACC_VOUCHERS=Array.isArray(r)?r:[]; }catch(e){ ACC_VOUCHERS=[]; }
+  try{ var r=await sbFetch('voucher_items',{select:'*',order:'created_at.asc'}); ACC_ITEMS=Array.isArray(r)?r:[]; }catch(e){ ACC_ITEMS=[]; }
+  try{ var r=await sbFetch('gst_entries',{select:'*',order:'date.desc'}); ACC_GST=Array.isArray(r)?r:[]; }catch(e){ ACC_GST=[]; }
+  try{ var r=await sbFetch('tds_entries',{select:'*',order:'date.desc'}); ACC_TDS=Array.isArray(r)?r:[]; }catch(e){ ACC_TDS=[]; }
+  try{ var r=await sbFetch('projects',{select:'id,name',order:'name.asc'}); ACC_PROJECTS=Array.isArray(r)?r:[]; }catch(e){ ACC_PROJECTS=[]; }
+  accRender();
+}
+
+function accTab(tab){
+  ACC_TAB = tab;
+  document.querySelectorAll('.acc-tab').forEach(function(b){ b.classList.remove('active'); });
+  var btn = document.getElementById('acc-t-'+tab);
+  if(btn) btn.classList.add('active');
+  var addBtn = document.getElementById('acc-add-btn');
+  if(addBtn) addBtn.style.display = tab==='entry' ? '' : 'none';
+  accRender();
+}
+
+function accRender(){
+  var el = document.getElementById('acc-content'); if(!el) return;
+  if(ACC_TAB==='dash')    el.innerHTML = accRenderDash();
+  else if(ACC_TAB==='entry')   el.innerHTML = accRenderVouchers();
+  else if(ACC_TAB==='party')   el.innerHTML = accRenderParty();
+  else if(ACC_TAB==='books')   el.innerHTML = accRenderBooks();
+  else if(ACC_TAB==='reports') el.innerHTML = accRenderReports();
+  else if(ACC_TAB==='gst')     el.innerHTML = accRenderGST();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────
+function accGetBalance(accountId){
+  var acct = ACC_ACCOUNTS.find(function(a){ return a.id===accountId; }) || {};
+  var opening = parseFloat(acct.opening_balance)||0;
+  var debits = ACC_ITEMS.filter(function(i){ return i.account_id===accountId && i.entry_type==='debit'; }).reduce(function(s,i){ return s+(parseFloat(i.amount)||0); },0);
+  var credits = ACC_ITEMS.filter(function(i){ return i.account_id===accountId && i.entry_type==='credit'; }).reduce(function(s,i){ return s+(parseFloat(i.amount)||0); },0);
+  if(acct.balance_type==='debit') return opening + debits - credits;
+  return opening + credits - debits;
+}
+
+function accGetBalanceByCode(code){
+  var acct = ACC_ACCOUNTS.find(function(a){ return a.code===code; });
+  return acct ? accGetBalance(acct.id) : 0;
+}
+
+function accRenderDash(){
+  var cash = accGetBalanceByCode('1100');
+  var bank = accGetBalanceByCode('1201');
+  var recv = accGetBalanceByCode('1300');
+  var payV = accGetBalanceByCode('2100');
+  var payS = accGetBalanceByCode('2200');
+  var gstO = accGetBalanceByCode('2300');
+  var gstI = accGetBalanceByCode('2310');
+  var tdsP = accGetBalanceByCode('2400');
+  var netGST = gstO - gstI;
+
+  // Project P&L
+  var projCards = ACC_PROJECTS.map(function(p){
+    var pvIds = ACC_VOUCHERS.filter(function(v){ return v.project_id===p.id; }).map(function(v){ return v.id; });
+    var income = 0, expense = 0;
+    ACC_ITEMS.forEach(function(item){
+      if(pvIds.indexOf(item.voucher_id)<0) return;
+      var acct = ACC_ACCOUNTS.find(function(a){ return a.id===item.account_id; })||{};
+      if(acct.account_type==='income' && item.entry_type==='credit') income += parseFloat(item.amount)||0;
+      if(acct.account_type==='expense' && item.entry_type==='debit') expense += parseFloat(item.amount)||0;
+    });
+    var profit = income - expense;
+    return '<div style="background:white;border-radius:12px;padding:12px;border:1px solid var(--border);margin-bottom:8px;">'+
+      '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">🏗️ '+p.name+'</div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<div style="flex:1;text-align:center;"><div style="font-size:10px;color:var(--text3);">Income</div><div style="font-size:13px;font-weight:800;color:#2E7D32;">'+fmtAmt(income)+'</div></div>'+
+        '<div style="flex:1;text-align:center;"><div style="font-size:10px;color:var(--text3);">Expense</div><div style="font-size:13px;font-weight:800;color:#C62828;">'+fmtAmt(expense)+'</div></div>'+
+        '<div style="flex:1;text-align:center;"><div style="font-size:10px;color:var(--text3);">P&L</div><div style="font-size:13px;font-weight:800;color:'+(profit>=0?'#1565C0':'#C62828')+';">'+fmtAmt(profit)+'</div></div>'+
+      '</div></div>';
+  }).join('');
+
+  // Recent vouchers
+  var recent = ACC_VOUCHERS.slice(0,8).map(function(v){
+    var vt = ACC_VTYPES[v.voucher_type]||{label:v.voucher_type,badge:'v-jnl',icon:'📄'};
+    return '<div class="voucher-row" onclick="accViewVoucher(\''+v.id+'\')">'+
+      '<div style="font-size:20px;flex-shrink:0;">'+vt.icon+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:12px;font-weight:800;">'+v.voucher_no+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);">'+(v.party_name||v.narration||'—')+'</div>'+
+        (v.project_name?'<div style="font-size:10px;color:var(--text3);">'+v.project_name+'</div>':'')+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0;">'+
+        '<div style="font-size:13px;font-weight:800;">'+fmtAmt(v.net_amount)+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">'+fmtD(v.date)+'</div>'+
+        '<span class="v-badge '+vt.badge+'">'+vt.label+'</span>'+
+      '</div></div>';
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No vouchers yet</div>';
+
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">'+
+    accBalCard('💵','Cash in Hand',cash,'#1B5E20')+
+    accBalCard('🏦','Bank (SBI)',bank,'#1A237E')+
+    accBalCard('📋','Receivables',recv,'#E65100')+
+    accBalCard('💳','Payable (Vendors)',payV,'#C62828')+
+    accBalCard('🏗️','Payable (SC)',payS,'#6A1B9A')+
+    accBalCard('🧾','Net GST Payable',netGST,netGST>0?'#C62828':'#2E7D32')+
+    '</div>'+
+    // Quick actions
+    '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+      accQA('💸','Payment','payment','#C62828')+
+      accQA('💰','Receipt','receipt','#2E7D32')+
+      accQA('🧾','Purchase','purchase','#1565C0')+
+      accQA('🔄','Contra','contra','#E65100')+
+      accQA('📔','Journal','journal','#6A1B9A')+
+      accQA('📊','Accounts','accounts','#37474F')+
+    '</div>'+
+    // Project P&L
+    (projCards?'<div class="acc-card"><div class="acc-card-title">📊 Project P&L</div>'+projCards+'</div>':'')+
+    // Recent vouchers
+    '<div class="acc-card"><div class="acc-card-title">🕐 Recent Vouchers</div>'+recent+'</div>';
+}
+
+function accBalCard(icon,label,val,col){
+  return '<div style="background:white;border-radius:12px;padding:12px;border:1px solid var(--border);">'+
+    '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-bottom:4px;">'+icon+' '+label+'</div>'+
+    '<div style="font-size:16px;font-weight:900;color:'+col+';">'+fmtAmt(val)+'</div>'+
+  '</div>';
+}
+
+function accQA(icon,label,action,col){
+  var onclick = action==='accounts' ? 'accOpenChartOfAccounts()' : 'accOpenVoucher(\''+action+'\')';
+  return '<button onclick="'+onclick+'" style="background:white;border:1px solid var(--border);border-radius:10px;padding:10px 4px;cursor:pointer;font-family:\'Nunito\',sans-serif;display:flex;flex-direction:column;align-items:center;gap:4px;">'+
+    '<span style="font-size:20px;">'+icon+'</span>'+
+    '<span style="font-size:11px;font-weight:800;color:'+col+';">'+label+'</span>'+
+  '</button>';
+}
+
+// ── VOUCHERS LIST ────────────────────────────────────────────
+function accRenderVouchers(){
+  var filterType = document.getElementById('acc-v-filter') ? document.getElementById('acc-v-filter').value : '';
+  var filterProj = document.getElementById('acc-p-filter') ? document.getElementById('acc-p-filter').value : '';
+  var list = ACC_VOUCHERS.filter(function(v){
+    if(filterType && v.voucher_type!==filterType) return false;
+    if(filterProj && v.project_id!==filterProj) return false;
+    return true;
+  });
+
+  var projOpts = ACC_PROJECTS.map(function(p){ return '<option value="'+p.id+'">'+p.name+'</option>'; }).join('');
+  var typeOpts = Object.keys(ACC_VTYPES).map(function(k){ return '<option value="'+k+'">'+ACC_VTYPES[k].label+'</option>'; }).join('');
+
+  var rows = list.map(function(v){
+    var vt = ACC_VTYPES[v.voucher_type]||{label:v.voucher_type,badge:'v-jnl',icon:'📄'};
+    return '<div class="voucher-row" onclick="accViewVoucher(\''+v.id+'\')">'+
+      '<div style="font-size:22px;flex-shrink:0;">'+vt.icon+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:800;">'+v.voucher_no+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);">'+(v.party_name||'—')+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">'+(v.project_name||'')+(v.narration?' · '+v.narration:'')+
+        (v.source!=='manual'?' <span style="background:#E3F2FD;color:#1565C0;border-radius:4px;padding:1px 5px;font-size:9px;">Auto</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0;">'+
+        '<div style="font-size:14px;font-weight:800;">'+fmtAmt(v.net_amount)+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">'+fmtD(v.date)+'</div>'+
+        '<span class="v-badge '+vt.badge+'">'+vt.label+'</span>'+
+      '</div></div>';
+  }).join('') || '<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;">📄</div><div style="margin-top:8px;font-weight:700;">No vouchers</div></div>';
+
+  return '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+    '<select id="acc-v-filter" class="fsel" style="flex:1;" onchange="accRender()"><option value="">All Types</option>'+typeOpts+'</select>'+
+    '<select id="acc-p-filter" class="fsel" style="flex:1;" onchange="accRender()"><option value="">All Projects</option>'+projOpts+'</select>'+
+  '</div>'+
+  '<div class="acc-card" style="padding:4px 12px;">'+rows+'</div>';
+}
+
+// ── PARTY LEDGER ─────────────────────────────────────────────
+function accRenderParty(){
+  var selParty = document.getElementById('acc-party-sel') ? document.getElementById('acc-party-sel').value : '';
+  // Build party list from vouchers
+  var parties = {};
+  ACC_VOUCHERS.forEach(function(v){
+    if(!v.party_name) return;
+    var key = v.party_name;
+    if(!parties[key]) parties[key]={name:v.party_name,type:v.party_type||'',dr:0,cr:0,txns:[]};
+    parties[key].txns.push(v);
+  });
+
+  var partyOpts = Object.keys(parties).map(function(k){
+    return '<option value="'+k+'">'+k+'</option>';
+  }).join('');
+
+  var ledgerHtml = '';
+  if(selParty && parties[selParty]){
+    var p = parties[selParty];
+    var balance = 0;
+    var rows = p.txns.sort(function(a,b){ return new Date(a.date)-new Date(b.date); }).map(function(v){
+      var vt = ACC_VTYPES[v.voucher_type]||{label:v.voucher_type,badge:'v-jnl'};
+      var isDebit = (v.voucher_type==='payment'||v.voucher_type==='purchase'||v.voucher_type==='journal');
+      var amt = parseFloat(v.net_amount)||0;
+      if(isDebit) balance += amt; else balance -= amt;
+      return '<div class="ledger-row">'+
+        '<div style="flex:0 0 72px;color:var(--text3);">'+fmtD(v.date)+'</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:12px;font-weight:700;">'+v.voucher_no+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+(v.narration||vt.label)+'</div>'+
+        '</div>'+
+        '<div style="flex:0 0 80px;text-align:right;color:'+(isDebit?'#C62828':'var(--text3)')+';">'+(isDebit?fmtAmt(amt):'—')+'</div>'+
+        '<div style="flex:0 0 80px;text-align:right;color:'+(isDebit?'var(--text3)':'#2E7D32')+'">'+(isDebit?'—':fmtAmt(amt))+'</div>'+
+        '<div style="flex:0 0 80px;text-align:right;font-weight:800;color:'+(balance>=0?'#1565C0':'#C62828')+';">'+fmtAmt(Math.abs(balance))+'</div>'+
+      '</div>';
+    }).join('');
+
+    ledgerHtml = '<div class="acc-card">'+
+      '<div class="acc-card-title">📋 '+selParty+' — Ledger</div>'+
+      '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+        '<div style="flex:1;background:#FFEBEE;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">Total Debit</div><div style="font-size:14px;font-weight:800;color:#C62828;">'+fmtAmt(p.txns.filter(function(v){return v.voucher_type==='payment'||v.voucher_type==='purchase';}).reduce(function(s,v){return s+(parseFloat(v.net_amount)||0);},0))+'</div></div>'+
+        '<div style="flex:1;background:#E8F5E9;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">Total Credit</div><div style="font-size:14px;font-weight:800;color:#2E7D32;">'+fmtAmt(p.txns.filter(function(v){return v.voucher_type==='receipt';}).reduce(function(s,v){return s+(parseFloat(v.net_amount)||0);},0))+'</div></div>'+
+        '<div style="flex:1;background:#E3F2FD;border-radius:8px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">Balance</div><div style="font-size:14px;font-weight:800;color:#1565C0;">'+fmtAmt(Math.abs(balance))+'</div></div>'+
+      '</div>'+
+      // Header
+      '<div class="ledger-row" style="font-weight:800;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);">'+
+        '<div style="flex:0 0 72px;">Date</div><div style="flex:1;">Particulars</div>'+
+        '<div style="flex:0 0 80px;text-align:right;">Debit</div>'+
+        '<div style="flex:0 0 80px;text-align:right;">Credit</div>'+
+        '<div style="flex:0 0 80px;text-align:right;">Balance</div>'+
+      '</div>'+
+      rows+
+    '</div>';
+  }
+
+  return '<div class="acc-card">'+
+    '<label class="flbl">Select Party</label>'+
+    '<select id="acc-party-sel" class="fsel" style="width:100%;" onchange="accRender()">'+
+      '<option value="">— Select Party —</option>'+partyOpts+
+    '</select>'+
+  '</div>'+ledgerHtml;
+}
+
+// ── BOOKS ────────────────────────────────────────────────────
+function accRenderBooks(){
+  var bookType = document.getElementById('acc-book-type') ? document.getElementById('acc-book-type').value : 'cash';
+  var fromDate = document.getElementById('acc-book-from') ? document.getElementById('acc-book-from').value : '';
+  var toDate   = document.getElementById('acc-book-to')   ? document.getElementById('acc-book-to').value   : '';
+
+  var targetCode = bookType==='cash' ? '1100' : '1201';
+  var targetAcct = ACC_ACCOUNTS.find(function(a){ return a.code===targetCode; });
+  if(!targetAcct) return '<div class="acc-card">Account not found. Please run DB setup SQL.</div>';
+
+  // Get all items for this account
+  var items = ACC_ITEMS.filter(function(i){ return i.account_id===targetAcct.id; });
+  if(fromDate) items = items.filter(function(i){
+    var v = ACC_VOUCHERS.find(function(v){ return v.id===i.voucher_id; });
+    return v && v.date >= fromDate;
+  });
+  if(toDate) items = items.filter(function(i){
+    var v = ACC_VOUCHERS.find(function(v){ return v.id===i.voucher_id; });
+    return v && v.date <= toDate;
+  });
+
+  var opening = parseFloat(targetAcct.opening_balance)||0;
+  var balance = opening;
+  var rows = items.map(function(item){
+    var v = ACC_VOUCHERS.find(function(v){ return v.id===item.voucher_id; })||{};
+    var amt = parseFloat(item.amount)||0;
+    var isIn = item.entry_type==='debit';
+    balance += isIn ? amt : -amt;
+    return '<div class="ledger-row">'+
+      '<div style="flex:0 0 72px;color:var(--text3);">'+fmtD(v.date)+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:12px;font-weight:700;">'+(v.party_name||v.voucher_no||'—')+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">'+(v.narration||v.voucher_type||'')+'</div>'+
+      '</div>'+
+      '<div style="flex:0 0 72px;text-align:right;color:#2E7D32;font-weight:700;">'+(isIn?fmtAmt(amt):'')+'</div>'+
+      '<div style="flex:0 0 72px;text-align:right;color:#C62828;font-weight:700;">'+(!isIn?fmtAmt(amt):'')+'</div>'+
+      '<div style="flex:0 0 80px;text-align:right;font-weight:800;color:#1565C0;">'+fmtAmt(balance)+'</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No entries for selected period</div>';
+
+  var today = new Date().toISOString().split('T')[0];
+  var monthStart = today.slice(0,7)+'-01';
+
+  return '<div class="acc-card">'+
+    '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+      '<select id="acc-book-type" class="fsel" style="flex:1;" onchange="accRender()">'+
+        '<option value="cash"'+(bookType==='cash'?' selected':'')+'>💵 Cash Book</option>'+
+        '<option value="bank"'+(bookType==='bank'?' selected':'')+'>🏦 Bank Book</option>'+
+      '</select>'+
+    '</div>'+
+    '<div class="g2" style="margin-bottom:10px;">'+
+      '<div><label class="flbl">From</label><input id="acc-book-from" class="finp" type="date" value="'+(fromDate||monthStart)+'" onchange="accRender()"></div>'+
+      '<div><label class="flbl">To</label><input id="acc-book-to" class="finp" type="date" value="'+(toDate||today)+'" onchange="accRender()"></div>'+
+    '</div>'+
+    '<div style="background:#F8FAFC;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:13px;font-weight:800;">'+
+      'Opening Balance: <span style="color:#1565C0;">'+fmtAmt(opening)+'</span>'+
+    '</div>'+
+    // Header
+    '<div class="ledger-row" style="font-weight:800;font-size:10px;color:var(--text3);border-bottom:2px solid var(--border);">'+
+      '<div style="flex:0 0 72px;">Date</div><div style="flex:1;">Particulars</div>'+
+      '<div style="flex:0 0 72px;text-align:right;">In (Dr)</div>'+
+      '<div style="flex:0 0 72px;text-align:right;">Out (Cr)</div>'+
+      '<div style="flex:0 0 80px;text-align:right;">Balance</div>'+
+    '</div>'+
+    rows+
+    '<div style="text-align:right;padding:10px 0;font-size:13px;font-weight:900;color:#1565C0;">'+
+      'Closing Balance: '+fmtAmt(balance)+
+    '</div>'+
+  '</div>';
+}
+
+// ── REPORTS ──────────────────────────────────────────────────
+function accRenderReports(){
+  var repType = document.getElementById('acc-rep-type') ? document.getElementById('acc-rep-type').value : 'trial';
+
+  var html = '<div style="margin-bottom:10px;">'+
+    '<select id="acc-rep-type" class="fsel" style="width:100%;" onchange="accRender()">'+
+      '<option value="trial">Trial Balance</option>'+
+      '<option value="pl">P&L Statement</option>'+
+      '<option value="outstanding">Outstanding</option>'+
+    '</select></div>';
+
+  if(repType==='trial'){
+    var rows = ACC_ACCOUNTS.map(function(a){
+      var bal = accGetBalance(a.id);
+      if(bal===0) return '';
+      var isDr = a.balance_type==='debit';
+      return '<div style="display:flex;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">'+
+        '<div style="flex:0 0 50px;color:var(--text3);">'+a.code+'</div>'+
+        '<div style="flex:1;">'+a.name+'</div>'+
+        '<div style="flex:0 0 90px;text-align:right;color:#C62828;">'+(isDr?fmtAmt(bal):'—')+'</div>'+
+        '<div style="flex:0 0 90px;text-align:right;color:#2E7D32;">'+(!isDr?fmtAmt(bal):'—')+'</div>'+
+      '</div>';
+    }).filter(Boolean).join('');
+    var totalDr = ACC_ACCOUNTS.filter(function(a){return a.balance_type==='debit';}).reduce(function(s,a){return s+accGetBalance(a.id);},0);
+    var totalCr = ACC_ACCOUNTS.filter(function(a){return a.balance_type==='credit';}).reduce(function(s,a){return s+accGetBalance(a.id);},0);
+    html += '<div class="acc-card">'+
+      '<div class="acc-card-title">Trial Balance</div>'+
+      '<div style="display:flex;padding:6px 0;font-weight:800;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);">'+
+        '<div style="flex:0 0 50px;">Code</div><div style="flex:1;">Account</div>'+
+        '<div style="flex:0 0 90px;text-align:right;">Debit</div>'+
+        '<div style="flex:0 0 90px;text-align:right;">Credit</div>'+
+      '</div>'+rows+
+      '<div style="display:flex;padding:10px 0;font-weight:900;border-top:2px solid var(--border);">'+
+        '<div style="flex:1;"></div>'+
+        '<div style="flex:0 0 90px;text-align:right;color:#C62828;">'+fmtAmt(totalDr)+'</div>'+
+        '<div style="flex:0 0 90px;text-align:right;color:#2E7D32;">'+fmtAmt(totalCr)+'</div>'+
+      '</div></div>';
+  } else if(repType==='pl'){
+    var income = 0, expense = 0;
+    var incRows = '', expRows = '';
+    ACC_ACCOUNTS.filter(function(a){return a.account_type==='income';}).forEach(function(a){
+      var bal = accGetBalance(a.id);
+      if(bal===0) return;
+      income += bal;
+      incRows += '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><div style="flex:1;">'+a.name+'</div><div style="font-weight:700;color:#2E7D32;">'+fmtAmt(bal)+'</div></div>';
+    });
+    ACC_ACCOUNTS.filter(function(a){return a.account_type==='expense';}).forEach(function(a){
+      var bal = accGetBalance(a.id);
+      if(bal===0) return;
+      expense += bal;
+      expRows += '<div style="display:flex;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><div style="flex:1;">'+a.name+'</div><div style="font-weight:700;color:#C62828;">'+fmtAmt(bal)+'</div></div>';
+    });
+    var profit = income - expense;
+    html += '<div class="acc-card">'+
+      '<div class="acc-card-title">Income</div>'+incRows+
+      '<div style="display:flex;padding:8px 0;font-weight:900;border-top:2px solid var(--border);"><div style="flex:1;">Total Income</div><div style="color:#2E7D32;">'+fmtAmt(income)+'</div></div>'+
+    '</div>'+
+    '<div class="acc-card">'+
+      '<div class="acc-card-title">Expenses</div>'+expRows+
+      '<div style="display:flex;padding:8px 0;font-weight:900;border-top:2px solid var(--border);"><div style="flex:1;">Total Expenses</div><div style="color:#C62828;">'+fmtAmt(expense)+'</div></div>'+
+    '</div>'+
+    '<div class="acc-card" style="background:'+(profit>=0?'#E8F5E9':'#FFEBEE')+';">'+
+      '<div style="display:flex;padding:4px 0;font-weight:900;font-size:16px;"><div style="flex:1;">'+(profit>=0?'Net Profit':'Net Loss')+'</div>'+
+      '<div style="color:'+(profit>=0?'#2E7D32':'#C62828')+';">'+fmtAmt(Math.abs(profit))+'</div></div>'+
+    '</div>';
+  } else if(repType==='outstanding'){
+    var parties = {};
+    ACC_VOUCHERS.forEach(function(v){
+      if(!v.party_name) return;
+      if(!parties[v.party_name]) parties[v.party_name]={name:v.party_name,type:v.party_type,payable:0,receivable:0};
+      if(v.voucher_type==='purchase') parties[v.party_name].payable += parseFloat(v.net_amount)||0;
+      else if(v.voucher_type==='payment') parties[v.party_name].payable -= parseFloat(v.net_amount)||0;
+      else if(v.voucher_type==='receipt') parties[v.party_name].receivable -= parseFloat(v.net_amount)||0;
+    });
+    var outRows = Object.values(parties).filter(function(p){ return p.payable>0||p.receivable>0; }).map(function(p){
+      return '<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);">'+
+        '<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+p.name+'</div><div style="font-size:10px;color:var(--text3);">'+(p.type||'')+'</div></div>'+
+        (p.payable>0?'<div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:#C62828;">Payable</div><div style="font-size:14px;font-weight:900;color:#C62828;">'+fmtAmt(p.payable)+'</div></div>':'')+''+
+        (p.receivable>0?'<div style="text-align:right;"><div style="font-size:12px;font-weight:800;color:#2E7D32;">Receivable</div><div style="font-size:14px;font-weight:900;color:#2E7D32;">'+fmtAmt(p.receivable)+'</div></div>':'')+''+
+      '</div>';
+    }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No outstanding amounts</div>';
+    html += '<div class="acc-card"><div class="acc-card-title">Outstanding Balances</div>'+outRows+'</div>';
+  }
+  return html;
+}
+
+// ── GST / TDS ────────────────────────────────────────────────
+function accRenderGST(){
+  var gstType = document.getElementById('acc-gst-type') ? document.getElementById('acc-gst-type').value : 'gst';
+  var today = new Date();
+  var monthStart = today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-01';
+  var monthEnd = today.toISOString().split('T')[0];
+  var fromDate = document.getElementById('acc-gst-from') ? document.getElementById('acc-gst-from').value : monthStart;
+  var toDate   = document.getElementById('acc-gst-to')   ? document.getElementById('acc-gst-to').value   : monthEnd;
+
+  var html = '<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+    '<select id="acc-gst-type" class="fsel" style="flex:1;" onchange="accRender()">'+
+      '<option value="gst"'+(gstType==='gst'?' selected':'')+'>🧾 GST Summary</option>'+
+      '<option value="tds"'+(gstType==='tds'?' selected':'')+'>📋 TDS Summary</option>'+
+    '</select></div>'+
+    '<div class="g2" style="margin-bottom:10px;">'+
+      '<div><label class="flbl">From</label><input id="acc-gst-from" class="finp" type="date" value="'+fromDate+'" onchange="accRender()"></div>'+
+      '<div><label class="flbl">To</label><input id="acc-gst-to" class="finp" type="date" value="'+toDate+'" onchange="accRender()"></div>'+
+    '</div>';
+
+  if(gstType==='gst'){
+    var filtered = ACC_GST.filter(function(g){ return g.date>=fromDate && g.date<=toDate; });
+    var input  = filtered.filter(function(g){ return g.gst_type==='input'; });
+    var output = filtered.filter(function(g){ return g.gst_type==='output'; });
+    var totalIn  = input.reduce(function(s,g){ return s+(parseFloat(g.total_gst)||0); },0);
+    var totalOut = output.reduce(function(s,g){ return s+(parseFloat(g.total_gst)||0); },0);
+    var netGST = totalOut - totalIn;
+
+    var rows = filtered.map(function(g){
+      return '<div style="display:flex;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">'+
+        '<div style="flex:0 0 72px;color:var(--text3);">'+fmtD(g.date)+'</div>'+
+        '<div style="flex:1;min-width:0;"><div style="font-weight:700;">'+(g.party_name||'—')+'</div><div style="font-size:10px;color:var(--text3);">'+(g.invoice_no||'')+'</div></div>'+
+        '<div style="flex:0 0 70px;text-align:right;">'+fmtAmt(g.taxable_amount)+'</div>'+
+        '<div style="flex:0 0 70px;text-align:right;font-weight:700;color:'+(g.gst_type==='input'?'#2E7D32':'#C62828')+';">'+fmtAmt(g.total_gst)+'</div>'+
+        '<span style="background:'+(g.gst_type==='input'?'#E8F5E9':'#FFEBEE')+';color:'+(g.gst_type==='input'?'#2E7D32':'#C62828')+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;flex-shrink:0;">'+g.gst_type.toUpperCase()+'</span>'+
+      '</div>';
+    }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No GST entries</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px;">'+
+      '<div style="background:#E8F5E9;border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">Input GST</div><div style="font-size:14px;font-weight:800;color:#2E7D32;">'+fmtAmt(totalIn)+'</div></div>'+
+      '<div style="background:#FFEBEE;border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">Output GST</div><div style="font-size:14px;font-weight:800;color:#C62828;">'+fmtAmt(totalOut)+'</div></div>'+
+      '<div style="background:'+(netGST>0?'#FFEBEE':'#E8F5E9')+';border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">Net Payable</div><div style="font-size:14px;font-weight:800;color:'+(netGST>0?'#C62828':'#2E7D32')+';">'+fmtAmt(netGST)+'</div></div>'+
+    '</div>'+
+    '<div class="acc-card" style="padding:4px 12px;">'+
+      '<div style="display:flex;padding:6px 0;font-size:10px;font-weight:800;color:var(--text3);border-bottom:2px solid var(--border);">'+
+        '<div style="flex:0 0 72px;">Date</div><div style="flex:1;">Party</div>'+
+        '<div style="flex:0 0 70px;text-align:right;">Taxable</div>'+
+        '<div style="flex:0 0 70px;text-align:right;">GST</div><div style="flex:0 0 50px;"></div>'+
+      '</div>'+rows+'</div>';
+  } else {
+    var tds = ACC_TDS.filter(function(t){ return t.date>=fromDate && t.date<=toDate; });
+    var deducted = tds.filter(function(t){ return t.tds_type==='deducted'; });
+    var received = tds.filter(function(t){ return t.tds_type==='received'; });
+    var totalDed = deducted.reduce(function(s,t){ return s+(parseFloat(t.tds_amount)||0); },0);
+    var totalRec = received.reduce(function(s,t){ return s+(parseFloat(t.tds_amount)||0); },0);
+
+    var tdsRows = tds.map(function(t){
+      return '<div style="display:flex;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px;">'+
+        '<div style="flex:0 0 72px;color:var(--text3);">'+fmtD(t.date)+'</div>'+
+        '<div style="flex:1;min-width:0;"><div style="font-weight:700;">'+(t.party_name||'—')+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">Sec '+t.section+' · '+(t.party_pan||'PAN N/A')+'</div></div>'+
+        '<div style="flex:0 0 70px;text-align:right;">'+fmtAmt(t.gross_amount)+'</div>'+
+        '<div style="flex:0 0 70px;text-align:right;font-weight:700;color:#6A1B9A;">'+fmtAmt(t.tds_amount)+'</div>'+
+        '<span style="background:'+(t.tds_type==='deducted'?'#FFEBEE':'#E8F5E9')+';color:'+(t.tds_type==='deducted'?'#C62828':'#2E7D32')+';border-radius:4px;padding:1px 6px;font-size:9px;font-weight:800;flex-shrink:0;">'+(t.tds_type==='deducted'?'DEDUCTED':'RECEIVED')+'</span>'+
+      '</div>';
+    }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No TDS entries</div>';
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
+      '<div style="background:#FFEBEE;border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">TDS Deducted (u/194C)</div><div style="font-size:14px;font-weight:800;color:#C62828;">'+fmtAmt(totalDed)+'</div></div>'+
+      '<div style="background:#E8F5E9;border-radius:10px;padding:10px;text-align:center;"><div style="font-size:10px;color:var(--text3);">TDS Received (from client)</div><div style="font-size:14px;font-weight:800;color:#2E7D32;">'+fmtAmt(totalRec)+'</div></div>'+
+    '</div>'+
+    '<div class="acc-card" style="padding:4px 12px;">'+tdsRows+'</div>';
+  }
+  return html;
+}
+
+// ── VOUCHER FORM ─────────────────────────────────────────────
+async function accOpenVoucher(type){
+  var projOpts = ACC_PROJECTS.map(function(p){ return '<option value="'+p.id+'" data-name="'+p.name+'">'+p.name+'</option>'; }).join('');
+  var acctOpts = ACC_ACCOUNTS.map(function(a){ return '<option value="'+a.id+'" data-name="'+a.name+'" data-type="'+a.account_type+'" data-code="'+a.code+'">'+a.code+' — '+a.name+'</option>'; }).join('');
+
+  // Default debit/credit based on voucher type
+  var defaults = {
+    payment:  {dr:'4000',cr:'1100', party:true},
+    receipt:  {dr:'1201',cr:'3100', party:true},
+    purchase: {dr:'4200',cr:'2100', party:true, gst:true},
+    journal:  {dr:'',cr:'',        party:false},
+    contra:   {dr:'1201',cr:'1100', party:false}
+  };
+
+  var typeOpts = Object.keys(ACC_VTYPES).map(function(k){
+    var vt = ACC_VTYPES[k];
+    return '<option value="'+k+'"'+(type===k?' selected':'')+'>'+vt.icon+' '+vt.label+' — '+vt.desc+'</option>';
+  }).join('');
+
+  // Generate voucher number
+  var today = new Date().toISOString().split('T')[0];
+  var fy = new Date().getMonth()>=3 ? new Date().getFullYear() : new Date().getFullYear()-1;
+  var prefix = {payment:'PMT',receipt:'RCT',purchase:'PUR',journal:'JNL',contra:'CTR'}[type]||'VCH';
+  var lastNo = ACC_VOUCHERS.filter(function(v){ return v.voucher_type===type; }).length+1;
+  var voucherNo = prefix+'-'+fy+'-'+String(lastNo).padStart(3,'0');
+
+  _accVoucherLines = type ? [
+    {type:'debit', accountId:'', amount:0},
+    {type:'credit', accountId:'', amount:0}
+  ] : [{type:'debit', accountId:'', amount:0},{type:'credit', accountId:'', amount:0}];
+
+  document.getElementById('voucher-sheet-title').textContent = '📝 '+(type ? ACC_VTYPES[type].label+' Voucher' : 'New Voucher');
+  document.getElementById('voucher-sheet-body').innerHTML =
+    '<label class="flbl">Voucher Type *</label>'+
+    '<select id="vf-type" class="fsel" onchange="accVoucherTypeChange()">'+typeOpts+'</select>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Date *</label><input id="vf-date" class="finp" type="date" value="'+today+'"></div>'+
+      '<div><label class="flbl">Voucher No</label><input id="vf-no" class="finp" value="'+voucherNo+'"></div>'+
+    '</div>'+
+    '<label class="flbl">Project</label>'+
+    '<select id="vf-proj" class="fsel"><option value="">— Select Project —</option>'+projOpts+'</select>'+
+    '<label class="flbl">Party Name</label>'+
+    '<input id="vf-party" class="finp" placeholder="Vendor / SC / Client / Employee name">'+
+    '<label class="flbl">Narration / Description</label>'+
+    '<input id="vf-narr" class="finp" placeholder="Brief description of transaction">'+
+    '<label class="flbl">Reference No</label>'+
+    '<input id="vf-ref" class="finp" placeholder="Invoice No / RA Bill No / Cheque No">'+
+    // Debit / Credit lines
+    '<div style="margin-top:8px;"><div style="font-size:10px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Ledger Entries (Dr / Cr)</div>'+
+    '<div id="vf-lines"></div>'+
+    '<button onclick="accAddLine()" style="background:#E3F2FD;color:#1565C0;border:none;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;margin-top:6px;">+ Add Line</button></div>'+
+    // GST section
+    '<div id="vf-gst-sec" style="display:none;margin-top:10px;background:#E8F5E9;border-radius:10px;padding:12px;">'+
+      '<div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:8px;">🧾 GST Details</div>'+
+      '<label class="flbl">Party GSTIN</label><input id="vf-gstin" class="finp" placeholder="27XXXXX0000X1ZX">'+
+      '<div class="g2">'+
+        '<div><label class="flbl">Taxable Amount</label><input id="vf-taxable" class="finp" type="number" placeholder="0" oninput="accCalcGST()"></div>'+
+        '<div><label class="flbl">GST Rate</label><select id="vf-gstrate" class="fsel" onchange="accCalcGST()">'+
+          '<option value="5">5%</option><option value="12" selected>12%</option><option value="18">18%</option><option value="28">28%</option>'+
+        '</select></div>'+
+      '</div>'+
+      '<div class="g2">'+
+        '<div><label class="flbl">CGST (auto)</label><input id="vf-cgst" class="finp" readonly style="opacity:.7;"></div>'+
+        '<div><label class="flbl">SGST (auto)</label><input id="vf-sgst" class="finp" readonly style="opacity:.7;"></div>'+
+      '</div>'+
+    '</div>'+
+    // TDS section
+    '<div id="vf-tds-sec" style="display:none;margin-top:10px;background:#F3E5F5;border-radius:10px;padding:12px;">'+
+      '<div style="font-size:10px;font-weight:800;color:#6A1B9A;margin-bottom:8px;">📋 TDS (Sec 194C)</div>'+
+      '<div class="g2">'+
+        '<div><label class="flbl">Gross Amount</label><input id="vf-tds-gross" class="finp" type="number" placeholder="0" oninput="accCalcTDS()"></div>'+
+        '<div><label class="flbl">TDS Rate %</label><input id="vf-tds-rate" class="finp" type="number" value="2" oninput="accCalcTDS()"></div>'+
+      '</div>'+
+      '<div class="g2">'+
+        '<div><label class="flbl">TDS Amount (auto)</label><input id="vf-tds-amt" class="finp" readonly style="opacity:.7;"></div>'+
+        '<div><label class="flbl">Party PAN</label><input id="vf-pan" class="finp" placeholder="ABCDE1234F"></div>'+
+      '</div>'+
+    '</div>'+
+    // Toggles
+    '<div style="display:flex;gap:12px;margin-top:10px;">'+
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;">'+
+        '<input type="checkbox" id="vf-has-gst" onchange="accToggleGST()" style="width:16px;height:16px;accent-color:#2E7D32;"> Apply GST'+
+      '</label>'+
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;">'+
+        '<input type="checkbox" id="vf-has-tds" onchange="accToggleTDS()" style="width:16px;height:16px;accent-color:#6A1B9A;"> Deduct TDS (194C)'+
+      '</label>'+
+    '</div>';
+
+  document.getElementById('voucher-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeVoucherSheet()">Cancel</button>'+
+    '<button class="btn btn-navy" onclick="accSaveVoucher()">💾 Save Voucher</button>';
+
+  accRenderLines(acctOpts);
+  openVoucherSheet();
+}
+
+function accRenderLines(acctOptsArg){
+  var el = document.getElementById('vf-lines'); if(!el) return;
+  var acctOpts = acctOptsArg || ACC_ACCOUNTS.map(function(a){ return '<option value="'+a.id+'">'+a.code+' — '+a.name+'</option>'; }).join('');
+  el.innerHTML = _accVoucherLines.map(function(line, idx){
+    return '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;">'+
+      '<select style="width:60px;flex-shrink:0;background:'+(line.type==='debit'?'#FFEBEE':'#E8F5E9')+';color:'+(line.type==='debit'?'#C62828':'#2E7D32')+';border:1px solid var(--border);border-radius:8px;padding:8px 4px;font-size:11px;font-weight:800;font-family:Nunito,sans-serif;" onchange="_accVoucherLines['+idx+'].type=this.value;accRenderLines()">'+
+        '<option value="debit"'+(line.type==='debit'?' selected':'')+'>Dr</option>'+
+        '<option value="credit"'+(line.type==='credit'?' selected':'')+'>Cr</option>'+
+      '</select>'+
+      '<select class="fsel" style="flex:1;" onchange="_accVoucherLines['+idx+'].accountId=this.value">'+
+        '<option value="">— Account —</option>'+acctOpts+
+      '</select>'+
+      '<input class="finp" type="number" placeholder="0.00" style="width:90px;flex-shrink:0;" value="'+(line.amount||'')+'" oninput="_accVoucherLines['+idx+'].amount=parseFloat(this.value)||0">'+
+      (idx>1?'<button onclick="_accVoucherLines.splice('+idx+',1);accRenderLines()" style="width:28px;height:36px;border:none;background:#FFEBEE;color:#C62828;border-radius:8px;cursor:pointer;flex-shrink:0;font-size:16px;">×</button>':'')+
+    '</div>';
+  }).join('');
+}
+
+function accAddLine(){
+  _accVoucherLines.push({type:'debit',accountId:'',amount:0});
+  accRenderLines();
+}
+
+function accVoucherTypeChange(){
+  var type = (document.getElementById('vf-type')||{value:''}).value;
+  var fy = new Date().getMonth()>=3 ? new Date().getFullYear() : new Date().getFullYear()-1;
+  var prefix = {payment:'PMT',receipt:'RCT',purchase:'PUR',journal:'JNL',contra:'CTR'}[type]||'VCH';
+  var lastNo = ACC_VOUCHERS.filter(function(v){ return v.voucher_type===type; }).length+1;
+  var el = document.getElementById('vf-no');
+  if(el) el.value = prefix+'-'+fy+'-'+String(lastNo).padStart(3,'0');
+  // Show/hide GST checkbox for purchase
+  var gstChk = document.getElementById('vf-has-gst');
+  if(gstChk && type==='purchase') gstChk.checked = true;
+  accToggleGST();
+}
+
+function accToggleGST(){
+  var show = document.getElementById('vf-has-gst') && document.getElementById('vf-has-gst').checked;
+  var sec = document.getElementById('vf-gst-sec');
+  if(sec) sec.style.display = show ? 'block' : 'none';
+}
+
+function accToggleTDS(){
+  var show = document.getElementById('vf-has-tds') && document.getElementById('vf-has-tds').checked;
+  var sec = document.getElementById('vf-tds-sec');
+  if(sec) sec.style.display = show ? 'block' : 'none';
+}
+
+function accCalcGST(){
+  var taxable = parseFloat((document.getElementById('vf-taxable')||{value:0}).value)||0;
+  var rate    = parseFloat((document.getElementById('vf-gstrate')||{value:12}).value)||12;
+  var half    = taxable * rate/100/2;
+  var cg = document.getElementById('vf-cgst'); if(cg) cg.value = half.toFixed(2);
+  var sg = document.getElementById('vf-sgst'); if(sg) sg.value = half.toFixed(2);
+}
+
+function accCalcTDS(){
+  var gross = parseFloat((document.getElementById('vf-tds-gross')||{value:0}).value)||0;
+  var rate  = parseFloat((document.getElementById('vf-tds-rate')||{value:2}).value)||2;
+  var tds   = gross * rate/100;
+  var el = document.getElementById('vf-tds-amt'); if(el) el.value = tds.toFixed(2);
+}
+
+async function accSaveVoucher(){
+  var g = function(id){ return (document.getElementById(id)||{value:''}).value; };
+  var type   = g('vf-type');
+  var date   = g('vf-date');
+  var no     = g('vf-no');
+  var projEl = document.getElementById('vf-proj');
+  var projId = projEl ? projEl.value : '';
+  var projName = projEl && projEl.selectedIndex>0 ? projEl.options[projEl.selectedIndex].text : '';
+  var party  = g('vf-party').trim()||null;
+  var narr   = g('vf-narr').trim()||null;
+  var ref    = g('vf-ref').trim()||null;
+  if(!type||!date||!no){ toast('Fill required fields','warning'); return; }
+  // Validate lines
+  var validLines = _accVoucherLines.filter(function(l){ return l.accountId && l.amount>0; });
+  if(validLines.length<2){ toast('Add at least 2 ledger lines (Dr & Cr)','warning'); return; }
+  var totalDr = validLines.filter(function(l){return l.type==='debit';}).reduce(function(s,l){return s+l.amount;},0);
+  var totalCr = validLines.filter(function(l){return l.type==='credit';}).reduce(function(s,l){return s+l.amount;},0);
+  if(Math.abs(totalDr-totalCr)>0.01){ toast('Debit ('+fmtAmt(totalDr)+') ≠ Credit ('+fmtAmt(totalCr)+') — must balance!','error'); return; }
+
+  var hasGST = document.getElementById('vf-has-gst') && document.getElementById('vf-has-gst').checked;
+  var hasTDS = document.getElementById('vf-has-tds') && document.getElementById('vf-has-tds').checked;
+  var gstAmt = hasGST ? (parseFloat(g('vf-cgst'))||0)*2 : 0;
+  var tdsAmt = hasTDS ? parseFloat(g('vf-tds-amt'))||0 : 0;
+
+  try{
+    toast('Saving...','info');
+    var voucher = await sbInsert('vouchers',{
+      voucher_no:no, voucher_type:type, date:date,
+      project_id:projId||null, project_name:projName||null,
+      party_name:party, narration:narr, reference_no:ref,
+      total_amount:totalDr, gst_amount:gstAmt, tds_amount:tdsAmt,
+      net_amount:totalDr, status:'posted', source:'manual',
+      created_by: currentUser ? currentUser.name : null
+    });
+    if(!voucher||!voucher[0]) throw new Error('Failed to save voucher');
+    var vid = voucher[0].id;
+
+    // Save line items
+    await Promise.all(validLines.map(function(l){
+      var acct = ACC_ACCOUNTS.find(function(a){ return a.id===l.accountId; })||{};
+      return sbInsert('voucher_items',{
+        voucher_id:vid, account_id:l.accountId, account_name:acct.name,
+        entry_type:l.type, amount:l.amount
+      });
+    }));
+
+    // Save GST entry
+    if(hasGST){
+      var taxable = parseFloat(g('vf-taxable'))||0;
+      var rate    = parseFloat(g('vf-gstrate'))||12;
+      await sbInsert('gst_entries',{
+        voucher_id:vid, date:date, party_name:party, party_gstin:g('vf-gstin')||null,
+        invoice_no:ref||null, taxable_amount:taxable,
+        cgst_rate:rate/2, sgst_rate:rate/2, igst_rate:0,
+        cgst_amount:parseFloat(g('vf-cgst'))||0, sgst_amount:parseFloat(g('vf-sgst'))||0, igst_amount:0,
+        total_gst:gstAmt, gst_type:(type==='receipt'?'output':'input'),
+        project_id:projId||null
+      });
+    }
+
+    // Save TDS entry
+    if(hasTDS){
+      await sbInsert('tds_entries',{
+        voucher_id:vid, date:date, party_name:party, party_pan:g('vf-pan')||null,
+        section:'194C', tds_rate:parseFloat(g('vf-tds-rate'))||2,
+        gross_amount:parseFloat(g('vf-tds-gross'))||0,
+        tds_amount:tdsAmt, net_amount:totalDr-tdsAmt,
+        tds_type:'deducted', project_id:projId||null
+      });
+    }
+
+    // Update local cache
+    ACC_VOUCHERS.unshift(voucher[0]);
+    toast('✓ Voucher '+no+' saved!','success');
+    closeVoucherSheet();
+    accRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+// ── VIEW VOUCHER ─────────────────────────────────────────────
+function accViewVoucher(id){
+  var v = ACC_VOUCHERS.find(function(v){ return v.id===id; }); if(!v) return;
+  var vt = ACC_VTYPES[v.voucher_type]||{label:v.voucher_type,badge:'v-jnl',icon:'📄'};
+  var items = ACC_ITEMS.filter(function(i){ return i.voucher_id===id; });
+  var gst   = ACC_GST.find(function(g){ return g.voucher_id===id; });
+  var tds   = ACC_TDS.find(function(t){ return t.voucher_id===id; });
+
+  function row(l,v){ if(!v||v==='—') return ''; return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0F4F8;font-size:12px;"><span style="color:var(--text3);">'+l+'</span><span style="font-weight:700;">'+v+'</span></div>'; }
+
+  var linesHtml = items.map(function(item){
+    return '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F0F4F8;font-size:12px;">'+
+      '<div><span style="background:'+(item.entry_type==='debit'?'#FFEBEE':'#E8F5E9')+';color:'+(item.entry_type==='debit'?'#C62828':'#2E7D32')+';border-radius:4px;padding:1px 6px;font-size:10px;font-weight:800;margin-right:6px;">'+(item.entry_type==='debit'?'Dr':'Cr')+'</span>'+
+      (item.account_name||'—')+'</div>'+
+      '<div style="font-weight:700;">'+fmtAmt(item.amount)+'</div>'+
+    '</div>';
+  }).join('');
+
+  document.getElementById('voucher-sheet-title').textContent = vt.icon+' '+v.voucher_no;
+  document.getElementById('voucher-sheet-body').innerHTML =
+    '<div style="background:#1A237E;border-radius:12px;padding:14px;margin-bottom:12px;color:white;text-align:center;">'+
+      '<div style="font-size:11px;opacity:.7;margin-bottom:4px;">'+vt.label+' Voucher</div>'+
+      '<div style="font-size:32px;font-weight:900;letter-spacing:-1px;">'+fmtAmt(v.net_amount)+'</div>'+
+      '<div style="font-size:12px;opacity:.6;margin-top:4px;">'+fmtD(v.date)+'</div>'+
+    '</div>'+
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      row('Party', v.party_name||'—')+
+      row('Project', v.project_name||'—')+
+      row('Reference', v.reference_no||'—')+
+      row('Narration', v.narration||'—')+
+      row('Status', v.status||'—')+
+      row('Source', v.source||'manual')+
+    '</div>'+
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:8px 0 4px;">Ledger Entries</div>'+
+      linesHtml+
+    '</div>'+
+    (gst ? '<div style="background:#E8F5E9;border-radius:10px;padding:12px;margin-bottom:10px;"><div style="font-size:10px;font-weight:800;color:#2E7D32;margin-bottom:6px;">🧾 GST</div>'+
+      row('Taxable',fmtAmt(gst.taxable_amount))+row('CGST',fmtAmt(gst.cgst_amount))+row('SGST',fmtAmt(gst.sgst_amount))+row('Total GST',fmtAmt(gst.total_gst))+'</div>' : '')+
+    (tds ? '<div style="background:#F3E5F5;border-radius:10px;padding:12px;margin-bottom:10px;"><div style="font-size:10px;font-weight:800;color:#6A1B9A;margin-bottom:6px;">📋 TDS</div>'+
+      row('Section',tds.section)+row('Gross',fmtAmt(tds.gross_amount))+row('TDS Rate',tds.tds_rate+'%')+row('TDS Amount',fmtAmt(tds.tds_amount))+row('Net Payable',fmtAmt(tds.net_amount))+'</div>' : '');
+
+  document.getElementById('voucher-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeVoucherSheet()">Close</button>'+
+    (currentUser&&currentUser.role==='admin'?
+      '<button class="btn" style="background:#C62828;color:white;" onclick="accDeleteVoucher(\''+id+'\')">🗑 Delete</button>':
+    '');
+  openVoucherSheet();
+}
+
+async function accDeleteVoucher(id){
+  if(!confirm('Delete this voucher? All ledger entries will be reversed.')) return;
+  try{
+    await sbDelete('vouchers', id);
+    ACC_VOUCHERS = ACC_VOUCHERS.filter(function(v){ return v.id!==id; });
+    ACC_ITEMS    = ACC_ITEMS.filter(function(i){ return i.voucher_id!==id; });
+    ACC_GST      = ACC_GST.filter(function(g){ return g.voucher_id!==id; });
+    ACC_TDS      = ACC_TDS.filter(function(t){ return t.voucher_id!==id; });
+    toast('Voucher deleted','success');
+    closeVoucherSheet();
+    accRender();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+// ── CHART OF ACCOUNTS ────────────────────────────────────────
+function accOpenChartOfAccounts(){
+  var groups = {};
+  ACC_ACCOUNTS.forEach(function(a){
+    if(!groups[a.group_name]) groups[a.group_name]=[];
+    groups[a.group_name].push(a);
+  });
+  var groupColors = {Assets:'#1565C0',Liabilities:'#C62828',Income:'#2E7D32',Expenses:'#E65100'};
+
+  var html = Object.keys(groups).map(function(g){
+    return '<div style="margin-bottom:12px;">'+
+      '<div style="font-size:10px;font-weight:800;color:'+groupColors[g]+';text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;">'+g+'</div>'+
+      groups[g].map(function(a){
+        var bal = accGetBalance(a.id);
+        return '<div style="display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">'+
+          '<div style="font-size:11px;color:var(--text3);width:44px;flex-shrink:0;">'+a.code+'</div>'+
+          '<div style="flex:1;font-size:13px;font-weight:700;">'+a.name+'</div>'+
+          '<div style="font-size:12px;font-weight:800;color:'+(bal>=0?'#1565C0':'#C62828')+';">'+fmtAmt(bal)+'</div>'+
+        '</div>';
+      }).join('')+
+    '</div>';
+  }).join('');
+
+  document.getElementById('account-sheet-title').textContent = '📊 Chart of Accounts';
+  document.getElementById('account-sheet-body').innerHTML =
+    '<div style="padding:0 4px;">'+html+'</div>'+
+    '<button onclick="accOpenNewAccount()" style="width:100%;margin-top:10px;padding:12px;background:#E3F2FD;color:#1565C0;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">+ Add New Account</button>';
+  document.getElementById('account-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeAccountSheet()">Close</button>';
+  openAccountSheet();
+}
+
+function accOpenNewAccount(){
+  var groupOpts = ['Assets','Liabilities','Income','Expenses'].map(function(g){ return '<option>'+g+'</option>'; }).join('');
+  var typeOpts = ['asset','liability','income','expense'].map(function(t){ return '<option>'+t+'</option>'; }).join('');
+  document.getElementById('account-sheet-title').textContent = '➕ New Account';
+  document.getElementById('account-sheet-body').innerHTML =
+    '<div class="g2"><div><label class="flbl">Account Code *</label><input id="na-code" class="finp" placeholder="e.g. 4110"></div>'+
+    '<div><label class="flbl">Account Name *</label><input id="na-name" class="finp" placeholder="e.g. Hire Charges"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Group</label><select id="na-group" class="fsel">'+groupOpts+'</select></div>'+
+    '<div><label class="flbl">Type</label><select id="na-type" class="fsel">'+typeOpts+'</select></div></div>'+
+    '<div class="g2"><div><label class="flbl">Opening Balance</label><input id="na-ob" class="finp" type="number" placeholder="0"></div>'+
+    '<div><label class="flbl">Balance Type</label><select id="na-btype" class="fsel"><option value="debit">Debit</option><option value="credit">Credit</option></select></div></div>'+
+    '<div style="display:flex;gap:12px;margin-top:6px;">'+
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;"><input type="checkbox" id="na-isbank" style="width:16px;height:16px;"> Is Bank Account</label>'+
+      '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;"><input type="checkbox" id="na-iscash" style="width:16px;height:16px;"> Is Cash Account</label>'+
+    '</div>';
+  document.getElementById('account-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="accOpenChartOfAccounts()">Back</button>'+
+    '<button class="btn btn-navy" onclick="accSaveNewAccount()">💾 Save Account</button>';
+}
+
+async function accSaveNewAccount(){
+  var g = function(id){ return (document.getElementById(id)||{value:''}).value; };
+  var code = g('na-code').trim(), name = g('na-name').trim();
+  if(!code||!name){ toast('Code and name required','warning'); return; }
+  try{
+    var r = await sbInsert('accounts',{
+      code:code, name:name, group_name:g('na-group'), sub_group:g('na-group'),
+      account_type:g('na-type'), balance_type:g('na-btype'),
+      opening_balance:parseFloat(g('na-ob'))||0,
+      is_bank:document.getElementById('na-isbank').checked,
+      is_cash:document.getElementById('na-iscash').checked,
+      is_system:false, active:true
+    });
+    if(r&&r[0]) ACC_ACCOUNTS.push(r[0]);
+    ACC_ACCOUNTS.sort(function(a,b){ return a.code>b.code?1:-1; });
+    toast('Account added!','success');
+    accOpenChartOfAccounts();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+// ── AUTO-ENTRY FROM PETTY CASH ───────────────────────────────
+async function accAutoFromPettyCash(expense){
+  // Find expense account by category
+  var catMap = {Labour:'4100',Material:'4200',Diesel:'4400',Machinery:'4500',Food:'4900',Transport:'4800',Office:'4600',Advance:'5000',Other:'4700'};
+  var expCode = catMap[expense.category]||'4700';
+  var cashAcct = ACC_ACCOUNTS.find(function(a){ return a.code==='1100'; });
+  var expAcct  = ACC_ACCOUNTS.find(function(a){ return a.code===expCode; });
+  if(!cashAcct||!expAcct) return;
+  var fy = new Date().getMonth()>=3 ? new Date().getFullYear() : new Date().getFullYear()-1;
+  var lastNo = ACC_VOUCHERS.filter(function(v){ return v.voucher_type==='payment'; }).length+1;
+  var vNo = 'PMT-'+fy+'-'+String(lastNo).padStart(3,'0');
+  try{
+    var v = await sbInsert('vouchers',{
+      voucher_no:vNo, voucher_type:'payment', date:expense.date,
+      project_id:expense.project_id, project_name:expense.project_name,
+      party_name:expense.party_name||expense.purpose,
+      narration:expense.purpose||expense.category,
+      total_amount:expense.amount, gst_amount:0, tds_amount:0, net_amount:expense.amount,
+      status:'posted', source:'petty_cash', source_id:expense.id,
+      created_by:'Auto'
+    });
+    if(v&&v[0]){
+      await sbInsert('voucher_items',{voucher_id:v[0].id,account_id:expAcct.id,account_name:expAcct.name,entry_type:'debit',amount:expense.amount});
+      await sbInsert('voucher_items',{voucher_id:v[0].id,account_id:cashAcct.id,account_name:cashAcct.name,entry_type:'credit',amount:expense.amount});
+      ACC_VOUCHERS.unshift(v[0]);
+    }
+  }catch(e){ console.error('Auto-entry error:',e); }
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// ACCOUNTS MODULE
+// ═══════════════════════════════════════════════════════════
+var ACC_TAB = 'dash';
+var ACC_VOUCHERS = [], ACC_ACCOUNTS = [], ACC_ITEMS = [];
+var ACC_GST = [], ACC_TDS = [];
+var ACC_BOOK_TYPE = 'cash'; // cash / bank / day
+var ACC_REP_TYPE  = 'trial';
+var ACC_LEDGER_PARTY = null;
+var ACC_PROJ_FILTER  = '';
+var accVouLineCount  = 2;
+
+var VOU_TYPES = {
+  payment:  {label:'Payment',  icon:'💸', css:'vou-payment',  dr:'Expense/Asset', cr:'Cash/Bank'},
+  receipt:  {label:'Receipt',  icon:'💰', css:'vou-receipt',  dr:'Cash/Bank',     cr:'Income/Party'},
+  purchase: {label:'Purchase', icon:'🧾', css:'vou-purchase', dr:'Expense',       cr:'Payable/Cash'},
+  journal:  {label:'Journal',  icon:'📒', css:'vou-journal',  dr:'Any',           cr:'Any'},
+  contra:   {label:'Contra',   icon:'🔄', css:'vou-contra',   dr:'Bank',          cr:'Cash'}
+};
+
+function openAccSheet(){ openSheet('ov-acc','sh-acc'); }
+function closeAccSheet(){ closeSheet('ov-acc','sh-acc'); }
+function fmtAcc(n){ return '₹'+Math.abs(Number(n||0)).toLocaleString('en-IN'); }
+function fmtAccSigned(n){ return (n<0?'−':'+')+fmtAcc(n); }
+
+async function initAccounts(){
+  var el=document.getElementById('acc-content');
+  if(el) el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">⏳ Loading...</div>';
+  try{
+    var r = await Promise.all([
+      sbFetch('vouchers',{select:'*',order:'date.desc'}),
+      sbFetch('accounts',{select:'*',filter:'active=eq.true',order:'code.asc'}),
+      sbFetch('voucher_items',{select:'*',order:'created_at.asc'}),
+      sbFetch('gst_entries',{select:'*',order:'date.desc'}),
+      sbFetch('tds_entries',{select:'*',order:'date.desc'})
+    ]);
+    ACC_VOUCHERS  = Array.isArray(r[0])?r[0]:[];
+    ACC_ACCOUNTS  = Array.isArray(r[1])?r[1]:[];
+    ACC_ITEMS     = Array.isArray(r[2])?r[2]:[];
+    ACC_GST       = Array.isArray(r[3])?r[3]:[];
+    ACC_TDS       = Array.isArray(r[4])?r[4]:[];
+  }catch(e){ console.error(e); }
+  accSwitchTab('dash', document.querySelector('.acc-tab'));
+}
+
+function accSwitchTab(tab, el){
+  ACC_TAB = tab;
+  document.querySelectorAll('.acc-tab').forEach(function(t){t.classList.remove('on');});
+  if(el) el.classList.add('on');
+  accRender();
+}
+
+function accRender(){
+  var el = document.getElementById('acc-content'); if(!el) return;
+  if(ACC_TAB==='dash')    el.innerHTML = accDashHTML();
+  else if(ACC_TAB==='entry')   el.innerHTML = accEntryHTML();
+  else if(ACC_TAB==='ledger')  el.innerHTML = accLedgerHTML();
+  else if(ACC_TAB==='books')   el.innerHTML = accBooksHTML();
+  else if(ACC_TAB==='reports') el.innerHTML = accReportsHTML();
+  else if(ACC_TAB==='gst')     el.innerHTML = accGstHTML();
+  else if(ACC_TAB==='coa')     el.innerHTML = accCoaHTML();
+}
+
+// ── HELPER: account balance ──────────────────────────
+function accBalance(accountId){
+  var acc = ACC_ACCOUNTS.find(function(a){return a.id===accountId;});
+  if(!acc) return 0;
+  var dr=0, cr=0;
+  ACC_ITEMS.forEach(function(it){
+    if(it.account_id!==accountId) return;
+    var v = ACC_VOUCHERS.find(function(v){return v.id===it.voucher_id;});
+    if(!v||v.status==='cancelled') return;
+    if(it.entry_type==='debit')  dr+=parseFloat(it.amount)||0;
+    if(it.entry_type==='credit') cr+=parseFloat(it.amount)||0;
+  });
+  var opening = parseFloat(acc.opening_balance)||0;
+  if(acc.balance_type==='debit')  return opening + dr - cr;
+  else                             return opening + cr - dr;
+}
+
+function accGetAccountsByType(types){
+  return ACC_ACCOUNTS.filter(function(a){ return types.indexOf(a.account_type)>-1; });
+}
+
+function accAccountOpts(filter){
+  return ACC_ACCOUNTS.filter(filter||function(){return true;}).map(function(a){
+    return '<option value="'+a.id+'">'+a.code+' — '+a.name+'</option>';
+  }).join('');
+}
+
+// ── DASHBOARD ────────────────────────────────────────
+function accDashHTML(){
+  // Key balances
+  var cashAcc  = ACC_ACCOUNTS.find(function(a){return a.is_cash;});
+  var bankAcc  = ACC_ACCOUNTS.find(function(a){return a.is_bank;});
+  var recvAcc  = ACC_ACCOUNTS.find(function(a){return a.code==='1300';});
+  var payVAcc  = ACC_ACCOUNTS.find(function(a){return a.code==='2100';});
+  var paySAcc  = ACC_ACCOUNTS.find(function(a){return a.code==='2200';});
+
+  var cashBal  = cashAcc  ? accBalance(cashAcc.id)  : 0;
+  var bankBal  = bankAcc  ? accBalance(bankAcc.id)  : 0;
+  var recvBal  = recvAcc  ? accBalance(recvAcc.id)  : 0;
+  var payBal   = (payVAcc ? accBalance(payVAcc.id) : 0) + (paySAcc ? accBalance(paySAcc.id) : 0);
+
+  // Recent vouchers
+  var recent = ACC_VOUCHERS.slice(0,8).map(function(v){
+    var cfg = VOU_TYPES[v.voucher_type]||{icon:'📄',css:'vou-journal',label:v.voucher_type};
+    return '<div class="vou-row" onclick="accViewVoucher(\''+v.id+'\')">' +
+      '<div style="width:36px;height:36px;border-radius:10px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+cfg.icon+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+v.narration+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:2px;"><span class="vou-badge '+cfg.css+'">'+cfg.label+'</span> &nbsp;'+v.voucher_no+' &nbsp;'+v.date+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0;">'+
+        '<div style="font-size:13px;font-weight:900;color:var(--navy);">'+fmtAcc(v.net_amount)+'</div>'+
+        (v.project_name?'<div style="font-size:10px;color:var(--text3);">'+v.project_name+'</div>':'')+
+      '</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No vouchers yet</div>';
+
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">' +
+    statCard('💵','Cash in Hand',cashBal,'#2E7D32') +
+    statCard('🏦','Bank Balance',bankBal,'#1565C0') +
+    statCard('📥','Receivable',recvBal,'#E65100') +
+    statCard('📤','Payable',payBal,'#C62828') +
+  '</div>'+
+  '<div style="display:flex;gap:8px;margin-bottom:12px;">'+
+    '<button onclick="accOpenVoucher(\'payment\')" style="flex:1;padding:10px;background:#C62828;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">💸 Payment</button>'+
+    '<button onclick="accOpenVoucher(\'receipt\')" style="flex:1;padding:10px;background:#2E7D32;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">💰 Receipt</button>'+
+    '<button onclick="accOpenVoucher(\'purchase\')" style="flex:1;padding:10px;background:#1565C0;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">🧾 Purchase</button>'+
+  '</div>'+
+  '<div class="acc-card">'+
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Recent Vouchers</div>'+
+    recent+
+  '</div>';
+
+  function statCard(icon,lbl,val,col){
+    return '<div class="acc-stat">'+
+      '<div style="font-size:22px;">'+icon+'</div>'+
+      '<div style="font-size:11px;color:var(--text3);font-weight:600;margin-top:6px;">'+lbl+'</div>'+
+      '<div class="acc-stat-val" style="color:'+col+';">'+fmtAcc(val)+'</div>'+
+    '</div>';
+  }
+}
+
+// ── ENTRY TAB ────────────────────────────────────────
+function accEntryHTML(){
+  var typeFilter = '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">';
+  ['all','payment','receipt','purchase','journal','contra'].forEach(function(t){
+    var cfg = t==='all'?{label:'All',css:''}:VOU_TYPES[t];
+    typeFilter += '<button onclick="accFilterVouchers(\''+t+'\',this)" class="'+(t==='all'?'on-filter':'')+'" '+
+      'style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);background:'+(t==='all'?'var(--navy)':'white')+';color:'+(t==='all'?'white':'var(--text2)')+';font-family:Nunito,sans-serif;">'+
+      (cfg?cfg.label:t)+'</button>';
+  });
+  typeFilter += '</div>';
+
+  var rows = ACC_VOUCHERS.map(function(v){
+    var cfg = VOU_TYPES[v.voucher_type]||{icon:'📄',css:'vou-journal',label:v.voucher_type};
+    return '<div class="vou-row" onclick="accViewVoucher(\''+v.id+'\')" data-type="'+v.voucher_type+'">'+
+      '<div style="width:34px;height:34px;border-radius:8px;background:#F8FAFC;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">'+cfg.icon+'</div>'+
+      '<div style="flex:1;min-width:0;">'+
+        '<div style="font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+v.narration+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+v.voucher_no+' &nbsp;·&nbsp; '+v.date+(v.party_name?' &nbsp;·&nbsp; '+v.party_name:'')+'</div>'+
+      '</div>'+
+      '<div style="text-align:right;flex-shrink:0;">'+
+        '<div class="vou-badge '+cfg.css+'">'+cfg.label+'</div>'+
+        '<div style="font-size:12px;font-weight:900;color:var(--navy);margin-top:4px;">'+fmtAcc(v.net_amount)+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:30px;color:var(--text3);">No vouchers yet.<br>Tap + to add.</div>';
+
+  return typeFilter +
+    '<div class="acc-card" id="acc-vou-list">'+rows+'</div>'+
+    '<button onclick="accOpenVoucher(null)" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">+ New Voucher</button>';
+}
+
+function accFilterVouchers(type, btn){
+  document.querySelectorAll('.on-filter').forEach(function(b){
+    b.classList.remove('on-filter'); b.style.background='white'; b.style.color='var(--text2)';
+  });
+  btn.classList.add('on-filter'); btn.style.background='var(--navy)'; btn.style.color='white';
+  document.querySelectorAll('#acc-vou-list .vou-row').forEach(function(row){
+    row.style.display = (type==='all'||row.getAttribute('data-type')===type)?'':'none';
+  });
+}
+
+// ── PARTY LEDGER TAB ─────────────────────────────────
+function accLedgerHTML(){
+  // Collect all parties from vouchers
+  var parties = {};
+  ACC_VOUCHERS.forEach(function(v){
+    if(v.party_name){
+      var k = (v.party_type||'other')+'|'+v.party_name;
+      if(!parties[k]) parties[k]={name:v.party_name, type:v.party_type||'other', dr:0, cr:0};
+    }
+  });
+  ACC_ITEMS.forEach(function(it){
+    var v = ACC_VOUCHERS.find(function(x){return x.id===it.voucher_id;});
+    if(!v||!v.party_name) return;
+    var k = (v.party_type||'other')+'|'+v.party_name;
+    if(!parties[k]) return;
+    var acc = ACC_ACCOUNTS.find(function(a){return a.id===it.account_id;});
+    if(!acc) return;
+    if(acc.account_type==='liability'||acc.account_type==='asset'){
+      if(it.entry_type==='debit') parties[k].dr+=parseFloat(it.amount)||0;
+      else parties[k].cr+=parseFloat(it.amount)||0;
+    }
+  });
+
+  var partyList = Object.values(parties).map(function(p){
+    var bal = p.cr - p.dr;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="accShowPartyDetail(\''+p.name+'\',\''+p.type+'\')">'+
+      '<div style="width:34px;height:34px;border-radius:50%;background:#EDE7F6;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#6A1B9A;flex-shrink:0;">'+p.name[0]+'</div>'+
+      '<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+p.name+'</div><div style="font-size:10px;color:var(--text3);">'+p.type+'</div></div>'+
+      '<div style="text-align:right;">'+
+        '<div style="font-size:13px;font-weight:900;color:'+(bal>0?'#C62828':'#2E7D32')+';">'+fmtAcc(bal)+'</div>'+
+        '<div style="font-size:10px;color:var(--text3);">'+(bal>0?'You Owe':'They Owe')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:30px;color:var(--text3);">No party transactions yet</div>';
+
+  return '<div class="acc-card">'+
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">All Party Accounts</div>'+
+    partyList+
+  '</div>';
+}
+
+function accShowPartyDetail(name, type){
+  var vouchers = ACC_VOUCHERS.filter(function(v){return v.party_name===name;});
+  var rows = vouchers.map(function(v){
+    var cfg = VOU_TYPES[v.voucher_type]||{icon:'📄',css:'vou-journal',label:v.voucher_type};
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">'+
+      '<span class="vou-badge '+cfg.css+'">'+cfg.label+'</span>'+
+      '<div style="flex:1;font-size:12px;font-weight:600;">'+v.narration+'</div>'+
+      '<div style="font-size:11px;color:var(--text3);">'+v.date+'</div>'+
+      '<div style="font-size:12px;font-weight:800;">'+fmtAcc(v.net_amount)+'</div>'+
+    '</div>';
+  }).join('');
+
+  document.getElementById('acc-sheet-title').textContent = '📒 '+name;
+  document.getElementById('acc-sheet-body').innerHTML =
+    '<div style="background:#EDE7F6;border-radius:10px;padding:10px 14px;margin-bottom:12px;">'+
+      '<div style="font-size:12px;font-weight:700;color:#6A1B9A;">Party: '+name+' &nbsp;·&nbsp; '+type+'</div>'+
+    '</div>'+
+    (rows||'<div style="text-align:center;padding:20px;color:var(--text3);">No transactions</div>');
+  document.getElementById('acc-sheet-foot').innerHTML = '<button class="btn" style="background:var(--navy);color:white;width:100%;" onclick="closeAccSheet()">Close</button>';
+  openAccSheet();
+}
+
+// ── BOOKS TAB ────────────────────────────────────────
+function accBooksHTML(){
+  var tabs = ['cash','bank','day'].map(function(t){
+    var lbl = t==='cash'?'Cash Book':t==='bank'?'Bank Book':'Day Book';
+    return '<button onclick="accSwitchBook(\''+t+'\',this)" style="flex:1;padding:9px;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:'+(ACC_BOOK_TYPE===t?'var(--navy)':'#F0F4F8')+';color:'+(ACC_BOOK_TYPE===t?'white':'var(--text3)')+';">'+lbl+'</button>';
+  }).join('');
+
+  var entries = [];
+  var today = new Date().toISOString().split('T')[0];
+  var from = new Date(); from.setDate(from.getDate()-30);
+  var fromStr = from.toISOString().split('T')[0];
+
+  ACC_VOUCHERS.forEach(function(v){
+    if(v.date < fromStr || v.status==='cancelled') return;
+    var items = ACC_ITEMS.filter(function(it){return it.voucher_id===v.id;});
+    items.forEach(function(it){
+      var acc = ACC_ACCOUNTS.find(function(a){return a.id===it.account_id;});
+      if(!acc) return;
+      var isCash = acc.is_cash, isBank = acc.is_bank;
+      if(ACC_BOOK_TYPE==='cash'&&!isCash) return;
+      if(ACC_BOOK_TYPE==='bank'&&!isBank) return;
+      entries.push({date:v.date, no:v.voucher_no, narr:v.narration||'', type:it.entry_type, amt:parseFloat(it.amount)||0, vid:v.id});
+    });
+  });
+  entries.sort(function(a,b){return b.date.localeCompare(a.date);});
+
+  var rows = entries.map(function(e){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);" onclick="accViewVoucher(\''+e.vid+'\')">'+
+      '<div style="width:50px;flex-shrink:0;font-size:10px;color:var(--text3);">'+e.date+'</div>'+
+      '<div style="flex:1;font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+e.narr+'<br><span style="font-size:10px;color:var(--text3);">'+e.no+'</span></div>'+
+      '<div style="font-size:12px;font-weight:800;color:'+(e.type==='debit'?'#2E7D32':'#C62828')+';">'+(e.type==='debit'?'+':'−')+fmtAcc(e.amt)+'</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No entries in last 30 days</div>';
+
+  return '<div style="display:flex;gap:6px;margin-bottom:12px;">'+tabs+'</div>'+
+    '<div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Last 30 days</div>'+
+    '<div class="acc-card">'+rows+'</div>';
+}
+
+function accSwitchBook(type, btn){
+  ACC_BOOK_TYPE = type;
+  accRender();
+}
+
+// ── REPORTS TAB ──────────────────────────────────────
+function accReportsHTML(){
+  var types = ['trial','pl','project','outstanding'].map(function(t){
+    var lbl = t==='trial'?'Trial Balance':t==='pl'?'P & L':t==='project'?'Project P&L':'Outstanding';
+    return '<button onclick="accSwitchReport(\''+t+'\',this)" style="flex:1;padding:9px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;border:none;font-family:Nunito,sans-serif;background:'+(ACC_REP_TYPE===t?'var(--navy)':'#F0F4F8')+';color:'+(ACC_REP_TYPE===t?'white':'var(--text3)')+';">'+lbl+'</button>';
+  }).join('');
+
+  var content = '';
+  if(ACC_REP_TYPE==='trial')       content = accTrialBalance();
+  else if(ACC_REP_TYPE==='pl')     content = accPLStatement();
+  else if(ACC_REP_TYPE==='project')content = accProjectPL();
+  else if(ACC_REP_TYPE==='outstanding') content = accOutstanding();
+
+  return '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px;">'+types+'</div>'+content;
+}
+
+function accSwitchReport(type, btn){ ACC_REP_TYPE=type; accRender(); }
+
+function accTrialBalance(){
+  var rows = ACC_ACCOUNTS.map(function(a){
+    var bal = accBalance(a.id);
+    if(bal===0) return '';
+    var dr = a.balance_type==='debit' && bal>0 ? bal : (a.balance_type==='credit' && bal<0 ? -bal : 0);
+    var cr = a.balance_type==='credit'&& bal>0 ? bal : (a.balance_type==='debit' && bal<0 ? -bal : 0);
+    return '<tr><td style="padding:6px 8px;font-size:12px;">'+a.code+'</td>'+
+      '<td style="padding:6px 8px;font-size:12px;font-weight:600;">'+a.name+'</td>'+
+      '<td style="padding:6px 8px;font-size:12px;text-align:right;color:#1565C0;">'+(dr>0?fmtAcc(dr):'')+'</td>'+
+      '<td style="padding:6px 8px;font-size:12px;text-align:right;color:#C62828;">'+(cr>0?fmtAcc(cr):'')+'</td>'+
+    '</tr>';
+  }).join('');
+  return '<div class="acc-card" style="overflow-x:auto;">'+
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Trial Balance</div>'+
+    '<table style="width:100%;border-collapse:collapse;">'+
+      '<thead><tr style="border-bottom:2px solid var(--border);">'+
+        '<th style="padding:6px 8px;font-size:10px;color:var(--text3);text-align:left;">Code</th>'+
+        '<th style="padding:6px 8px;font-size:10px;color:var(--text3);text-align:left;">Account</th>'+
+        '<th style="padding:6px 8px;font-size:10px;color:var(--text3);text-align:right;">Dr</th>'+
+        '<th style="padding:6px 8px;font-size:10px;color:var(--text3);text-align:right;">Cr</th>'+
+      '</tr></thead><tbody>'+rows+'</tbody>'+
+    '</table>'+
+  '</div>';
+}
+
+function accPLStatement(){
+  var income  = 0, expense = 0;
+  var incRows='', expRows='';
+  ACC_ACCOUNTS.forEach(function(a){
+    var bal = accBalance(a.id);
+    if(bal===0) return;
+    if(a.account_type==='income'){
+      income += bal;
+      incRows += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><span>'+a.name+'</span><span style="color:#2E7D32;font-weight:700;">'+fmtAcc(bal)+'</span></div>';
+    } else if(a.account_type==='expense'){
+      expense += bal;
+      expRows += '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;"><span>'+a.name+'</span><span style="color:#C62828;font-weight:700;">'+fmtAcc(bal)+'</span></div>';
+    }
+  });
+  var profit = income - expense;
+  return '<div class="acc-card">'+
+    '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">INCOME</div>'+
+    (incRows||'<div style="font-size:12px;color:var(--text3);">No income entries</div>')+
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #2E7D32;margin-top:4px;"><span>Total Income</span><span style="color:#2E7D32;">'+fmtAcc(income)+'</span></div>'+
+    '<div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">EXPENSES</div>'+
+    (expRows||'<div style="font-size:12px;color:var(--text3);">No expense entries</div>')+
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #C62828;margin-top:4px;"><span>Total Expenses</span><span style="color:#C62828;">'+fmtAcc(expense)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:12px 14px;background:'+(profit>=0?'#E8F5E9':'#FFEBEE')+';border-radius:10px;margin-top:10px;font-size:15px;font-weight:900;">'+
+      '<span>'+(profit>=0?'NET PROFIT':'NET LOSS')+'</span>'+
+      '<span style="color:'+(profit>=0?'#2E7D32':'#C62828')+';">'+fmtAcc(Math.abs(profit))+'</span>'+
+    '</div>'+
+  '</div>';
+}
+
+function accProjectPL(){
+  var projects = {};
+  ACC_VOUCHERS.forEach(function(v){
+    if(!v.project_id) return;
+    var k = v.project_id;
+    if(!projects[k]) projects[k]={name:v.project_name||'—',income:0,expense:0};
+    var items = ACC_ITEMS.filter(function(it){return it.voucher_id===v.id;});
+    items.forEach(function(it){
+      var a = ACC_ACCOUNTS.find(function(a){return a.id===it.account_id;});
+      if(!a) return;
+      if(a.account_type==='income')  projects[k].income  += parseFloat(it.amount)||0;
+      if(a.account_type==='expense') projects[k].expense += parseFloat(it.amount)||0;
+    });
+  });
+  var rows = Object.values(projects).map(function(p){
+    var profit = p.income - p.expense;
+    return '<div style="background:white;border-radius:12px;border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;">'+
+      '<div style="font-size:13px;font-weight:800;margin-bottom:8px;">'+p.name+'</div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<div style="flex:1;background:#E8F5E9;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:#2E7D32;font-weight:700;">Income</div><div style="font-size:14px;font-weight:900;color:#2E7D32;">'+fmtAcc(p.income)+'</div></div>'+
+        '<div style="flex:1;background:#FFEBEE;border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:#C62828;font-weight:700;">Expense</div><div style="font-size:14px;font-weight:900;color:#C62828;">'+fmtAcc(p.expense)+'</div></div>'+
+        '<div style="flex:1;background:'+(profit>=0?'#E3F2FD':'#FFF3E0')+';border-radius:8px;padding:8px;text-align:center;"><div style="font-size:10px;color:'+(profit>=0?'#1565C0':'#E65100')+';font-weight:700;">'+(profit>=0?'Profit':'Loss')+'</div><div style="font-size:14px;font-weight:900;color:'+(profit>=0?'#1565C0':'#E65100')+';">'+fmtAcc(Math.abs(profit))+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:30px;color:var(--text3);">No project entries yet</div>';
+  return '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;">Project-wise P&L</div>'+rows;
+}
+
+function accOutstanding(){
+  var parties = {}, typeLabel={vendor:'Vendor',sc:'Subcontractor',client:'Client',employee:'Employee'};
+  ACC_VOUCHERS.forEach(function(v){
+    if(!v.party_name) return;
+    var k=v.party_name;
+    if(!parties[k]) parties[k]={name:v.party_name,type:v.party_type||'other',dr:0,cr:0};
+  });
+  ACC_ITEMS.forEach(function(it){
+    var v=ACC_VOUCHERS.find(function(x){return x.id===it.voucher_id;});
+    if(!v||!v.party_name) return;
+    var k=v.party_name; if(!parties[k]) return;
+    var a=ACC_ACCOUNTS.find(function(a){return a.id===it.account_id;});
+    if(!a) return;
+    if(a.account_type==='liability'||a.account_type==='asset'){
+      if(it.entry_type==='debit') parties[k].dr+=parseFloat(it.amount)||0;
+      else parties[k].cr+=parseFloat(it.amount)||0;
+    }
+  });
+  var rows = Object.values(parties).filter(function(p){return Math.abs(p.cr-p.dr)>0;}).map(function(p){
+    var bal=p.cr-p.dr;
+    return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">'+
+      '<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+p.name+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);">'+(typeLabel[p.type]||p.type)+'</div></div>'+
+      '<div style="text-align:right;"><div style="font-size:13px;font-weight:900;color:'+(bal>0?'#C62828':'#2E7D32')+';">'+fmtAcc(bal)+'</div>'+
+      '<div style="font-size:10px;color:var(--text3);">'+(bal>0?'Payable':'Receivable')+'</div></div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No outstanding balances</div>';
+  return '<div class="acc-card"><div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Outstanding Balances</div>'+rows+'</div>';
+}
+
+// ── GST / TDS TAB ────────────────────────────────────
+function accGstHTML(){
+  // GST Summary
+  var inputGST=0, outputGST=0;
+  ACC_GST.forEach(function(g){
+    if(g.gst_type==='input')  inputGST  += parseFloat(g.total_gst)||0;
+    if(g.gst_type==='output') outputGST += parseFloat(g.total_gst)||0;
+  });
+  var netGST = outputGST - inputGST;
+
+  // TDS Summary
+  var tdsDeducted=0, tdsReceived=0;
+  ACC_TDS.forEach(function(t){
+    if(t.tds_type==='deducted') tdsDeducted += parseFloat(t.tds_amount)||0;
+    if(t.tds_type==='received') tdsReceived += parseFloat(t.tds_amount)||0;
+  });
+
+  var gstRows = ACC_GST.slice(0,10).map(function(g){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">'+
+      '<span class="vou-badge '+(g.gst_type==='input'?'vou-receipt':'vou-payment')+'">'+g.gst_type.toUpperCase()+'</span>'+
+      '<div style="flex:1;font-size:12px;font-weight:600;">'+g.party_name+'<br><span style="font-size:10px;color:var(--text3);">'+g.date+' &nbsp;'+g.invoice_no+'</span></div>'+
+      '<div style="text-align:right;font-size:12px;font-weight:800;">'+fmtAcc(g.total_gst)+'</div>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:20px;color:var(--text3);">No GST entries</div>';
+
+  return '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div class="acc-stat"><div style="font-size:11px;color:var(--text3);font-weight:600;">Input GST</div><div style="font-size:16px;font-weight:900;color:#1565C0;margin-top:4px;">'+fmtAcc(inputGST)+'</div></div>'+
+    '<div class="acc-stat"><div style="font-size:11px;color:var(--text3);font-weight:600;">Output GST</div><div style="font-size:16px;font-weight:900;color:#C62828;margin-top:4px;">'+fmtAcc(outputGST)+'</div></div>'+
+    '<div class="acc-stat"><div style="font-size:11px;color:var(--text3);font-weight:600;">Net Payable</div><div style="font-size:16px;font-weight:900;color:'+(netGST>=0?'#C62828':'#2E7D32')+';margin-top:4px;">'+fmtAcc(netGST)+'</div></div>'+
+  '</div>'+
+  '<div class="acc-card">'+
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">GST Register</div>'+
+    gstRows+
+  '</div>'+
+  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;">'+
+    '<div class="acc-stat"><div style="font-size:11px;color:var(--text3);font-weight:600;">TDS Deducted (194C)</div><div style="font-size:16px;font-weight:900;color:#E65100;margin-top:4px;">'+fmtAcc(tdsDeducted)+'</div></div>'+
+    '<div class="acc-stat"><div style="font-size:11px;color:var(--text3);font-weight:600;">TDS Received</div><div style="font-size:16px;font-weight:900;color:#2E7D32;margin-top:4px;">'+fmtAcc(tdsReceived)+'</div></div>'+
+  '</div>';
+}
+
+// ── CHART OF ACCOUNTS TAB ────────────────────────────
+function accCoaHTML(){
+  var groups = {};
+  ACC_ACCOUNTS.forEach(function(a){
+    if(!groups[a.group_name]) groups[a.group_name]=[];
+    groups[a.group_name].push(a);
+  });
+  var html = '<button onclick="accOpenNewAccount()" style="width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;margin-bottom:12px;">+ Add Account / Ledger</button>';
+  var groupColors={Assets:'#1565C0',Liabilities:'#C62828',Income:'#2E7D32',Expenses:'#E65100'};
+  Object.keys(groups).forEach(function(g){
+    var col = groupColors[g]||'#37474F';
+    html += '<div style="font-size:11px;font-weight:800;color:'+col+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;margin-top:10px;">'+g+'</div>';
+    html += '<div class="acc-card" style="padding:0;">';
+    groups[g].forEach(function(a){
+      var bal = accBalance(a.id);
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">'+
+        '<div style="width:40px;font-size:11px;font-weight:800;color:'+col+';">'+a.code+'</div>'+
+        '<div style="flex:1;"><div style="font-size:12px;font-weight:700;">'+a.name+'</div>'+
+        (a.sub_group?'<div style="font-size:10px;color:var(--text3);">'+a.sub_group+'</div>':'')+
+        '</div>'+
+        '<div style="font-size:12px;font-weight:900;color:'+(bal>=0?col:'#C62828')+';">'+fmtAcc(bal)+'</div>'+
+      '</div>';
+    });
+    html += '</div>';
+  });
+  return html;
+}
+
+// ── NEW VOUCHER FORM ─────────────────────────────────
+async function accOpenVoucher(type){
+  accVouLineCount = 2;
+  var projs=[], parties=[];
+  try{ var p=await sbFetch('projects',{select:'id,name',order:'name.asc'}); projs=Array.isArray(p)?p:[]; }catch(e){}
+
+  var typeOpts = Object.keys(VOU_TYPES).map(function(t){
+    return '<option value="'+t+'"'+(t===type?' selected':'')+'>'+VOU_TYPES[t].icon+' '+VOU_TYPES[t].label+'</option>';
+  }).join('');
+  var projOpts = '<option value="">— No Project —</option>'+projs.map(function(p){return '<option value="'+p.id+'" data-name="'+p.name+'">'+p.name+'</option>';}).join('');
+
+  // Voucher number
+  var vType = type||'payment';
+  var prefix = {payment:'PMT',receipt:'RCP',purchase:'PUR',journal:'JNL',contra:'CTR'}[vType]||'VCH';
+  var count = ACC_VOUCHERS.filter(function(v){return v.voucher_type===vType;}).length+1;
+  var vno = prefix+'-'+new Date().getFullYear()+'-'+String(count).padStart(3,'0');
+
+  var accOpts = accAccountOpts();
+  var lineRows = accLineRows(accOpts);
+
+  document.getElementById('acc-sheet-title').textContent = '📝 New Voucher';
+  document.getElementById('acc-sheet-body').innerHTML =
+    '<div class="g2"><div><label class="flbl">Voucher Type *</label><select id="av-type" class="fsel" onchange="accTypeChanged()">'+typeOpts+'</select></div>'+
+    '<div><label class="flbl">Date *</label><input id="av-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Voucher No</label><input id="av-no" class="finp" value="'+vno+'"></div>'+
+    '<div><label class="flbl">Project</label><select id="av-proj" class="fsel">'+projOpts+'</select></div></div>'+
+    '<label class="flbl">Party Name</label><input id="av-party" class="finp" placeholder="Vendor / SC / Client / Employee name">'+
+    '<div class="g2"><div><label class="flbl">Party Type</label><select id="av-party-type" class="fsel">'+
+      '<option value="">— Select —</option><option value="vendor">Vendor</option><option value="sc">Subcontractor</option><option value="client">Client</option><option value="employee">Employee</option>'+
+    '</select></div>'+
+    '<div><label class="flbl">Reference No</label><input id="av-ref" class="finp" placeholder="Invoice / RA Bill No"></div></div>'+
+    '<label class="flbl">Narration *</label><input id="av-narr" class="finp" placeholder="Describe this transaction...">'+
+    // Debit / Credit Lines
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Accounting Entries</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;margin-bottom:4px;padding:0 4px;">'+
+      '<div style="font-size:10px;color:var(--text3);font-weight:700;">Account</div>'+
+      '<div style="font-size:10px;color:var(--text3);font-weight:700;text-align:center;">Dr</div>'+
+      '<div style="font-size:10px;color:var(--text3);font-weight:700;text-align:center;">Cr</div>'+
+    '</div>'+
+    '<div id="av-lines">'+lineRows+'</div>'+
+    '<button onclick="accAddLine()" style="width:100%;padding:8px;background:#F0F4F8;border:1.5px dashed var(--border);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;color:var(--text3);margin-top:4px;">+ Add Line</button>'+
+    // GST
+    '<div style="margin-top:12px;padding:12px;background:#E3F2FD;border-radius:10px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="font-size:12px;font-weight:800;color:#1565C0;">GST Details (optional)</div>'+
+        '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:700;">'+
+          '<input type="checkbox" id="av-gst-toggle" onchange="accGstToggle()" style="width:16px;height:16px;"> Include GST</label>'+
+      '</div>'+
+      '<div id="av-gst-fields" style="display:none;">'+
+        '<div class="g2"><div><label class="flbl">Party GSTIN</label><input id="av-gstin" class="finp" placeholder="27XXXXX..."></div>'+
+        '<div><label class="flbl">Taxable Amount</label><input id="av-tax-amt" class="finp" type="number" oninput="accCalcGST()"></div></div>'+
+        '<div class="g2"><div><label class="flbl">CGST %</label><input id="av-cgst" class="finp" type="number" value="9" oninput="accCalcGST()"></div>'+
+        '<div><label class="flbl">SGST %</label><input id="av-sgst" class="finp" type="number" value="9" oninput="accCalcGST()"></div></div>'+
+        '<div class="g2"><div><label class="flbl">GST Type</label><select id="av-gst-type" class="fsel"><option value="input">Input (Purchase)</option><option value="output">Output (Sales)</option></select></div>'+
+        '<div><label class="flbl">Total GST</label><input id="av-gst-total" class="finp" readonly style="background:#F8FAFC;"></div></div>'+
+      '</div>'+
+    '</div>'+
+    // TDS
+    '<div style="margin-top:8px;padding:12px;background:#FFF3E0;border-radius:10px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="font-size:12px;font-weight:800;color:#E65100;">TDS (194C — Contractor)</div>'+
+        '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:700;">'+
+          '<input type="checkbox" id="av-tds-toggle" onchange="accTdsToggle()" style="width:16px;height:16px;"> Include TDS</label>'+
+      '</div>'+
+      '<div id="av-tds-fields" style="display:none;">'+
+        '<div class="g2"><div><label class="flbl">Gross Amount</label><input id="av-tds-gross" class="finp" type="number" oninput="accCalcTDS()"></div>'+
+        '<div><label class="flbl">TDS Rate %</label><input id="av-tds-rate" class="finp" type="number" value="2" oninput="accCalcTDS()"></div></div>'+
+        '<div class="g2"><div><label class="flbl">TDS Amount</label><input id="av-tds-amt" class="finp" readonly style="background:#F8FAFC;"></div>'+
+        '<div><label class="flbl">PAN</label><input id="av-tds-pan" class="finp" placeholder="Party PAN"></div></div>'+
+        '<div class="g2"><div><label class="flbl">TDS Type</label><select id="av-tds-type" class="fsel"><option value="deducted">Deducted (we deduct)</option><option value="received">Received (client deducts)</option></select></div>'+
+        '<div><label class="flbl">Net Amount</label><input id="av-tds-net" class="finp" readonly style="background:#F8FAFC;"></div></div>'+
+      '</div>'+
+    '</div>'+
+    '<label class="flbl" style="margin-top:10px;">Attachment</label>'+
+    '<label for="av-attach" style="display:flex;align-items:center;gap:8px;padding:10px 12px;border:1.5px dashed var(--border);border-radius:10px;cursor:pointer;background:#F8FAFC;">'+
+      '<input type="file" id="av-attach" accept="image/*,application/pdf" style="display:none;" onchange="accPhotoPreview(this)">'+
+      '<span style="font-size:18px;">📎</span><span id="av-attach-lbl" style="font-size:12px;font-weight:600;color:var(--text3);">Tap to attach invoice / bill</span>'+
+    '</label>';
+
+  document.getElementById('acc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeAccSheet()">Cancel</button>'+
+    '<button class="btn" style="background:var(--navy);color:white;" onclick="accSaveVoucher()">💾 Post Voucher</button>';
+  openAccSheet();
+}
+
+function accLineRows(accOpts){
+  var rows='';
+  for(var i=0;i<accVouLineCount;i++){
+    var isDr = i%2===0;
+    rows += '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;margin-bottom:4px;" id="av-line-'+i+'">'+
+      '<select class="fsel av-acc" style="font-size:12px;padding:8px 10px;">'+accOpts+'</select>'+
+      '<input type="number" class="finp av-dr" placeholder="0" style="text-align:right;font-size:12px;padding:8px 6px;"'+(isDr?'':' disabled style="background:#F8FAFC;opacity:.6;text-align:right;font-size:12px;padding:8px 6px;"')+'>'+
+      '<input type="number" class="finp av-cr" placeholder="0" style="text-align:right;font-size:12px;padding:8px 6px;"'+(!isDr?'':' disabled style="background:#F8FAFC;opacity:.6;text-align:right;font-size:12px;padding:8px 6px;"')+'>'+
+    '</div>';
+  }
+  return rows;
+}
+
+function accAddLine(){
+  accVouLineCount++;
+  var accOpts = accAccountOpts();
+  var newRow = document.createElement('div');
+  newRow.id = 'av-line-'+(accVouLineCount-1);
+  newRow.style.cssText = 'display:grid;grid-template-columns:1fr 80px 80px;gap:4px;margin-bottom:4px;';
+  newRow.innerHTML =
+    '<select class="fsel av-acc" style="font-size:12px;padding:8px 10px;">'+accOpts+'</select>'+
+    '<input type="number" class="finp av-dr" placeholder="0" style="text-align:right;font-size:12px;padding:8px 6px;">'+
+    '<input type="number" class="finp av-cr" placeholder="0" style="text-align:right;font-size:12px;padding:8px 6px;">';
+  document.getElementById('av-lines').appendChild(newRow);
+}
+
+function accGstToggle(){
+  var show = document.getElementById('av-gst-toggle').checked;
+  document.getElementById('av-gst-fields').style.display = show?'block':'none';
+}
+function accTdsToggle(){
+  var show = document.getElementById('av-tds-toggle').checked;
+  document.getElementById('av-tds-fields').style.display = show?'block':'none';
+}
+function accCalcGST(){
+  var taxAmt = parseFloat((document.getElementById('av-tax-amt')||{value:0}).value)||0;
+  var cgst    = parseFloat((document.getElementById('av-cgst')||{value:9}).value)||0;
+  var sgst    = parseFloat((document.getElementById('av-sgst')||{value:9}).value)||0;
+  var total   = taxAmt*(cgst+sgst)/100;
+  var el = document.getElementById('av-gst-total');
+  if(el) el.value = total.toFixed(2);
+}
+function accCalcTDS(){
+  var gross = parseFloat((document.getElementById('av-tds-gross')||{value:0}).value)||0;
+  var rate  = parseFloat((document.getElementById('av-tds-rate')||{value:2}).value)||0;
+  var tds   = gross*rate/100;
+  var net   = gross-tds;
+  var tEl = document.getElementById('av-tds-amt'); if(tEl) tEl.value = tds.toFixed(2);
+  var nEl = document.getElementById('av-tds-net'); if(nEl) nEl.value = net.toFixed(2);
+}
+function accPhotoPreview(inp){
+  var lbl = document.getElementById('av-attach-lbl');
+  if(inp.files[0]&&lbl) lbl.textContent = '✅ '+inp.files[0].name;
+}
+
+async function accSaveVoucher(){
+  var g = function(id){return(document.getElementById(id)||{value:''}).value;};
+  var vType  = g('av-type')||'payment';
+  var date   = g('av-date');
+  var vno    = g('av-no');
+  var narr   = g('av-narr').trim();
+  var party  = g('av-party').trim()||null;
+  var pType  = g('av-party-type')||null;
+  var ref    = g('av-ref').trim()||null;
+  if(!date||!narr){ toast('Date and narration required','warning'); return; }
+
+  var projSel = document.getElementById('av-proj');
+  var projId  = projSel?projSel.value||null:null;
+  var projName= projSel&&projSel.selectedIndex>0?projSel.options[projSel.selectedIndex].text:null;
+
+  // Collect line items
+  var lines=[], totalDr=0, totalCr=0;
+  document.querySelectorAll('#av-lines > div').forEach(function(row){
+    var accEl = row.querySelector('.av-acc');
+    var drEl  = row.querySelector('.av-dr');
+    var crEl  = row.querySelector('.av-cr');
+    var accId = accEl?accEl.value:'';
+    var dr = parseFloat(drEl?drEl.value:0)||0;
+    var cr = parseFloat(crEl?crEl.value:0)||0;
+    if(accId&&(dr>0||cr>0)){
+      var acc = ACC_ACCOUNTS.find(function(a){return a.id===accId;})||{};
+      if(dr>0){ lines.push({account_id:accId,account_name:acc.name,entry_type:'debit',amount:dr}); totalDr+=dr; }
+      if(cr>0){ lines.push({account_id:accId,account_name:acc.name,entry_type:'credit',amount:cr}); totalCr+=cr; }
+    }
+  });
+  if(!lines.length){ toast('Add at least one accounting entry','warning'); return; }
+  if(Math.abs(totalDr-totalCr)>0.01){ toast('Debit ('+fmtAcc(totalDr)+') ≠ Credit ('+fmtAcc(totalCr)+') — must balance!','error'); return; }
+
+  // GST
+  var hasGST = document.getElementById('av-gst-toggle')&&document.getElementById('av-gst-toggle').checked;
+  var hasTDS = document.getElementById('av-tds-toggle')&&document.getElementById('av-tds-toggle').checked;
+  var gstAmt=0, tdsAmt=0;
+  if(hasGST) gstAmt = parseFloat(g('av-gst-total'))||0;
+  if(hasTDS) tdsAmt = parseFloat(g('av-tds-amt'))||0;
+  var netAmt = totalDr - tdsAmt;
+
+  // Upload attachment
+  var photoUrl=null;
+  var attachFile=document.getElementById('av-attach');
+  if(attachFile&&attachFile.files[0]){
+    try{ toast('Uploading...','info'); photoUrl=await uploadToCloudinary(attachFile.files[0],'vouchers','av-attach'); }catch(e){}
+  }
+
+  try{
+    toast('Posting voucher...','info');
+    var vou = await sbInsert('vouchers',{
+      voucher_no:vno, voucher_type:vType, date:date,
+      project_id:projId, project_name:projName,
+      party_name:party, party_type:pType,
+      narration:narr, reference_no:ref,
+      total_amount:totalDr, gst_amount:gstAmt,
+      tds_amount:tdsAmt, net_amount:netAmt,
+      status:'posted', source:'manual',
+      attachment_url:photoUrl,
+      created_by:currentUser?currentUser.name:null
+    });
+    if(!vou||!vou[0]){ toast('Failed to save voucher','error'); return; }
+    var vouId = vou[0].id;
+    ACC_VOUCHERS.unshift(vou[0]);
+
+    // Save line items
+    var itemInserts = lines.map(function(l){
+      return sbInsert('voucher_items',Object.assign({voucher_id:vouId},l));
+    });
+    var savedItems = await Promise.all(itemInserts);
+    savedItems.forEach(function(r){if(r&&r[0]) ACC_ITEMS.push(r[0]);});
+
+    // Save GST
+    if(hasGST&&gstAmt>0){
+      var gstRow = await sbInsert('gst_entries',{
+        voucher_id:vouId, date:date, party_name:party,
+        party_gstin:g('av-gstin')||null,
+        invoice_no:ref||null,
+        taxable_amount:parseFloat(g('av-tax-amt'))||0,
+        cgst_rate:parseFloat(g('av-cgst'))||0,
+        sgst_rate:parseFloat(g('av-sgst'))||0,
+        cgst_amount:(parseFloat(g('av-tax-amt'))||0)*(parseFloat(g('av-cgst'))||0)/100,
+        sgst_amount:(parseFloat(g('av-tax-amt'))||0)*(parseFloat(g('av-sgst'))||0)/100,
+        total_gst:gstAmt,
+        gst_type:g('av-gst-type')||'input',
+        project_id:projId
+      });
+      if(gstRow&&gstRow[0]) ACC_GST.push(gstRow[0]);
+    }
+
+    // Save TDS
+    if(hasTDS&&tdsAmt>0){
+      var tdsRow = await sbInsert('tds_entries',{
+        voucher_id:vouId, date:date, party_name:party,
+        party_pan:g('av-tds-pan')||null,
+        section:'194C', tds_rate:parseFloat(g('av-tds-rate'))||2,
+        gross_amount:parseFloat(g('av-tds-gross'))||0,
+        tds_amount:tdsAmt, net_amount:parseFloat(g('av-tds-net'))||0,
+        tds_type:g('av-tds-type')||'deducted',
+        project_id:projId
+      });
+      if(tdsRow&&tdsRow[0]) ACC_TDS.push(tdsRow[0]);
+    }
+
+    toast('✓ Voucher '+vno+' posted!','success');
+    closeAccSheet();
+    accRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
+// ── VIEW VOUCHER ─────────────────────────────────────
+function accViewVoucher(id){
+  var v = ACC_VOUCHERS.find(function(x){return x.id===id;}); if(!v) return;
+  var cfg = VOU_TYPES[v.voucher_type]||{icon:'📄',label:v.voucher_type,css:'vou-journal'};
+  var items = ACC_ITEMS.filter(function(it){return it.voucher_id===id;});
+  var gst   = ACC_GST.find(function(g){return g.voucher_id===id;});
+  var tds   = ACC_TDS.find(function(t){return t.voucher_id===id;});
+
+  function row(l,v){ return v?'<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F0EDE8;font-size:12px;"><span style="color:var(--text3);">'+l+'</span><span style="font-weight:700;">'+v+'</span></div>':''; }
+
+  var lineHtml = '<div style="display:grid;grid-template-columns:1fr 80px 80px;gap:4px;margin-top:8px;padding:8px;background:#F8FAFC;border-radius:8px;">'+
+    '<div style="font-size:10px;font-weight:700;color:var(--text3);">Account</div>'+
+    '<div style="font-size:10px;font-weight:700;color:var(--text3);text-align:right;">Dr</div>'+
+    '<div style="font-size:10px;font-weight:700;color:var(--text3);text-align:right;">Cr</div>'+
+    items.map(function(it){
+      return '<div style="font-size:12px;font-weight:600;padding:4px 0;">'+it.account_name+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:#1565C0;text-align:right;">'+(it.entry_type==='debit'?fmtAcc(it.amount):'')+'</div>'+
+        '<div style="font-size:12px;font-weight:800;color:#C62828;text-align:right;">'+(it.entry_type==='credit'?fmtAcc(it.amount):'')+'</div>';
+    }).join('')+
+  '</div>';
+
+  document.getElementById('acc-sheet-title').textContent = cfg.icon+' '+cfg.label+' Voucher';
+  document.getElementById('acc-sheet-body').innerHTML =
+    '<div style="background:var(--navy);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px;color:white;">'+
+      '<div style="font-size:12px;opacity:.6;margin-bottom:4px;">'+v.voucher_no+' &nbsp;·&nbsp; '+v.date+'</div>'+
+      '<div style="font-size:28px;font-weight:900;">'+fmtAcc(v.net_amount)+'</div>'+
+      (v.narration?'<div style="font-size:12px;opacity:.7;margin-top:4px;">'+v.narration+'</div>':'')+
+    '</div>'+
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.05);">'+
+      row('Voucher No', v.voucher_no)+
+      row('Date', v.date)+
+      row('Type', cfg.label)+
+      row('Party', v.party_name||(v.party_type?'—':''))+
+      row('Project', v.project_name||'')+
+      row('Reference', v.reference_no||'')+
+      row('GST', v.gst_amount>0?fmtAcc(v.gst_amount):'')+
+      row('TDS', v.tds_amount>0?fmtAcc(v.tds_amount):'')+
+    '</div>'+
+    lineHtml+
+    (v.attachment_url?'<div style="margin-top:10px;"><a href="'+v.attachment_url+'" target="_blank"><img src="'+v.attachment_url+'" style="width:100%;border-radius:10px;border:1.5px solid var(--border);"></a></div>':'');
+
+  var isAdmin = currentUser&&(currentUser.role==='admin');
+  document.getElementById('acc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeAccSheet()">Close</button>'+
+    (isAdmin?'<button class="btn" style="background:#C62828;color:white;" onclick="accCancelVoucher(\''+id+'\')">✕ Cancel</button>':'');
+  openAccSheet();
+}
+
+async function accCancelVoucher(id){
+  if(!confirm('Cancel this voucher? This will reverse its effect.')) return;
+  try{
+    await sbUpdate('vouchers',id,{status:'cancelled'});
+    var idx = ACC_VOUCHERS.findIndex(function(v){return v.id===id;});
+    if(idx>-1) ACC_VOUCHERS[idx].status='cancelled';
+    toast('Voucher cancelled','info');
+    closeAccSheet();
+    accRender();
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+// ── ADD NEW ACCOUNT ──────────────────────────────────
+function accOpenNewAccount(){
+  document.getElementById('acc-sheet-title').textContent = '+ New Account / Ledger';
+  document.getElementById('acc-sheet-body').innerHTML =
+    '<div class="g2"><div><label class="flbl">Account Code *</label><input id="an-code" class="finp" placeholder="e.g. 4950"></div>'+
+    '<div><label class="flbl">Account Type *</label><select id="an-type" class="fsel">'+
+      '<option value="asset">Asset</option><option value="liability">Liability</option>'+
+      '<option value="income">Income</option><option value="expense">Expense</option>'+
+    '</select></div></div>'+
+    '<label class="flbl">Account Name *</label><input id="an-name" class="finp" placeholder="e.g. Rent Expenses">'+
+    '<div class="g2"><div><label class="flbl">Group</label><select id="an-group" class="fsel">'+
+      '<option>Assets</option><option>Liabilities</option><option>Income</option><option>Expenses</option>'+
+    '</select></div>'+
+    '<div><label class="flbl">Sub Group</label><input id="an-sub" class="finp" placeholder="e.g. Labour"></div></div>'+
+    '<label class="flbl">Opening Balance (₹)</label><input id="an-ob" class="finp" type="number" placeholder="0">'+
+    '<div class="g2"><div><label class="flbl">Balance Type</label><select id="an-btype" class="fsel"><option value="debit">Debit</option><option value="credit">Credit</option></select></div>'+
+    '<div><label class="flbl">Is Bank A/c?</label><select id="an-isbank" class="fsel"><option value="false">No</option><option value="true">Yes</option></select></div></div>';
+  document.getElementById('acc-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeAccSheet()">Cancel</button>'+
+    '<button class="btn" style="background:var(--navy);color:white;" onclick="accSaveAccount()">+ Add Account</button>';
+  openAccSheet();
+}
+
+async function accSaveAccount(){
+  var g = function(id){return(document.getElementById(id)||{value:''}).value;};
+  var code=g('an-code').trim(), name=g('an-name').trim();
+  if(!code||!name){ toast('Code and name required','warning'); return; }
+  try{
+    toast('Saving...','info');
+    var res = await sbInsert('accounts',{
+      code:code, name:name, account_type:g('an-type'),
+      group_name:g('an-group'), sub_group:g('an-sub')||null,
+      opening_balance:parseFloat(g('an-ob'))||0,
+      balance_type:g('an-btype'),
+      is_bank:g('an-isbank')==='true',
+      is_cash:false, is_system:false, active:true
+    });
+    if(res&&res[0]){ ACC_ACCOUNTS.push(res[0]); toast(name+' added!','success'); closeAccSheet(); accRender(); }
+  }catch(e){ toast('Error: '+e.message,'error'); }
+}
+
+// ── AUTO-ENTRY FROM PETTY CASH ───────────────────────
+async function accAutoFromPettyCash(expense){
+  // Creates Payment voucher when petty cash expense is saved
+  try{
+    var cashAcc  = ACC_ACCOUNTS.find(function(a){return a.is_cash;});
+    var expAcc   = ACC_ACCOUNTS.find(function(a){return a.code==='4700';});
+    if(!cashAcc||!expAcc) return;
+    var catExpMap = {Labour:'4100',Material:'4200',Diesel:'4400',Machinery:'4500',Office:'4600',Transport:'4800',Food:'4900',Advance:'5000'};
+    var expCode = catExpMap[expense.category]||'4700';
+    var specExpAcc = ACC_ACCOUNTS.find(function(a){return a.code===expCode;})||expAcc;
+    var count = ACC_VOUCHERS.filter(function(v){return v.voucher_type==='payment';}).length+1;
+    var vno = 'PMT-'+new Date().getFullYear()+'-'+String(count).padStart(3,'0');
+    var vou = await sbInsert('vouchers',{
+      voucher_no:vno, voucher_type:'payment', date:expense.date,
+      project_id:expense.project_id, project_name:expense.project_name,
+      party_name:expense.party_name, party_type:'other',
+      narration:'Petty Cash: '+(expense.purpose||expense.category),
+      total_amount:expense.amount, net_amount:expense.amount,
+      status:'posted', source:'petty_cash', source_id:expense.id
+    });
+    if(!vou||!vou[0]) return;
+    var vid = vou[0].id;
+    ACC_VOUCHERS.unshift(vou[0]);
+    await Promise.all([
+      sbInsert('voucher_items',{voucher_id:vid,account_id:specExpAcc.id,account_name:specExpAcc.name,entry_type:'debit',amount:expense.amount}),
+      sbInsert('voucher_items',{voucher_id:vid,account_id:cashAcc.id,account_name:cashAcc.name,entry_type:'credit',amount:expense.amount})
+    ]);
+  }catch(e){ console.warn('Auto-entry failed:',e.message); }
 }
 
 
