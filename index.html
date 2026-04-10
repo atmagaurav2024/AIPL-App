@@ -10238,8 +10238,40 @@ function accViewVoucher(id){
   var isAdmin = currentUser&&(currentUser.role==='admin');
   document.getElementById('acc-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeAccSheet()">Close</button>'+
-    (isAdmin?'<button class="btn" style="background:#C62828;color:white;" onclick="accCancelVoucher(\''+id+'\')">✕ Cancel</button>':'');
+    (isAdmin?
+      '<button class="btn" style="background:#E65100;color:white;" onclick="accCancelVoucher(\''+id+'\')" title="Mark as cancelled (reversible)">✕ Cancel</button>'+
+      '<button class="btn" style="background:#C62828;color:white;" onclick="accDeleteVoucher(\''+id+'\')" title="Permanently delete">🗑 Delete</button>'
+    :'');
   openAccSheet();
+}
+
+async function accDeleteVoucher(id){
+  if(!confirm('Permanently delete this voucher? This cannot be undone and will remove all accounting entries.')) return;
+  try{
+    toast('Deleting...','info');
+    // Delete voucher items first (cascade should handle it, but just in case)
+    await fetch(SUPABASE_URL+'/rest/v1/voucher_items?voucher_id=eq.'+id,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    await fetch(SUPABASE_URL+'/rest/v1/gst_entries?voucher_id=eq.'+id,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    await fetch(SUPABASE_URL+'/rest/v1/tds_entries?voucher_id=eq.'+id,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    await sbDelete('vouchers', id);
+    // Remove from local arrays
+    ACC_VOUCHERS  = ACC_VOUCHERS.filter(function(v){return v.id!==id;});
+    ACC_ITEMS     = ACC_ITEMS.filter(function(it){return it.voucher_id!==id;});
+    ACC_GST       = ACC_GST.filter(function(g){return g.voucher_id!==id;});
+    ACC_TDS       = ACC_TDS.filter(function(t){return t.voucher_id!==id;});
+    toast('✓ Voucher deleted','success');
+    closeAccSheet();
+    accRender();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
 }
 
 async function accCancelVoucher(id){
