@@ -2541,7 +2541,7 @@ input,select,textarea{font-size:16px !important;}
     <div class="acc-tab" onclick="accSwitchTab('books',this)">Books</div>
     <div class="acc-tab" onclick="accSwitchTab('reports',this)">Reports</div>
     <div class="acc-tab" onclick="accSwitchTab('gst',this)">GST / TDS</div>
-    <div class="acc-tab" onclick="accSwitchTab('coa',this)">Accounts</div>
+    <div class="acc-tab" onclick="accSwitchTab('coa',this)">Chart of Accounts</div>
   </div>
   <div class="acc-scroll" id="acc-content">
     <div style="text-align:center;padding:40px;color:var(--text3);">⏳ Loading...</div>
@@ -9913,30 +9913,108 @@ function accGstHTML(){
 
 // ── CHART OF ACCOUNTS TAB ────────────────────────────
 function accCoaHTML(){
-  var groups = {};
-  ACC_ACCOUNTS.forEach(function(a){
+  var groupColors={Assets:'#1565C0',Liabilities:'#C62828',Income:'#2E7D32',Expenses:'#E65100'};
+  var typeLabel={asset:'Asset',liability:'Liability',income:'Income',expense:'Expense'};
+
+  // Group accounts
+  var groups={};
+  ACC_ACCOUNTS.sort(function(a,b){return a.code.localeCompare(b.code);}).forEach(function(a){
     if(!groups[a.group_name]) groups[a.group_name]=[];
     groups[a.group_name].push(a);
   });
-  var html = '<button onclick="accOpenNewAccount()" style="width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;margin-bottom:12px;">+ Add Account / Ledger</button>';
-  var groupColors={Assets:'#1565C0',Liabilities:'#C62828',Income:'#2E7D32',Expenses:'#E65100'};
+
+  // Summary row totals
+  var totals={Assets:0,Liabilities:0,Income:0,Expenses:0};
+  ACC_ACCOUNTS.forEach(function(a){ var b=accBalance(a.id); if(totals[a.group_name]!==undefined) totals[a.group_name]+=b; });
+
+  var summaryCards='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">';
+  Object.keys(groupColors).forEach(function(g){
+    summaryCards+='<div style="background:white;border-radius:12px;padding:10px 12px;border-left:3px solid '+groupColors[g]+';box-shadow:0 2px 6px rgba(0,0,0,.05);">'+
+      '<div style="font-size:10px;font-weight:800;color:'+groupColors[g]+';text-transform:uppercase;">'+g+'</div>'+
+      '<div style="font-size:16px;font-weight:900;color:var(--navy);margin-top:4px;">'+fmtAcc(totals[g]||0)+'</div>'+
+    '</div>';
+  });
+  summaryCards+='</div>';
+
+  var html = summaryCards+
+    '<button onclick="accOpenNewAccount()" style="width:100%;padding:12px;background:var(--navy);color:white;border:none;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;margin-bottom:14px;">+ Add New Account / Ledger</button>';
+
+  html += '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">💡 These codes appear in voucher entry dropdowns. Tap any account to view details.</div>';
+
   Object.keys(groups).forEach(function(g){
-    var col = groupColors[g]||'#37474F';
-    html += '<div style="font-size:11px;font-weight:800;color:'+col+';text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;margin-top:10px;">'+g+'</div>';
-    html += '<div class="acc-card" style="padding:0;">';
+    var col=groupColors[g]||'#37474F';
+    html+='<div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 6px;">'+
+      '<div style="font-size:11px;font-weight:800;color:'+col+';text-transform:uppercase;letter-spacing:.5px;">'+g+'</div>'+
+      '<div style="font-size:11px;font-weight:700;color:'+col+';">'+fmtAcc(totals[g]||0)+'</div>'+
+    '</div>';
+    html+='<div class="acc-card" style="padding:0;overflow:hidden;">';
+    // Header row
+    html+='<div style="display:grid;grid-template-columns:56px 1fr 90px;gap:4px;padding:6px 14px;background:'+col+'15;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:10px;font-weight:800;color:'+col+';">Code</div>'+
+      '<div style="font-size:10px;font-weight:800;color:'+col+';">Account Name</div>'+
+      '<div style="font-size:10px;font-weight:800;color:'+col+';text-align:right;">Balance</div>'+
+    '</div>';
     groups[g].forEach(function(a){
-      var bal = accBalance(a.id);
-      html += '<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">'+
-        '<div style="width:40px;font-size:11px;font-weight:800;color:'+col+';">'+a.code+'</div>'+
-        '<div style="flex:1;"><div style="font-size:12px;font-weight:700;">'+a.name+'</div>'+
-        (a.sub_group?'<div style="font-size:10px;color:var(--text3);">'+a.sub_group+'</div>':'')+
+      var bal=accBalance(a.id);
+      var isSystem=a.is_system;
+      html+='<div onclick="accViewAccount(this.dataset.aid)" data-aid="'+a.id+'" style="display:grid;grid-template-columns:56px 1fr 90px;gap:4px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;">'+
+        '<div style="font-size:12px;font-weight:900;color:'+col+';letter-spacing:-.3px;">'+a.code+'</div>'+
+        '<div>'+
+          '<div style="font-size:12px;font-weight:700;color:var(--navy);">'+a.name+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);margin-top:1px;">'+
+            (a.sub_group?a.sub_group+' &nbsp;':'')+(a.is_cash?'💵 Cash':a.is_bank?'🏦 Bank':'')+
+            (isSystem?' &nbsp;<span style="font-size:9px;background:#E3F2FD;color:#1565C0;border-radius:4px;padding:1px 5px;">System</span>':'')+
+          '</div>'+
         '</div>'+
-        '<div style="font-size:12px;font-weight:900;color:'+(bal>=0?col:'#C62828')+';">'+fmtAcc(bal)+'</div>'+
+        '<div style="text-align:right;">'+
+          '<div style="font-size:12px;font-weight:900;color:'+(bal>0?col:bal<0?'#C62828':'var(--text3)')+';">'+fmtAcc(Math.abs(bal))+'</div>'+
+          (bal!==0?'<div style="font-size:9px;color:var(--text3);">'+(a.balance_type==='debit'?(bal>0?'Dr':'Cr'):(bal>0?'Cr':'Dr'))+'</div>':'')+
+        '</div>'+
       '</div>';
     });
-    html += '</div>';
+    html+='</div>';
   });
+
   return html;
+}
+
+function accViewAccount(id){
+  var a=ACC_ACCOUNTS.find(function(x){return x.id===id;}); if(!a) return;
+  var col={Assets:'#1565C0',Liabilities:'#C62828',Income:'#2E7D32',Expenses:'#E65100'}[a.group_name]||'#37474F';
+  var bal=accBalance(a.id);
+  // Get all transactions for this account
+  var txns=ACC_ITEMS.filter(function(it){return it.account_id===id;}).map(function(it){
+    var v=ACC_VOUCHERS.find(function(x){return x.id===it.voucher_id;})||{};
+    return {date:v.date,no:v.voucher_no,narr:v.narration,type:it.entry_type,amt:parseFloat(it.amount)||0,status:v.status};
+  }).filter(function(t){return t.status!=='cancelled';}).sort(function(a,b){return (b.date||'').localeCompare(a.date||'');});
+
+  var txnHtml=txns.slice(0,20).map(function(t){
+    var isDr=t.type==='debit';
+    return '<div style="display:grid;grid-template-columns:80px 1fr 70px 70px;gap:4px;padding:8px 0;border-bottom:1px solid var(--border);font-size:11px;">'+
+      '<div style="color:var(--text3);">'+t.date+'</div>'+
+      '<div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+t.narr+'<br><span style="font-size:10px;color:var(--text3);">'+t.no+'</span></div>'+
+      '<div style="text-align:right;color:#1565C0;font-weight:800;">'+(isDr?fmtAcc(t.amt):'')+'</div>'+
+      '<div style="text-align:right;color:#C62828;font-weight:800;">'+(!isDr?fmtAcc(t.amt):'')+'</div>'+
+    '</div>';
+  }).join('')||'<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No transactions yet</div>';
+
+  document.getElementById('acc-sheet-title').textContent=a.code+' — '+a.name;
+  document.getElementById('acc-sheet-body').innerHTML=
+    '<div style="background:'+col+';border-radius:12px;padding:14px;margin-bottom:12px;color:white;">'+
+      '<div style="font-size:11px;opacity:.7;margin-bottom:4px;">'+a.group_name+' &nbsp;·&nbsp; '+a.sub_group+'</div>'+
+      '<div style="font-size:28px;font-weight:900;letter-spacing:-1px;">'+fmtAcc(Math.abs(bal))+'</div>'+
+      '<div style="font-size:11px;opacity:.7;margin-top:4px;">'+(a.balance_type==='debit'?(bal>=0?'Debit Balance':'Credit Balance'):(bal>=0?'Credit Balance':'Debit Balance'))+'</div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:80px 1fr 70px 70px;gap:4px;padding:6px 0;border-bottom:2px solid var(--border);margin-bottom:2px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);">Date</div>'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);">Narration</div>'+
+      '<div style="font-size:10px;font-weight:800;color:#1565C0;text-align:right;">Dr</div>'+
+      '<div style="font-size:10px;font-weight:800;color:#C62828;text-align:right;">Cr</div>'+
+    '</div>'+
+    txnHtml;
+  document.getElementById('acc-sheet-foot').innerHTML=
+    '<button class="btn" style="background:var(--navy);color:white;width:100%;" onclick="closeAccSheet()">Close</button>';
+  openAccSheet();
 }
 
 // ── NEW VOUCHER FORM ─────────────────────────────────
