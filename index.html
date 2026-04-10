@@ -2359,6 +2359,143 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="proj-sheet-foot"></div>
 </div>
 
+<!-- BOQ SCREEN -->
+<div class="app-screen" id="app-boq">
+  <div class="boq-topbar" style="background:#4A148C;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">&#128203; BOQ Items</div>
+    <div style="flex:1;"></div>
+    <button class="tb-btn" onclick="boqOpenAddItem(null)" style="font-size:20px;">&#43;</button>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="boq-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>
+  </div>
+</div>
+<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
+<div class="sheet" id="sh-boq">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div>
+  <div class="sh-body" id="boq-sheet-body"></div>
+  <div class="sh-foot" id="boq-sheet-foot"></div>
+</div>
+
+<!-- JM SCREEN -->
+<div class="app-screen" id="app-jm">
+  <div class="boq-topbar" style="background:#283593;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">&#128208; Joint Measurements</div>
+    <div style="flex:1;"></div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="jm-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>
+  </div>
+</div>
+<div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
+<div class="sheet" id="sh-jm">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div>
+  <div class="sh-body" id="jm-sheet-body"></div>
+  <div class="sh-foot" id="jm-sheet-foot"></div>
+</div>
+
+<!-- PLANNING SCREEN -->
+<div class="app-screen" id="app-planning">
+  <div class="boq-topbar" style="background:#1565C0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">&#128230; Planning</div>
+    <div style="flex:1;"></div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="plan-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>
+  </div>
+</div>
+<div class="sh-overlay" id="ov-plan" onclick="closeSheet('ov-plan','sh-plan')"></div>
+<div class="sheet" id="sh-plan">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div>
+  <div class="sh-body" id="plan-sheet-body"></div>
+  <div class="sh-foot" id="plan-sheet-foot"></div>
+</div>
+
+<!-- WORK ALLOTMENT SCREEN -->
+<div class="app-screen" id="app-execution">
+  <div class="boq-topbar" style="background:#E65100;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">&#128221; Work Allotment</div>
+    <div style="flex:1;"></div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
+    <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="exec-content">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Select a project to begin</div>
+  </div>
+</div>
+<div class="sh-overlay" id="ov-exec" onclick="closeSheet('ov-exec','sh-exec')"></div>
+<div class="sheet" id="sh-exec">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="exec-sheet-title">Add Execution Entry</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div>
+  <div class="sh-body" id="exec-sheet-body"></div>
+  <div class="sh-foot" id="exec-sheet-foot"></div>
+</div>
+
+<!-- PETTY CASH SCREEN -->
+<div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;flex-direction:column;overflow:hidden;">
+  <div style="display:flex;align-items:center;padding:18px 18px 10px;background:#EFEBE4;flex-shrink:0;">
+    <span onclick="showApp('dashboard')" style="font-size:28px;color:#1E2547;cursor:pointer;margin-right:10px;line-height:1;">&#8249;</span>
+    <div style="flex:1;">
+      <div style="font-size:20px;font-weight:900;color:#1E2547;">Site Cash Manager</div>
+      <div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:1px;">Atmagaurav Infra Pvt Ltd</div>
+    </div>
+    <div onclick="pcOpenManageProjects()" style="cursor:pointer;font-size:22px;color:#6B7280;">&#9881;</div>
+  </div>
+  <div id="pc-site-tabs" style="display:flex;gap:10px;padding:2px 18px 14px;overflow-x:auto;scrollbar-width:none;align-items:center;flex-shrink:0;-webkit-overflow-scrolling:touch;"></div>
+  <div id="pc-main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;">
+    <div style="text-align:center;padding:40px;color:#9CA3AF;">Loading...</div>
+  </div>
+  <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
+</div>
+<div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
+<div class="sheet" id="sh-pc" style="max-height:92vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div>
+  <div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div>
+  <div class="sh-foot" id="pc-sheet-foot"></div>
+</div>
+
+<!-- ACCESS CONTROL SCREEN -->
+<div class="app-screen" id="app-access">
+  <div class="boq-topbar" style="background:#4A148C;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div class="tb-title">&#128274; Access Control</div>
+    <div style="flex:1;"></div>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
+      <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
+    </div>
+    <div id="ac-selector" style="margin-bottom:14px;">
+      <select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select>
+    </div>
+    <div id="ac-modules-list">
+      <div style="text-align:center;padding:40px;color:var(--text3);">Select an employee or role to manage permissions</div>
+    </div>
+  </div>
+  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
+    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
+  </div>
+</div>
+
 <!-- BOTTOM NAV -->
 <nav class="app-nav" id="app-nav" style="display:none;">
   <button class="an-item on" id="an-home" onclick="showApp('dashboard')"><div class="an-ic">&#127968;</div><div class="an-lb">Home</div></button>
@@ -2395,6 +2532,12 @@ function showApp(name){
   if(name==='registry'){initRegistry();startSync();}
   else if(name==='accounts'){initAccounts();}
   else if(name==='projects'){initProjects();}
+  else if(name==='boq'){initBOQ();}
+  else if(name==='jm'){initJM();}
+  else if(name==='planning'){initPlanning();}
+  else if(name==='execution'){initExecution();}
+  else if(name==='petty-cash'){initPettyCash();}
+  else if(name==='access'){initAccess();}
   else {stopSync();}
 }
 
@@ -5498,6 +5641,489 @@ async function deleteProjConfirm(id){
   toast(p.name+' deleted','success');
   try{await sbDelete('projects',id);}catch(e){console.error(e);}
 }
+
+// ═══════════════════════════════════════════════════════════
+// BOQ MODULE
+// ═══════════════════════════════════════════════════════════
+var BOQ_ITEMS=[]; var BOQ_SUBITEMS=[];
+function openBOQSheet(){openSheet('ov-boq','sh-boq');}
+function closeBOQSheet(){closeSheet('ov-boq','sh-boq');}
+function fmtINR(n){if(!n)return '&#8377;0';return '&#8377;'+parseFloat(n).toLocaleString('en-IN',{maximumFractionDigits:0});}
+function initBOQ(){boqLoadProjects();}
+async function boqLoadProjects(){
+  var sel=document.getElementById('boq-proj-sel');if(!sel)return;
+  try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}
+}
+async function boqLoadItems(){
+  var sel=document.getElementById('boq-proj-sel');var projId=sel?sel.value:'';
+  var content=document.getElementById('boq-content');
+  if(!projId){if(content)content.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';BOQ_ITEMS=[];return;}
+  if(content)content.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">&#9203; Loading...</div>';
+  try{var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'})]);BOQ_ITEMS=Array.isArray(r[0])?r[0]:[];BOQ_SUBITEMS=Array.isArray(r[1])?r[1]:[];}catch(e){BOQ_ITEMS=[];console.error(e);}
+  boqRender();
+}
+function boqRender(){
+  var el=document.getElementById('boq-content');if(!el)return;
+  if(!BOQ_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;">&#128203;</div><div style="font-weight:700;margin-top:10px;">No BOQ items yet</div><div style="font-size:12px;margin-top:6px;">Tap + to add</div></div>';return;}
+  var total=BOQ_ITEMS.reduce(function(s,i){return s+(parseFloat(i.boq_qty)||0)*(parseFloat(i.rate)||0);},0);
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;"><div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #4A148C;"><div style="font-size:10px;color:var(--text3);font-weight:700;">ITEMS</div><div style="font-size:20px;font-weight:900;color:#4A148C;">'+BOQ_ITEMS.length+'</div></div><div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #2E7D32;"><div style="font-size:10px;color:var(--text3);font-weight:700;">TOTAL VALUE</div><div style="font-size:16px;font-weight:900;color:#2E7D32;">'+fmtINR(total)+'</div></div></div>';
+  html+=BOQ_ITEMS.map(function(item){
+    var bq=parseFloat(item.boq_qty)||0,rate=parseFloat(item.rate)||0;
+    var subs=BOQ_SUBITEMS.filter(function(s){return s.boq_item_id===item.id;});
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#F3E5F5;display:flex;align-items:flex-start;justify-content:space-between;gap:8px;">'+
+        '<div style="flex:1;"><span style="font-size:10px;font-family:monospace;background:#EDE7F6;color:#7B1FA2;padding:2px 7px;border-radius:6px;font-weight:700;">'+item.item_code+'</span>'+
+        '<div style="font-size:13px;font-weight:800;margin-top:4px;">'+(item.short_name||item.description)+'</div>'+
+        (item.short_name?'<div style="font-size:10px;color:var(--text3);">'+item.description+'</div>':'')+
+        '</div><div style="text-align:right;flex-shrink:0;"><div style="font-size:13px;font-weight:900;color:#4A148C;">'+fmtINR(bq*rate)+'</div><div style="font-size:10px;color:var(--text3);">'+bq+' '+item.unit+' x &#8377;'+rate+'</div></div>'+
+      '</div>'+
+      (subs.length?'<div style="padding:8px 14px;font-size:11px;color:var(--text2);border-bottom:1px solid var(--border);">'+subs.map(function(s){return '<span style="background:#F3E5F5;color:#7B1FA2;border-radius:4px;padding:2px 7px;margin-right:4px;margin-bottom:3px;display:inline-block;">'+s.name+'</span>';}).join('')+'</div>':'')+
+      '<div style="padding:8px 14px;display:flex;gap:8px;justify-content:flex-end;">'+
+        '<button onclick="boqEditItem(\''+item.id+'\')" style="background:none;border:1px solid var(--border);border-radius:8px;color:var(--navy);font-size:11px;font-weight:800;cursor:pointer;padding:4px 12px;">&#9998; Edit</button>'+
+        '<button onclick="boqDeleteItem(\''+item.id+'\')" style="background:none;border:1px solid #FFCDD2;border-radius:8px;color:#C62828;font-size:11px;font-weight:800;cursor:pointer;padding:4px 12px;">&#128465; Delete</button>'+
+      '</div></div>';
+  }).join('');
+  el.innerHTML=html;
+}
+async function boqOpenAddItem(editItem){
+  var v=editItem||{};
+  var uomOpts='';
+  try{var uoms=await sbFetch('categories',{select:'name',filter:'active=eq.true&type=eq.uom',order:'name.asc'});if(Array.isArray(uoms))uomOpts=uoms.map(function(u){return '<option value="'+u.name+'"'+(u.name===v.unit?' selected':'')+'>'+u.name+'</option>';}).join('');}catch(e){}
+  if(!uomOpts)uomOpts='<option>Nos</option><option>Rmt</option><option>Sqm</option><option>Cum</option><option>MT</option><option>Kg</option><option>LS</option>';
+  document.getElementById('boq-sheet-title').textContent=editItem?'Edit BOQ Item':'New BOQ Item';
+  document.getElementById('boq-sheet-body').innerHTML=
+    '<label class="flbl">Item Code *</label><input id="bi-code" class="finp" placeholder="e.g. SSR-2024/C-001" value="'+(v.item_code||'')+'">'+
+    '<label class="flbl">Description *</label><input id="bi-desc" class="finp" placeholder="Full description" value="'+(v.description||'')+'">'+
+    '<label class="flbl">Short Name</label><input id="bi-short" class="finp" placeholder="e.g. RCC M25" value="'+(v.short_name||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Unit</label><select id="bi-unit" class="fsel">'+uomOpts+'</select></div>'+
+    '<div><label class="flbl">BOQ Qty *</label><input id="bi-qty" class="finp" type="number" step="0.001" value="'+(v.boq_qty||'')+'"></div></div>'+
+    '<label class="flbl">Rate (&#8377;/unit)</label><input id="bi-rate" class="finp" type="number" step="0.01" value="'+(v.rate||'')+'">'+
+    '<label class="flbl">Remarks</label><textarea id="bi-remarks" class="ftxt">'+(v.remarks||'')+'</textarea>';
+  document.getElementById('boq-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeBOQSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#7B1FA2;color:white;" onclick="boqSaveItem(\''+(editItem?editItem.id:'')+'\')">&#10003; '+(editItem?'Save':'Add')+'</button>';
+  openBOQSheet();
+}
+function boqEditItem(id){var item=BOQ_ITEMS.find(function(i){return i.id===id;});if(!item)return;closeBOQSheet();setTimeout(function(){boqOpenAddItem(item);},320);}
+async function boqSaveItem(editId){
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var code=g('bi-code').trim(),desc=g('bi-desc').trim(),qty=parseFloat(g('bi-qty'))||0;
+  if(!code||!desc||!qty){toast('Code, description and qty required','warning');return;}
+  var projId=document.getElementById('boq-proj-sel').value;
+  var data={project_id:projId,item_code:code,description:desc,short_name:g('bi-short').trim()||null,unit:(document.getElementById('bi-unit')||{value:'Nos'}).value||'Nos',boq_qty:qty,rate:parseFloat(g('bi-rate'))||0,remarks:g('bi-remarks').trim()||null};
+  try{
+    toast('Saving...','info');
+    if(editId){await sbUpdate('boq_items',editId,data);var idx=BOQ_ITEMS.findIndex(function(i){return i.id===editId;});if(idx>-1)BOQ_ITEMS[idx]=Object.assign(BOQ_ITEMS[idx],data);toast('Updated!','success');}
+    else{var res=await sbInsert('boq_items',data);if(res&&res[0])BOQ_ITEMS.push(res[0]);toast('BOQ item added!','success');}
+    closeBOQSheet();boqRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+async function boqDeleteItem(id){
+  if(!confirm('Delete this BOQ item?'))return;
+  BOQ_ITEMS=BOQ_ITEMS.filter(function(i){return i.id!==id;});boqRender();
+  try{await sbDelete('boq_items',id);toast('Deleted','info');}catch(e){console.error(e);}
+}
+
+// ═══════════════════════════════════════════════════════════
+// JM MODULE
+// ═══════════════════════════════════════════════════════════
+var JM_ITEMS=[]; var JM_JMS=[];
+function initJM(){jmLoadProjects();}
+async function jmLoadProjects(){
+  var sel=document.getElementById('jm-proj-sel');if(!sel)return;
+  try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}
+}
+async function jmLoadItems(){
+  var projId=(document.getElementById('jm-proj-sel')||{}).value||'';
+  var el=document.getElementById('jm-content');
+  if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';return;}
+  if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">&#9203; Loading...</div>';
+  try{var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'})]);JM_ITEMS=Array.isArray(r[0])?r[0]:[];JM_JMS=Array.isArray(r[1])?r[1]:[];}catch(e){JM_ITEMS=[];JM_JMS=[];console.error(e);}
+  jmRender();
+}
+function jmRender(){
+  var el=document.getElementById('jm-content');if(!el)return;
+  if(!JM_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No BOQ items found. Add BOQ items first.</div>';return;}
+  el.innerHTML=JM_ITEMS.map(function(item){
+    var boqQty=parseFloat(item.boq_qty)||0;
+    var itemJMs=JM_JMS.filter(function(j){return j.boq_item_id===item.id;});
+    var totalJM=itemJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+    var balance=boqQty-totalJM;
+    var pct=boqQty>0?Math.min(100,Math.round(totalJM/boqQty*100)):0;
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#E8EAF6;display:flex;align-items:center;gap:8px;">'+
+        '<div style="flex:1;"><span style="font-size:10px;font-family:monospace;background:#C5CAE9;color:#283593;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
+        '<div style="font-size:13px;font-weight:800;margin-top:3px;">'+(item.short_name||item.description)+'</div></div>'+
+        '<button onclick="jmOpenAdd(\''+item.id+'\','+boqQty+',\''+item.unit+'\')" style="background:#283593;color:white;border:none;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ JM</button>'+
+      '</div>'+
+      '<div style="padding:4px 14px;font-size:10px;color:var(--text3);background:#F3F4F6;display:flex;justify-content:space-between;">'+
+        '<span>BOQ: '+boqQty+' '+item.unit+' | JM: '+totalJM+' | Balance: <b style="color:'+(balance<0?'#C62828':'#283593')+'">'+balance.toFixed(3).replace(/\.?0+$/,'')+'</b></span><span>'+pct+'%</span>'+
+      '</div>'+
+      '<div style="height:4px;background:#E8EAF6;"><div style="height:100%;width:'+pct+'%;background:#283593;"></div></div>'+
+      '<div style="padding:8px 14px;">'+
+        (itemJMs.length?itemJMs.map(function(jm){
+          return '<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">'+
+            '<span style="background:#283593;color:white;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;">JM-'+jm.jm_number+'</span>'+
+            '<div style="flex:1;"><div style="font-size:12px;font-weight:700;">'+jm.jm_qty+' '+item.unit+'</div>'+
+            '<div style="font-size:10px;color:var(--text3);">'+jm.date+(jm.reference?' · '+jm.reference:'')+'</div></div>'+
+            '<button onclick="jmDelete(\''+jm.id+'\')" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;">&#215;</button>'+
+          '</div>';
+        }).join(''):'<div style="font-size:11px;color:var(--text3);padding:6px 0;">No JMs yet</div>')+
+      '</div></div>';
+  }).join('');
+}
+function jmOpenAdd(itemId,boqQty,unit,editJM){
+  var allJMs=JM_JMS.filter(function(j){return j.boq_item_id===itemId;});
+  var usedQty=allJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+  if(editJM)usedQty-=parseFloat(editJM.jm_qty)||0;
+  var remaining=(boqQty||0)-usedQty;
+  var jmNum=editJM?editJM.jm_number:allJMs.length+1;
+  document.getElementById('jm-sheet-title').textContent=editJM?'Edit JM-'+jmNum:'New JM-'+jmNum;
+  document.getElementById('jm-sheet-body').innerHTML=
+    '<div style="background:#E8EAF6;border-radius:12px;padding:10px 14px;margin-bottom:12px;"><div style="font-size:11px;font-weight:800;color:#283593;">JM-'+jmNum+'</div><div style="font-size:18px;font-weight:900;color:#283593;">Balance: '+remaining.toFixed(3).replace(/\.?0+$/,'')+' '+unit+'</div></div>'+
+    '<div class="g2"><div><label class="flbl">JM Date *</label><input id="jm-f-date" class="finp" type="date" value="'+(editJM?editJM.date:new Date().toISOString().slice(0,10))+'"></div>'+
+    '<div><label class="flbl">JM Qty ('+unit+') *</label><input id="jm-f-qty" class="finp" type="number" step="0.001" value="'+(editJM?editJM.jm_qty:'')+'"></div></div>'+
+    '<label class="flbl">Reference / Notes</label><input id="jm-f-ref" class="finp" value="'+(editJM&&editJM.reference?editJM.reference:'')+'">';
+  document.getElementById('jm-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeSheet(\'ov-jm\',\'sh-jm\')">Cancel</button>'+
+    '<button class="btn" style="background:#283593;color:white;" onclick="jmSave(\''+itemId+'\','+boqQty+',\''+unit+'\','+(editJM?'\''+editJM.id+'\'':'null')+','+jmNum+')">&#10003; '+(editJM?'Save':'Add JM')+'</button>';
+  openSheet('ov-jm','sh-jm');
+}
+async function jmSave(itemId,boqQty,unit,editId,jmNum){
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var date=g('jm-f-date'),qty=parseFloat(g('jm-f-qty'))||0,ref=g('jm-f-ref').trim()||null;
+  if(!date||!qty){toast('Date and qty required','warning');return;}
+  var allJMs=JM_JMS.filter(function(j){return j.boq_item_id===itemId;});
+  var usedQty=allJMs.reduce(function(s,j){return s+(parseFloat(j.jm_qty)||0);},0);
+  if(editId){var old=JM_JMS.find(function(j){return j.id===editId;});if(old)usedQty-=parseFloat(old.jm_qty)||0;}
+  if(usedQty+qty>boqQty){toast('Exceeds BOQ balance! Max: '+(boqQty-usedQty)+' '+unit,'error');return;}
+  var projId=(document.getElementById('jm-proj-sel')||{}).value||'';
+  try{
+    toast('Saving...','info');
+    if(editId){await sbUpdate('boq_jm',editId,{date:date,jm_qty:qty,reference:ref});var j=JM_JMS.find(function(x){return x.id===editId;});if(j){j.date=date;j.jm_qty=qty;j.reference=ref;}toast('JM updated!','success');}
+    else{var res=await sbInsert('boq_jm',{project_id:projId,boq_item_id:itemId,jm_number:jmNum,date:date,jm_qty:qty,reference:ref});if(res&&res[0])JM_JMS.push(res[0]);toast('JM-'+jmNum+' added!','success');}
+    closeSheet('ov-jm','sh-jm');jmRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+async function jmDelete(id){
+  if(!confirm('Delete this JM?'))return;
+  JM_JMS=JM_JMS.filter(function(j){return j.id!==id;});jmRender();
+  try{await sbDelete('boq_jm',id);toast('JM deleted','info');}catch(e){console.error(e);}
+}
+
+// ═══════════════════════════════════════════════════════════
+// PLANNING MODULE
+// ═══════════════════════════════════════════════════════════
+var PLAN_ITEMS=[],PLAN_JMS=[],PLAN_SUBS=[],PLAN_RESOURCES=[];
+function initPlanning(){planLoadProjects();}
+async function planLoadProjects(){
+  var sel=document.getElementById('plan-proj-sel');if(!sel)return;
+  try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}
+}
+async function planLoadItems(){
+  var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
+  var el=document.getElementById('plan-content');
+  if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';return;}
+  if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">&#9203; Loading...</div>';
+  try{
+    var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'}),sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId+'&exec_type=eq.planned',order:'created_at.asc'})]);
+    PLAN_ITEMS=Array.isArray(r[0])?r[0]:[];PLAN_JMS=Array.isArray(r[1])?r[1]:[];PLAN_SUBS=Array.isArray(r[2])?r[2]:[];PLAN_RESOURCES=Array.isArray(r[3])?r[3]:[];
+  }catch(e){PLAN_ITEMS=[];console.error(e);}
+  planRender();
+}
+function planRender(){
+  var el=document.getElementById('plan-content');if(!el)return;
+  if(!PLAN_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No BOQ items found</div>';return;}
+  el.innerHTML=PLAN_ITEMS.map(function(item){
+    var itemSubs=PLAN_SUBS.filter(function(s){return s.boq_item_id===item.id;});
+    var itemRes=PLAN_RESOURCES.filter(function(r){return r.boq_item_id===item.id;});
+    var totalPlanned=itemRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
+    var subsHtml=itemSubs.length?itemSubs.map(function(sub){
+      var subRes=itemRes.filter(function(r){return r.boq_subitem_id===sub.id;});
+      return '<div style="margin-bottom:6px;"><div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;">'+
+        '<div style="font-size:11px;font-weight:800;color:#1565C0;">'+sub.name+'</div>'+
+        '<div style="display:flex;gap:4px;"><button onclick="planOpenAddResource(\''+sub.id+'\',\''+item.id+'\',\''+item.unit+'\')" style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button>'+
+        '<button onclick="planDeleteSub(\''+sub.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">&#215;</button></div></div>'+
+        subRes.map(function(r){return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F8F9FF;border-radius:8px;margin-top:3px;">'+
+          '<div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+'</div><div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||'')+' @ &#8377;'+r.rate+'</div>'+
+          '<div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div>'+
+          '<button onclick="planDeleteResource(\''+r.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">&#215;</button></div>';}).join('')+'</div>';
+    }).join(''):'<div style="font-size:11px;color:var(--text3);padding:6px 0;">No activities yet</div>';
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#E3F2FD;display:flex;align-items:center;justify-content:space-between;">'+
+        '<div><span style="font-size:10px;font-family:monospace;background:#BBDEFB;color:#1565C0;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
+        '<span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
+        '<div style="font-size:10px;color:var(--text3);margin-top:2px;">BOQ: '+item.boq_qty+' '+item.unit+'</div></div>'+
+        '<div style="display:flex;align-items:center;gap:6px;">'+(totalPlanned?'<span style="font-size:12px;font-weight:900;color:#1565C0;">'+fmtINR(totalPlanned)+'</span>':'')+
+        '<button onclick="planOpenAddSub(\''+item.id+'\')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ Activity</button></div>'+
+      '</div><div style="padding:10px 14px;">'+subsHtml+'</div></div>';
+  }).join('');
+}
+function planOpenAddSub(itemId){
+  document.getElementById('plan-sheet-title').textContent='Add Work Activity';
+  document.getElementById('plan-sheet-body').innerHTML='<label class="flbl">Activity Name *</label><input id="ps-name" class="finp" placeholder="e.g. Bar Bending, Shuttering...">';
+  document.getElementById('plan-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-plan\',\'sh-plan\')">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveSub(\''+itemId+'\')">+ Add</button>';
+  openSheet('ov-plan','sh-plan');
+}
+async function planSaveSub(itemId){
+  var name=(document.getElementById('ps-name')||{value:''}).value.trim();
+  if(!name){toast('Activity name required','warning');return;}
+  var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
+  var sortOrder=PLAN_SUBS.filter(function(s){return s.boq_item_id===itemId;}).length+1;
+  try{var res=await sbInsert('boq_subitems',{project_id:projId,boq_item_id:itemId,name:name,sort_order:sortOrder});if(res&&res[0])PLAN_SUBS.push(res[0]);toast(name+' added','success');closeSheet('ov-plan','sh-plan');planRender();}catch(e){toast('Error: '+e.message,'error');}
+}
+function planOpenAddResource(subId,itemId,unit){
+  document.getElementById('plan-sheet-title').textContent='Add Resource';
+  document.getElementById('plan-sheet-body').innerHTML=
+    '<label class="flbl">Resource Name *</label><input id="pr-name" class="finp" placeholder="e.g. Cement OPC 53, Bar Bending Labour">'+
+    '<div class="g2"><div><label class="flbl">Planned Qty</label><input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
+    '<div><label class="flbl">Unit</label><input id="pr-unit" class="finp" placeholder="'+unit+'"></div></div>'+
+    '<label class="flbl">Planned Rate (&#8377;)</label><input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0">';
+  document.getElementById('plan-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-plan\',\'sh-plan\')">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="planSaveResource(\''+subId+'\',\''+itemId+'\')">&#128230; Save</button>';
+  openSheet('ov-plan','sh-plan');
+}
+async function planSaveResource(subId,itemId){
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var name=g('pr-name').trim(),qty=parseFloat(g('pr-qty'))||0,rate=parseFloat(g('pr-rate'))||0,unit=g('pr-unit').trim();
+  if(!name){toast('Resource name required','warning');return;}
+  var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
+  try{var res=await sbInsert('boq_exec_resources',{project_id:projId,boq_item_id:itemId,boq_subitem_id:subId||null,date:new Date().toISOString().slice(0,10),exec_type:'planned',party_name:name,qty:qty,unit:unit||null,rate:rate});if(res&&res[0])PLAN_RESOURCES.push(res[0]);toast(name+' saved!','success');closeSheet('ov-plan','sh-plan');planRender();}catch(e){toast('Error: '+e.message,'error');}
+}
+async function planDeleteSub(id){if(!confirm('Delete this activity?'))return;PLAN_SUBS=PLAN_SUBS.filter(function(s){return s.id!==id;});PLAN_RESOURCES=PLAN_RESOURCES.filter(function(r){return r.boq_subitem_id!==id;});planRender();try{await sbDelete('boq_subitems',id);}catch(e){console.error(e);}}
+async function planDeleteResource(id){if(!confirm('Delete?'))return;PLAN_RESOURCES=PLAN_RESOURCES.filter(function(r){return r.id!==id;});planRender();try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}}
+
+// ═══════════════════════════════════════════════════════════
+// WORK ALLOTMENT MODULE
+// ═══════════════════════════════════════════════════════════
+var WA_ITEMS=[],WA_JMS=[],WA_ALLOTMENTS=[];
+function initExecution(){execLoadProjects();}
+async function execLoadProjects(){
+  var sel=document.getElementById('exec-proj-sel');if(!sel)return;
+  try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}
+}
+async function execLoadItems(){
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  var el=document.getElementById('exec-content');
+  if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';WA_ITEMS=[];return;}
+  if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">&#9203; Loading...</div>';
+  try{var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId+'&exec_type=not.eq.planned',order:'created_at.asc'})]);WA_ITEMS=Array.isArray(r[0])?r[0]:[];WA_JMS=Array.isArray(r[1])?r[1]:[];WA_ALLOTMENTS=Array.isArray(r[2])?r[2]:[];}catch(e){WA_ITEMS=[];console.error(e);}
+  execRender();
+}
+function execRender(){
+  var el=document.getElementById('exec-content');if(!el)return;
+  if(!WA_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No BOQ items found</div>';return;}
+  el.innerHTML=WA_ITEMS.map(function(item){
+    var itemJMs=WA_JMS.filter(function(j){return j.boq_item_id===item.id;});
+    if(!itemJMs.length)return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;padding:12px 14px;"><span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-weight:700;margin-left:8px;">'+(item.short_name||item.description)+'</span><div style="font-size:11px;color:var(--text3);margin-top:4px;">No JMs yet</div></div>';
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#FFF3E0;"><span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span></div>'+
+      itemJMs.map(function(jm){
+        var jmAllot=WA_ALLOTMENTS.filter(function(a){return a.jm_id===jm.id;});
+        return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);">'+
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">'+
+            '<div><span style="background:#E65100;color:white;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;">JM-'+jm.jm_number+'</span>'+
+            '<span style="font-size:12px;font-weight:700;color:#E65100;margin-left:6px;">'+jm.jm_qty+' '+item.unit+'</span>'+
+            '<span style="font-size:10px;color:var(--text3);margin-left:6px;">'+jm.date+'</span></div>'+
+            '<button onclick="execOpenAllot(\''+jm.id+'\',\''+item.id+'\',\''+item.unit+'\',\''+jm.jm_qty+'\')" style="background:#E65100;color:white;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;">+ Allot</button>'+
+          '</div>'+
+          (jmAllot.length?jmAllot.map(function(a){var tc={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#2E7D32'};var tl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour'};
+            return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#FFF8F0;border-radius:8px;margin-bottom:4px;border:1px solid #FFE0B2;">'+
+              '<span style="background:'+(tc[a.exec_type]||'#37474F')+'20;color:'+(tc[a.exec_type]||'#37474F')+';border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;">'+(tl[a.exec_type]||a.exec_type)+'</span>'+
+              '<div style="flex:1;font-size:12px;font-weight:700;">'+a.party_name+'</div>'+
+              '<div style="font-size:11px;color:var(--text3);">'+a.qty+' '+(a.unit||'')+(a.rate?' @ &#8377;'+a.rate:'')+'</div>'+
+              '<button onclick="execDeleteAllot(\''+a.id+'\')" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;">&#215;</button></div>';
+          }).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0;">No allotments yet</div>')+
+        '</div>';
+      }).join('')+'</div>';
+  }).join('');
+}
+function execOpenAllot(jmId,itemId,unit,jmQty){
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  document.getElementById('exec-sheet-title').textContent='Work Allotment';
+  document.getElementById('exec-sheet-body').innerHTML=
+    '<div style="background:#FFF3E0;border-radius:12px;padding:10px 14px;margin-bottom:12px;"><div style="font-size:11px;font-weight:800;color:#E65100;">JM Qty: '+jmQty+' '+unit+'</div></div>'+
+    '<label class="flbl">Assign To *</label><select id="wa-type" class="fsel" style="margin-bottom:10px;"><option value="vendor">&#128230; Vendor</option><option value="sc">&#127959; Subcontractor</option><option value="labour_contractor">&#128d7; Labour Contractor</option><option value="labour">&#128100; Labour</option></select>'+
+    '<label class="flbl">Party Name *</label><input id="wa-party" class="finp" placeholder="Enter name">'+
+    '<div class="g2"><div><label class="flbl">Qty</label><input id="wa-qty" class="finp" type="number" step="0.001"></div><div><label class="flbl">Unit</label><input id="wa-unit" class="finp" value="'+unit+'"></div></div>'+
+    '<label class="flbl">Rate (&#8377;)</label><input id="wa-rate" class="finp" type="number" step="0.01">';
+  document.getElementById('exec-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-exec\',\'sh-exec\')">Cancel</button>'+
+    '<button class="btn" style="background:#E65100;color:white;" onclick="execSaveAllot(\''+jmId+'\',\''+itemId+'\',\''+projId+'\')">&#128190; Save</button>';
+  openSheet('ov-exec','sh-exec');
+}
+async function execSaveAllot(jmId,itemId,projId){
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var party=g('wa-party').trim(),type=g('wa-type'),qty=parseFloat(g('wa-qty'))||0;
+  if(!party){toast('Party name required','warning');return;}
+  try{var res=await sbInsert('boq_exec_resources',{project_id:projId,boq_item_id:itemId,jm_id:jmId,date:new Date().toISOString().slice(0,10),exec_type:type,party_name:party,qty:qty,unit:g('wa-unit').trim()||null,rate:parseFloat(g('wa-rate'))||0});if(res&&res[0])WA_ALLOTMENTS.push(res[0]);toast(party+' allotted!','success');closeSheet('ov-exec','sh-exec');execRender();}catch(e){toast('Error: '+e.message,'error');}
+}
+async function execDeleteAllot(id){if(!confirm('Remove?'))return;WA_ALLOTMENTS=WA_ALLOTMENTS.filter(function(a){return a.id!==id;});execRender();try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}}
+
+// ═══════════════════════════════════════════════════════════
+// PETTY CASH MODULE
+// ═══════════════════════════════════════════════════════════
+var PC_IN=[],PC_EXP=[],PC_EMPS=[],PC_PROJS=[],PC_ACTIVE=null;
+var PC_CAT={Labour:{e:'&#128d7;',c:'#E07820'},Material:{e:'&#129521;',c:'#3B82F6'},Diesel:{e:'&#9981;',c:'#8B5CF6'},Machinery:{e:'&#128667;',c:'#F59E0B'},Food:{e:'&#127860;',c:'#10B981'},Transport:{e:'&#128667;',c:'#06B6D4'},Advance:{e:'&#128179;',c:'#EC4899'},Office:{e:'&#127970;',c:'#6B7280'},Other:{e:'&#128230;',c:'#9CA3AF'}};
+function pcFmt(n){return '&#8377;'+Number(n||0).toLocaleString('en-IN');}
+function pcFmtD(d){if(!d)return '—';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function pcEmpName(id){var e=PC_EMPS.find(function(x){return x.id===id;})||{};return(e.first_name||'')+(e.last_name?' '+e.last_name:'');}
+function pcEmpBal(id){return PC_IN.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)-PC_EXP.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);}
+async function initPettyCash(){
+  var el=document.getElementById('pc-main');if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:#9CA3AF;">&#9203; Loading...</div>';
+  var fab=document.getElementById('pc-fab');if(fab)fab.style.display='none';
+  try{var r=await sbFetch('petty_cash_in',{select:'*',order:'date.desc'});PC_IN=Array.isArray(r)?r:[];}catch(e){PC_IN=[];}
+  try{var r=await sbFetch('petty_cash_expense',{select:'*',order:'date.desc'});PC_EXP=Array.isArray(r)?r:[];}catch(e){PC_EXP=[];}
+  try{var r=await sbFetch('employees',{select:'id,first_name,last_name,emp_id',filter:'status=eq.active',order:'first_name.asc'});PC_EMPS=Array.isArray(r)?r:[];}catch(e){PC_EMPS=[];}
+  try{var r=await sbFetch('projects',{select:'id,name,location',order:'name.asc'});PC_PROJS=Array.isArray(r)?r:[];}catch(e){PC_PROJS=[];}
+  if(!PC_ACTIVE&&PC_PROJS.length)PC_ACTIVE=PC_PROJS[0];
+  if(fab)fab.style.display='';
+  pcRenderTabs();pcRefresh();
+}
+function pcRenderTabs(){
+  var c=document.getElementById('pc-site-tabs');if(!c)return;c.innerHTML='';
+  PC_PROJS.forEach(function(p){
+    var sel=PC_ACTIVE&&p.id===PC_ACTIVE.id;
+    var t=document.createElement('div');
+    t.style.cssText='flex-shrink:0;padding:10px 20px;border-radius:50px;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;border:1.5px solid '+(sel?'#E07820':'#E2DDD5')+';background:'+(sel?'#E07820':'#fff')+';color:'+(sel?'#fff':'#1E2547')+';';
+    t.textContent=p.name;t.onclick=function(){PC_ACTIVE=p;pcRenderTabs();pcRefresh();};c.appendChild(t);
+  });
+}
+function pcRefresh(){
+  var el=document.getElementById('pc-main');if(!el)return;
+  var p=PC_ACTIVE;
+  if(!p||!PC_PROJS.length){el.innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:44px;">&#127959;</div><p style="color:#6B7280;font-weight:600;margin-top:10px;">No projects. Add projects first.</p></div>';return;}
+  var pIn=PC_IN.filter(function(r){return r.project_id===p.id||!r.project_id;});
+  var pEx=PC_EXP.filter(function(r){return r.project_id===p.id;});
+  var totalIn=pIn.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var totalOut=pEx.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
+  var bal=totalIn-totalOut;
+  var txns=pEx.map(function(r){return Object.assign({},r,{_type:'out'});}).concat(pIn.map(function(r){return Object.assign({},r,{_type:'in'});})).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,20);
+  var txnHtml=txns.map(function(t){
+    var isIn=t._type==='in';var cfg=PC_CAT[t.category]||{e:'&#128230;',c:'#9CA3AF'};var n=pcEmpName(t.employee_id);
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+
+      '<div style="width:38px;height:38px;border-radius:10px;background:'+(isIn?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(isIn?'&#128176;':cfg.e)+'</div>'+
+      '<div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(isIn?(n||'Cash In'):(t.party_name||t.purpose||'—'))+'</div>'+
+      '<div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(isIn?'Payment In':t.category)+(n&&!isIn?' &bull; '+n:'')+'</div></div>'+
+      '<div style="text-align:right;flex-shrink:0;"><div style="font-size:15px;font-weight:900;color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'−')+pcFmt(t.amount)+'</div>'+
+      '<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div></div></div>';
+  }).join('')||'<div style="text-align:center;padding:30px;color:#9CA3AF;">No transactions yet</div>';
+  el.innerHTML=
+    '<div style="margin:0 18px 16px;background:#1E2547;border-radius:18px;padding:20px 22px;">'+
+      '<div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:6px;">'+p.name+' — Balance</div>'+
+      '<div style="font-size:36px;font-weight:900;color:#fff;">'+pcFmt(bal)+'</div>'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px;">'+
+      '<div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Received</div><div style="font-size:20px;font-weight:900;color:#2DAE6A;margin-top:5px;">'+pcFmt(totalIn)+'</div></div>'+
+      '<div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Spent</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(totalOut)+'</div></div>'+
+    '</div>'+
+    '<div style="padding:0 18px;display:flex;flex-direction:column;gap:10px;padding-bottom:6px;">'+
+      '<button onclick="pcOpenExpense()" style="display:flex;align-items:center;gap:14px;padding:17px 20px;border-radius:18px;font-size:15px;font-weight:800;cursor:pointer;border:none;width:100%;background:#E07820;color:#fff;font-family:Nunito,sans-serif;"><span style="font-size:20px;">&#43;</span><span>Add Expense</span></button>'+
+      '<button onclick="pcOpenCashIn()" style="display:flex;align-items:center;gap:14px;padding:17px 20px;border-radius:18px;font-size:15px;font-weight:800;cursor:pointer;border:1.5px solid #2DAE6A;width:100%;background:#fff;color:#2DAE6A;font-family:Nunito,sans-serif;"><span style="font-size:20px;">&#8601;</span><span>Cash Received</span></button>'+
+    '</div>'+
+    '<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1.5px;padding:14px 18px 10px;">Recent Transactions</div>'+
+    '<div style="background:#fff;border-radius:18px;margin:0 18px 16px;padding:4px 16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">'+txnHtml+'</div>';
+}
+function pcOpenManageProjects(){toast('Manage projects in the Projects module','info');}
+async function pcOpenCashIn(){
+  var eOpts=PC_EMPS.map(function(e){return '<option value="'+e.id+'">'+pcEmpName(e.id)+'</option>';}).join('');
+  document.getElementById('pc-sheet-title').textContent='Cash Received';
+  document.getElementById('pc-sheet-body').innerHTML=
+    '<div class="g2"><div><label class="flbl">Date *</label><input id="pcf-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div><div><label class="flbl">Mode</label><select id="pcf-mode" class="fsel"><option>Cash</option><option>UPI</option><option>Bank Transfer</option></select></div></div>'+
+    '<label class="flbl">Given To *</label><select id="pcf-emp" class="fsel"><option value="">— Select —</option>'+eOpts+'</select>'+
+    '<label class="flbl">Amount (&#8377;) *</label><input id="pcf-amt" class="finp" type="number" placeholder="0.00" style="font-size:24px;font-weight:900;" inputmode="decimal">'+
+    '<label class="flbl">Remarks</label><input id="pcf-rem" class="finp" placeholder="Optional">';
+  document.getElementById('pc-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-pc\',\'sh-pc\')">Cancel</button>'+
+    '<button class="btn" style="background:#2DAE6A;color:#fff;" onclick="pcSaveCashIn()">&#8601; Save</button>';
+  openSheet('ov-pc','sh-pc');
+}
+async function pcSaveCashIn(){
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var date=g('pcf-date'),empId=g('pcf-emp'),amount=parseFloat(g('pcf-amt'))||0;
+  if(!date||!empId||!amount){toast('Date, employee and amount required','warning');return;}
+  try{var r=await sbInsert('petty_cash_in',{date:date,employee_id:empId,amount:amount,payment_mode:g('pcf-mode'),remarks:g('pcf-rem').trim()||null});if(r&&r[0])PC_IN.unshift(r[0]);toast('Cash In saved!','success');closeSheet('ov-pc','sh-pc');pcRefresh();}catch(e){toast('Error: '+e.message,'error');}
+}
+async function pcOpenExpense(){
+  var eOpts=PC_EMPS.map(function(e){var b=pcEmpBal(e.id);return '<option value="'+e.id+'">'+pcEmpName(e.id)+' (Bal: &#8377;'+Math.round(b)+')</option>';}).join('');
+  var pOpts=PC_PROJS.map(function(p){return '<option value="'+p.id+'"'+(PC_ACTIVE&&p.id===PC_ACTIVE.id?' selected':'')+'>'+p.name+'</option>';}).join('');
+  var cOpts=Object.keys(PC_CAT).map(function(c){return '<option value="'+c+'">'+PC_CAT[c].e+' '+c+'</option>';}).join('');
+  document.getElementById('pc-sheet-title').textContent='Add Expense';
+  document.getElementById('pc-sheet-body').innerHTML=
+    '<div class="g2"><div><label class="flbl">Date *</label><input id="pcf-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div><div><label class="flbl">Mode</label><select id="pcf-mode" class="fsel"><option>Cash</option><option>UPI</option><option>Bank Transfer</option></select></div></div>'+
+    '<label class="flbl">Site / Project *</label><select id="pcf-proj" class="fsel"><option value="">— Select —</option>'+pOpts+'</select>'+
+    '<label class="flbl">Spent By *</label><select id="pcf-emp" class="fsel"><option value="">— Select Employee —</option>'+eOpts+'</select>'+
+    '<label class="flbl">Paid To</label><input id="pcf-party" class="finp" placeholder="Enter name...">'+
+    '<label class="flbl">Amount (&#8377;) *</label><input id="pcf-amt" class="finp" type="number" placeholder="0.00" style="font-size:24px;font-weight:900;" inputmode="decimal">'+
+    '<label class="flbl">Category *</label><select id="pcf-cat" class="fsel"><option value="" disabled selected>Select...</option>'+cOpts+'</select>'+
+    '<label class="flbl">Purpose *</label><textarea id="pcf-pur" class="finp" style="min-height:60px;resize:none;" placeholder="Describe the expense..."></textarea>'+
+    '<label class="flbl">Remarks</label><input id="pcf-rem" class="finp" placeholder="Optional">';
+  document.getElementById('pc-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-pc\',\'sh-pc\')">Cancel</button>'+
+    '<button class="btn" style="background:#E07820;color:#fff;" onclick="pcSaveExpense()">Submit</button>';
+  openSheet('ov-pc','sh-pc');
+}
+async function pcSaveExpense(){
+  var g=function(id){return(document.getElementById(id)||{value:''}).value;};
+  var date=g('pcf-date'),empId=g('pcf-emp'),cat=g('pcf-cat'),amount=parseFloat(g('pcf-amt'))||0,purpose=g('pcf-pur').trim();
+  var projEl=document.getElementById('pcf-proj');var projId=projEl?projEl.value:'',projName=projEl&&projEl.selectedIndex>0?projEl.options[projEl.selectedIndex].text:'';
+  if(!date||!empId||!projId||!cat||!amount||!purpose){toast('Please fill all required fields','warning');return;}
+  var bal=pcEmpBal(empId);
+  if(amount>bal){toast('Insufficient balance! Available: &#8377;'+Math.round(bal),'warning');return;}
+  try{var r=await sbInsert('petty_cash_expense',{date:date,employee_id:empId,project_id:projId,project_name:projName,category:cat,party_name:g('pcf-party').trim()||null,amount:amount,payment_mode:g('pcf-mode'),purpose:purpose,remarks:g('pcf-rem').trim()||null});if(r&&r[0])PC_EXP.unshift(r[0]);toast('Expense saved!','success');closeSheet('ov-pc','sh-pc');pcRefresh();}catch(e){toast('Error: '+e.message,'error');}
+}
+
+// ═══════════════════════════════════════════════════════════
+// ACCESS CONTROL MODULE
+// ═══════════════════════════════════════════════════════════
+var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};
+var AC_MODULES=[{key:'projects',label:'Projects',icon:'&#127959;',params:['view','edit','delete']},{key:'boq',label:'BOQ Items',icon:'&#128203;',params:['view','edit','delete']},{key:'jm',label:'Joint Measurements',icon:'&#128208;',params:['view','edit','delete']},{key:'planning',label:'Planning',icon:'&#128230;',params:['view','edit','delete']},{key:'execution',label:'Work Allotment',icon:'&#128221;',params:['view','edit','delete']},{key:'petty-cash',label:'Petty Cash',icon:'&#128181;',params:['view','cash_in','expense','reports']},{key:'registry',label:'Master Registry',icon:'&#128218;',params:['view','edit','delete']},{key:'attendance',label:'Attendance',icon:'&#128203;',params:['view','mark','reports']},{key:'accounts',label:'Accounts',icon:'&#128176;',params:['view','edit','delete']}];
+var AC_PARAM_COLORS={view:'#1565C0',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',reports:'#6A1B9A',mark:'#00838F'};
+var AC_PARAM_LABELS={view:'View',edit:'Edit',delete:'Delete',cash_in:'Cash In',expense:'Expense',reports:'Reports',mark:'Mark'};
+async function initAccess(){
+  if(!currentUser||(currentUser.role!=='admin')){document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:40px;margin-bottom:10px;">&#128274;</div><div style="font-weight:800;color:var(--navy);">Admin Only</div></div>';return;}
+  try{var emps=await sbFetch('employees',{select:'id,first_name,last_name,emp_id,role',filter:'status=eq.active',order:'first_name.asc'});var sel=document.getElementById('ac-emp-sel');if(sel&&Array.isArray(emps)){sel.innerHTML='<option value="">— Select Employee —</option>'+emps.map(function(e){var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');return '<option value="'+e.id+'">'+n+(e.emp_id?' ('+e.emp_id+')':'')+'</option>';}).join('');}}catch(e){console.error(e);}
+}
+function acSwitchTab(tab){
+  AC_TAB=tab;AC_TARGET=null;AC_PERMISSIONS={};
+  var eb=document.getElementById('ac-tab-emp'),rb=document.getElementById('ac-tab-role'),sd=document.getElementById('ac-selector');
+  if(tab==='emp'){if(eb){eb.style.background='var(--navy)';eb.style.color='white';eb.style.border='none';}if(rb){rb.style.background='white';rb.style.color='var(--text2)';rb.style.border='1.5px solid var(--border)';}if(sd){sd.innerHTML='<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select>';initAccess();}}
+  else{if(rb){rb.style.background='var(--navy)';rb.style.color='white';rb.style.border='none';}if(eb){eb.style.background='white';eb.style.color='var(--text2)';eb.style.border='1.5px solid var(--border)';}if(sd){sd.innerHTML='<select id="ac-role-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Role —</option>'+['admin','pm','engineer','qhse','finance','viewer'].map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')+'</select>';}}
+  document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee or role</div>';
+}
+async function acLoadPermissions(){
+  var selId=AC_TAB==='emp'?'ac-emp-sel':'ac-role-sel';var sel=document.getElementById(selId);
+  if(!sel||!sel.value){document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee or role</div>';return;}
+  AC_TARGET=sel.value;
+  try{var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;var rows=await sbFetch('access_permissions',{select:'*',filter:filter});AC_PERMISSIONS={};if(Array.isArray(rows))rows.forEach(function(r){if(!AC_PERMISSIONS[r.module])AC_PERMISSIONS[r.module]={};AC_PERMISSIONS[r.module][r.permission]=r.granted;});}catch(e){AC_PERMISSIONS={};}
+  acRenderModules();
+}
+function acRenderModules(){
+  var listEl=document.getElementById('ac-modules-list');if(!listEl)return;
+  listEl.innerHTML=AC_MODULES.map(function(mod){
+    var modPerms=AC_PERMISSIONS[mod.key]||{};
+    var paramBoxes=mod.params.map(function(p){var checked=modPerms[p]===true||(Object.keys(AC_PERMISSIONS).length===0&&p==='view');var col=AC_PARAM_COLORS[p]||'#37474F';
+      return '<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;cursor:pointer;border:1.5px solid '+(checked?col:'var(--border)')+';background:'+(checked?col+'15':'transparent')+';margin-bottom:4px;">'+
+        '<input type="checkbox" id="ac-'+mod.key+'-'+p+'" '+(checked?'checked':'')+' onchange="acToggle(\''+mod.key+'\',\''+p+'\',this)" style="width:16px;height:16px;accent-color:'+col+';">'+
+        '<span style="font-size:12px;font-weight:700;color:'+(checked?col:'var(--text3)')+';">'+AC_PARAM_LABELS[p]+'</span></label>';
+    }).join('');
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:12px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:18px;">'+mod.icon+'</span><span style="font-size:14px;font-weight:800;color:var(--navy);">'+mod.label+'</span></div>'+
+      '<div style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;">'+paramBoxes+'</div></div>';
+  }).join('');
+}
+function acToggle(modKey,param,chk){if(!AC_PERMISSIONS[modKey])AC_PERMISSIONS[modKey]={};AC_PERMISSIONS[modKey][param]=chk.checked;}
+async function acSavePermissions(){
+  if(!AC_TARGET){toast('Select an employee or role first','warning');return;}
+  toast('Saving...','info');
+  try{
+    var inserts=[];AC_MODULES.forEach(function(mod){var modPerms=AC_PERMISSIONS[mod.key]||{};mod.params.forEach(function(p){inserts.push({target_type:AC_TAB,employee_id:AC_TAB==='emp'?AC_TARGET:null,role:AC_TAB==='role'?AC_TARGET:null,module:mod.key,permission:p,granted:modPerms[p]===true});});});
+    var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;
+    await fetch(SUPABASE_URL+'/rest/v1/access_permissions?'+filter,{method:'DELETE',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}});
+    await fetch(SUPABASE_URL+'/rest/v1/access_permissions',{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(inserts)});
+    toast('&#10003; Permissions saved!','success');
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
 // ═══════════════════════════════════════════════════════════
 var ACC_TAB='dash';
 var ACC_ACCOUNTS=[], ACC_VOUCHERS=[], ACC_ITEMS=[], ACC_GST=[], ACC_TDS=[];
@@ -6225,11 +6851,43 @@ function accGstHTML(){
 
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out & records</div></div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out &amp; records</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E8F5E9;">&#127959;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">&#128203;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">BOQ Items</div><div class="drawer-item-sub">Bill of Quantities</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8EAF6;">&#128208;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ items</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">&#128230;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resources per BOQ item</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF3E0;">&#128221;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to SC / Labour</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('petty-cash');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#FFF8E1;">&#128181;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Petty Cash</div><div class="drawer-item-sub">Cash in hand &amp; site expenses</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('accounts');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8EAF6;">&#128176;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Accounts</div><div class="drawer-item-sub">Vouchers, Ledger, GST, TDS</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('access');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#EDE7F6;">&#128274;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Access Control</div><div class="drawer-item-sub">Manage module permissions</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
       <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
