@@ -9655,67 +9655,52 @@ function accFilterVouchers(type, btn){
 
 // ── PARTY LEDGER TAB ─────────────────────────────────
 function accLedgerHTML(){
-  // Collect all parties from vouchers
   var parties = {};
+  var typeColor={vendor:'#1565C0',sc:'#6A1B9A',employee:'#2E7D32',client:'#E65100',other:'#37474F'};
+  var typeLabel={vendor:'Vendor',sc:'Subcontractor',employee:'Employee',client:'Client',other:'Other'};
+
+  // Populate from registry first
+  VENDORS.forEach(function(v){var n=v.name||v.companyName||'';if(!n)return;parties[n]={name:n,type:'vendor',dr:0,cr:0};});
+  SUBCONTRACTORS.forEach(function(s){var n=s.name||s.companyName||'';if(!n)return;parties[n]={name:n,type:'sc',dr:0,cr:0};});
+  USERS.forEach(function(e){var n=e.name||(e.first_name||'')+(e.last_name?' '+e.last_name:'');if(!n)return;parties[n]={name:n,type:'employee',dr:0,cr:0};});
+
+  // Also add parties from vouchers not in registry
   ACC_VOUCHERS.forEach(function(v){
-    if(v.party_name){
-      var k = (v.party_type||'other')+'|'+v.party_name;
-      if(!parties[k]) parties[k]={name:v.party_name, type:v.party_type||'other', dr:0, cr:0};
-    }
+    if(!v.party_name)return;
+    if(!parties[v.party_name])parties[v.party_name]={name:v.party_name,type:v.party_type||'other',dr:0,cr:0};
   });
+
+  // Calculate balances
   ACC_ITEMS.forEach(function(it){
-    var v = ACC_VOUCHERS.find(function(x){return x.id===it.voucher_id;});
-    if(!v||!v.party_name) return;
-    var k = (v.party_type||'other')+'|'+v.party_name;
-    if(!parties[k]) return;
-    var acc = ACC_ACCOUNTS.find(function(a){return a.id===it.account_id;});
-    if(!acc) return;
+    var v=ACC_VOUCHERS.find(function(x){return x.id===it.voucher_id;});
+    if(!v||!v.party_name||v.status==='cancelled')return;
+    if(!parties[v.party_name])return;
+    var acc=ACC_ACCOUNTS.find(function(a){return a.id===it.account_id;});
+    if(!acc)return;
     if(acc.account_type==='liability'||acc.account_type==='asset'){
-      if(it.entry_type==='debit') parties[k].dr+=parseFloat(it.amount)||0;
-      else parties[k].cr+=parseFloat(it.amount)||0;
+      if(it.entry_type==='debit')parties[v.party_name].dr+=parseFloat(it.amount)||0;
+      else parties[v.party_name].cr+=parseFloat(it.amount)||0;
     }
   });
 
-  var partyList = Object.values(parties).map(function(p){
-    var bal = p.cr - p.dr;
-    return '<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="accShowPartyDetail(\''+p.name+'\',\''+p.type+'\')">'+
-      '<div style="width:34px;height:34px;border-radius:50%;background:#EDE7F6;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#6A1B9A;flex-shrink:0;">'+p.name[0]+'</div>'+
-      '<div style="flex:1;"><div style="font-size:13px;font-weight:700;">'+p.name+'</div><div style="font-size:10px;color:var(--text3);">'+p.type+'</div></div>'+
-      '<div style="text-align:right;">'+
-        '<div style="font-size:13px;font-weight:900;color:'+(bal>0?'#C62828':'#2E7D32')+';">'+fmtAcc(bal)+'</div>'+
-        '<div style="font-size:10px;color:var(--text3);">'+(bal>0?'You Owe':'They Owe')+'</div>'+
-      '</div>'+
-    '</div>';
-  }).join('') || '<div style="text-align:center;padding:30px;color:var(--text3);">No party transactions yet</div>';
+    var accLTypes=['all','vendor','sc','employee','client'];
+  var filterHtml='<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">'+
+    accLTypes.map(function(t){
+      var lbl=t==='all'?'All':typeLabel[t];
+      var isSel=t==='all';
+      return '<button data-ltype="'+t+'" onclick="accFilterLedger(this)" style="padding:5px 12px;border-radius:20px;font-size:11px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);background:'+(isSel?'var(--navy)':'white')+';color:'+(isSel?'white':'var(--text2)')+';font-family:Nunito,sans-serif;">'+lbl+'</button>';
+    }).join('')+'</div>';
 
-  return '<div class="acc-card">'+
-    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">All Party Accounts</div>'+
-    partyList+
-  '</div>';
+
+
+  return filterHtml+'<div class="acc-card" id="acc-ledger-list">'+list+'</div>';
 }
 
-function accShowPartyDetail(name, type){
-  var vouchers = ACC_VOUCHERS.filter(function(v){return v.party_name===name;});
-  var rows = vouchers.map(function(v){
-    var cfg = VOU_TYPES[v.voucher_type]||{icon:'📄',css:'vou-journal',label:v.voucher_type};
-    return '<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">'+
-      '<span class="vou-badge '+cfg.css+'">'+cfg.label+'</span>'+
-      '<div style="flex:1;font-size:12px;font-weight:600;">'+v.narration+'</div>'+
-      '<div style="font-size:11px;color:var(--text3);">'+v.date+'</div>'+
-      '<div style="font-size:12px;font-weight:800;">'+fmtAcc(v.net_amount)+'</div>'+
-    '</div>';
-  }).join('');
-
-  document.getElementById('acc-sheet-title').textContent = '📒 '+name;
-  document.getElementById('acc-sheet-body').innerHTML =
-    '<div style="background:#EDE7F6;border-radius:10px;padding:10px 14px;margin-bottom:12px;">'+
-      '<div style="font-size:12px;font-weight:700;color:#6A1B9A;">Party: '+name+' &nbsp;·&nbsp; '+type+'</div>'+
-    '</div>'+
-    (rows||'<div style="text-align:center;padding:20px;color:var(--text3);">No transactions</div>');
-  document.getElementById('acc-sheet-foot').innerHTML = '<button class="btn" style="background:var(--navy);color:white;width:100%;" onclick="closeAccSheet()">Close</button>';
-  openAccSheet();
+function accFilterLedger(btn){ var type=btn?btn.getAttribute("data-ltype"):"all";
+  document.querySelectorAll('[data-ltype]').forEach(function(b){if(b.tagName==='BUTTON'){b.style.background='white';b.style.color='var(--text2)';}});
+  btn.style.background='var(--navy)';btn.style.color='white';
+  document.querySelectorAll('.acc-ledger-row').forEach(function(row){row.style.display=(type==='all'||row.getAttribute('data-ltype')===type)?'':'none';});
 }
-
 // ── BOOKS TAB ────────────────────────────────────────
 function accBooksHTML(){
   var tabs = ['cash','bank','day'].map(function(t){
@@ -9984,11 +9969,11 @@ async function accOpenVoucher(type){
     '<div><label class="flbl">Date *</label><input id="av-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div></div>'+
     '<div class="g2"><div><label class="flbl">Voucher No</label><input id="av-no" class="finp" value="'+vno+'"></div>'+
     '<div><label class="flbl">Project</label><select id="av-proj" class="fsel">'+projOpts+'</select></div></div>'+
-    '<label class="flbl">Party Name</label><input id="av-party" class="finp" placeholder="Vendor / SC / Client / Employee name">'+
-    '<div class="g2"><div><label class="flbl">Party Type</label><select id="av-party-type" class="fsel">'+
-      '<option value="">— Select —</option><option value="vendor">Vendor</option><option value="sc">Subcontractor</option><option value="client">Client</option><option value="employee">Employee</option>'+
+    '<div class="g2"><div><label class="flbl">Party Type *</label><select id="av-party-type" class="fsel" onchange="accLoadPartyList()">'+
+      '<option value="">— Select —</option><option value="vendor">Vendor</option><option value="sc">Subcontractor</option><option value="client">Client (RA Bill)</option><option value="employee">Employee</option>'+
     '</select></div>'+
     '<div><label class="flbl">Reference No</label><input id="av-ref" class="finp" placeholder="Invoice / RA Bill No"></div></div>'+
+    '<label class="flbl">Party Name *</label><div id="av-party-wrap"><input id="av-party" class="finp" placeholder="Select party type first..."></div>'+
     '<label class="flbl">Narration *</label><input id="av-narr" class="finp" placeholder="Describe this transaction...">'+
     // Debit / Credit Lines
     '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Accounting Entries</div>'+
@@ -10340,6 +10325,54 @@ async function accAutoFromPettyCash(expense){
 }
 
 
+
+// ── LOAD PARTY LIST BASED ON TYPE ───────────────────
+async function accLoadPartyList(){
+  var type = (document.getElementById('av-party-type')||{value:''}).value;
+  var wrap = document.getElementById('av-party-wrap'); if(!wrap) return;
+
+  if(!type){
+    wrap.innerHTML = '<input id="av-party" class="finp" placeholder="Select party type first...">';
+    return;
+  }
+
+  // Load from registry based on type
+  var opts = '<option value="">— Select Party —</option>';
+  try{
+    if(type==='vendor'){
+      if(!VENDORS.length){ var r=await sbFetch('vendors',{select:'id,name,vendor_id',filter:'status=eq.active',order:'name.asc'}); if(Array.isArray(r)) VENDORS=r.map(mapVendor||function(v){return v;}); }
+      opts += VENDORS.map(function(v){var n=v.name||v.companyName||''; return '<option value="'+n+'">'+n+(v.vendor_id?' ('+v.vendor_id+')':'')+'</option>';}).join('');
+    } else if(type==='sc'){
+      if(!SUBCONTRACTORS.length){ var r=await sbFetch('subcontractors',{select:'id,name,sc_id',filter:'status=eq.active',order:'name.asc'}); if(Array.isArray(r)) SUBCONTRACTORS=r.map(mapSC||function(v){return v;}); }
+      opts += SUBCONTRACTORS.map(function(s){var n=s.name||s.companyName||''; return '<option value="'+n+'">'+n+(s.sc_id?' ('+s.sc_id+')':'')+'</option>';}).join('');
+    } else if(type==='employee'){
+      if(!USERS.length){ var r=await sbFetch('employees',{select:'id,first_name,last_name,emp_id',filter:'status=eq.active',order:'first_name.asc'}); if(Array.isArray(r)) USERS=r; }
+      opts += USERS.map(function(e){var n=(e.name)||(e.first_name||'')+(e.last_name?' '+e.last_name:''); return '<option value="'+n+'">'+n+(e.empId||e.emp_id?' ('+(e.empId||e.emp_id)+')':'')+'</option>';}).join('');
+    } else if(type==='client'){
+      // Clients from projects table (client field)
+      var r=await sbFetch('projects',{select:'client,name',order:'name.asc'});
+      var clients = {};
+      if(Array.isArray(r)) r.forEach(function(p){ if(p.client) clients[p.client]=p.name; });
+      opts += Object.keys(clients).map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+      opts += '<option value="_custom">+ Enter manually...</option>';
+    }
+  }catch(e){ console.error('accLoadPartyList:',e); }
+
+  wrap.innerHTML = '<select id="av-party" class="fsel" onchange="accPartyCustomCheck(this)">'+opts+'</select>';
+}
+
+function accPartyCustomCheck(sel){
+  var wrap = document.getElementById('av-party-wrap'); if(!wrap) return;
+  if(sel.value==='_custom'){
+    wrap.innerHTML = '<input id="av-party" class="finp" placeholder="Enter party name..." autofocus>';
+  }
+}
+
+
+function accShowPartyByIdx(idx){
+  var p = (window._accParties||[])[idx]; if(!p) return;
+  accShowPartyDetail(p.name, p.type);
+}
 </script>
 
 </body>
