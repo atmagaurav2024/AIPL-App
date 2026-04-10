@@ -2359,9 +2359,8 @@ input,select,textarea{font-size:16px !important;}
   <div class="sh-foot" id="proj-sheet-foot"></div>
 </div>
 
-<!-- BOQ SCREEN -->
-<div class="app-screen" id="app-boq">
-  <div class="boq-topbar">
+<!-- BOTTOM NAV -->
+<nav class="app-nav" id="app-nav" style="display:none;">
   <button class="an-item on" id="an-home" onclick="showApp('dashboard')"><div class="an-ic">&#127968;</div><div class="an-lb">Home</div></button>
   <button class="an-item" id="an-attendance" onclick="showApp('attendance')"><div class="an-ic">&#128101;</div><div class="an-lb">Attendance</div></button>
   <button class="an-item" id="an-registry" onclick="showApp('registry')"><div class="an-ic">&#128218;</div><div class="an-lb">Registry</div></button>
@@ -2395,6 +2394,7 @@ function showApp(name){
   if(name==='attendance' && !window._attInit){window._attInit=true;initAttendance();}
   if(name==='registry'){initRegistry();startSync();}
   else if(name==='accounts'){initAccounts();}
+  else if(name==='projects'){initProjects();}
   else {stopSync();}
 }
 
@@ -5305,7 +5305,199 @@ function closeDrawer(){
 }
 
 // ═══════════════════════════════════════════════════════════
-// ACCOUNTS MODULE
+// PROJECTS MODULE
+// ═══════════════════════════════════════════════════════════
+var PROJ_DATA = [];
+var PROJ_EDIT_ID = null;
+var projDocsTemp = [];
+
+function initProjects(){
+  loadProjData();
+}
+
+async function loadProjData(){
+  var el=document.getElementById('proj-list');
+  if(el) el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>';
+  try{
+    var data=await sbFetch('projects',{select:'*',order:'created_at.desc'});
+    PROJ_DATA=Array.isArray(data)?data:[];
+  }catch(e){PROJ_DATA=[];}
+  renderProjList();
+}
+
+function searchProj(q){
+  if(!q||!q.trim()){renderProjList();return;}
+  q=q.toLowerCase();
+  renderProjList(PROJ_DATA.filter(function(p){
+    return (p.name||'').toLowerCase().includes(q)||(p.client||'').toLowerCase().includes(q)||(p.location||'').toLowerCase().includes(q)||(p.code||'').toLowerCase().includes(q);
+  }));
+}
+
+function renderProjList(data){
+  var list=data||PROJ_DATA;
+  var el=document.getElementById('proj-list'); if(!el) return;
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;margin-bottom:10px;">&#127959;</div><div style="font-weight:700;">No projects yet</div><div style="font-size:12px;margin-top:6px;">Tap + to create one</div></div>';
+    return;
+  }
+  el.innerHTML=list.map(function(p){
+    var si=projStatusInfo(p.status);
+    var init=(p.name||'P').split(' ').map(function(w){return w[0];}).join('').slice(0,2).toUpperCase();
+    return '<div class="reg-card" onclick="openProjDetail(\''+p.id+'\')">'+
+      '<div class="rc-accent" style="background:'+si.col+'"></div>'+
+      '<div class="rc-body">'+
+        '<div class="avatar" style="background:'+si.col+';font-size:13px;font-weight:900;">'+init+'</div>'+
+        '<div class="rc-info">'+
+          '<div class="rc-name">'+p.name+'</div>'+
+          '<div class="rc-sub">'+(p.client||'—')+' &bull; '+(p.location||'—')+'</div>'+
+          '<div class="rc-tags"><span class="badge" style="background:'+si.col+'20;color:'+si.col+';">'+si.label+'</span></div>'+
+        '</div>'+
+        '<div class="rc-right"><div class="rc-id" style="color:'+si.col+';">'+(p.code||'—')+'</div></div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function projStatusInfo(status){
+  var map={
+    'in-progress':{label:'In Progress',col:'#1565C0'},
+    'under-dlp':{label:'Under DLP',col:'#F57F17'},
+    'fully-completed':{label:'Completed',col:'#2E7D32'},
+    'active':{label:'In Progress',col:'#1565C0'},
+    'planning':{label:'Planning',col:'#6A1B9A'},
+    'completed':{label:'Completed',col:'#2E7D32'},
+    'on-hold':{label:'On Hold',col:'#F57F17'},
+    'cancelled':{label:'Cancelled',col:'#C62828'}
+  };
+  return map[status]||{label:status||'Active',col:'#1565C0'};
+}
+
+function openProjSheet(){openSheet('ov-proj','sh-proj');}
+function closeProjSheet(){closeSheet('ov-proj','sh-proj');}
+
+function openProjForm(p){
+  PROJ_EDIT_ID=p?p.id:null;
+  projDocsTemp=p&&p.documents?JSON.parse(JSON.stringify(p.documents)):[];
+  document.getElementById('proj-sheet-title').textContent=p?'Edit Project':'New Project';
+  var v=p||{};
+  function dv(d){return d?d.slice(0,10):'';}
+  function sel(id,opts,val){
+    return '<select id="'+id+'" class="fsel">'+opts.map(function(o){
+      var ov=Array.isArray(o)?o[0]:o, ol=Array.isArray(o)?o[1]:o;
+      return '<option value="'+ov+'"'+(val===ov?' selected':'')+'>'+ol+'</option>';
+    }).join('')+'</select>';
+  }
+  var projOpts=[['in-progress','In Progress'],['under-dlp','Under DLP'],['fully-completed','Fully Completed']];
+  document.getElementById('proj-sheet-body').innerHTML=
+    '<label class="flbl">Project Name *</label><input id="pf-name" class="finp" placeholder="e.g. NH-48 Bypass Road" value="'+(v.name||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Client / Employer</label><input id="pf-client" class="finp" value="'+(v.client||'')+'"></div>'+
+    '<div><label class="flbl">Project Code</label><input id="pf-code" class="finp" placeholder="e.g. NH48" value="'+(v.code||'')+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Status</label>'+sel('pf-status',projOpts,v.status||'in-progress')+'</div>'+
+    '<div><label class="flbl">Length (km)</label><input id="pf-length" class="finp" type="number" step="0.01" value="'+(v.length||'')+'"></div></div>'+
+    '<label class="flbl">Location / Site</label><input id="pf-location" class="finp" value="'+(v.location||'')+'">'+
+    '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;padding-bottom:4px;border-bottom:2px solid #2E7D3220;">&#128176; Financial</div>'+
+    '<div class="g2"><div><label class="flbl">Tender Price (&#8377;)</label><input id="pf-tender" class="finp" type="number" value="'+(v.tender_price||'')+'"></div>'+
+    '<div><label class="flbl">Contract Price (&#8377;)</label><input id="pf-contract" class="finp" type="number" value="'+(v.contract_price||'')+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Performance Security (&#8377;)</label><input id="pf-perf" class="finp" type="number" value="'+(v.perf_security||'')+'"></div>'+
+    '<div><label class="flbl">% Below/Above</label><input id="pf-below" class="finp" value="'+(v.pct_below||'')+'"></div></div>'+
+    '<div style="font-size:11px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;padding-bottom:4px;border-bottom:2px solid #E6510020;">&#128197; Schedule</div>'+
+    '<div class="g2"><div><label class="flbl">LOA Date</label><input id="pf-loa" class="finp" type="date" value="'+dv(v.loa_date)+'"></div>'+
+    '<div><label class="flbl">Work Order Date</label><input id="pf-wo" class="finp" type="date" value="'+dv(v.wo_date)+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Construction Period (Days)</label><input id="pf-cp" class="finp" type="number" value="'+(v.construction_period||'')+'"></div>'+
+    '<div><label class="flbl">SCD</label><input id="pf-scd" class="finp" type="date" value="'+dv(v.scd)+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Maintenance Period (Days)</label><input id="pf-mp" class="finp" type="number" value="'+(v.maintenance_period||'')+'"></div>'+
+    '<div><label class="flbl">DLP Date</label><input id="pf-dlp" class="finp" type="date" value="'+dv(v.dlp_date)+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Is Subcontract?</label>'+sel('pf-sub',[['no','No'],['yes','Yes']],v.subcontract||'no')+'</div>'+
+    '<div><label class="flbl">Main Contractor</label><input id="pf-maincon" class="finp" value="'+(v.main_contractor||'')+'"></div></div>';
+  document.getElementById('proj-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeProjSheet()">Cancel</button>'+
+    '<button class="btn btn-green" onclick="saveProjForm()">'+(p?'&#10003; Save Changes':'&#10003; Create Project')+'</button>';
+  openProjSheet();
+}
+
+function gvEl(id){var el=document.getElementById(id);return el?el.value.trim():'';}
+
+async function saveProjForm(){
+  var name=gvEl('pf-name');
+  if(!name){toast('Project name is required','warning');return;}
+  var data={
+    name:name, client:gvEl('pf-client')||null, code:gvEl('pf-code')||null,
+    status:gvEl('pf-status')||'in-progress', location:gvEl('pf-location')||null,
+    length:parseFloat(gvEl('pf-length'))||null,
+    tender_price:parseFloat(gvEl('pf-tender'))||null,
+    contract_price:parseFloat(gvEl('pf-contract'))||null,
+    pct_below:gvEl('pf-below')||null, perf_security:parseFloat(gvEl('pf-perf'))||null,
+    loa_date:gvEl('pf-loa')||null, wo_date:gvEl('pf-wo')||null,
+    construction_period:parseInt(gvEl('pf-cp'))||null, scd:gvEl('pf-scd')||null,
+    maintenance_period:parseInt(gvEl('pf-mp'))||null, dlp_date:gvEl('pf-dlp')||null,
+    subcontract:gvEl('pf-sub')||'no', main_contractor:gvEl('pf-maincon')||null,
+    documents:projDocsTemp.filter(function(d){return d.url;})
+  };
+  try{
+    toast('Saving...','info');
+    if(PROJ_EDIT_ID){
+      await sbUpdate('projects',PROJ_EDIT_ID,data);
+      var idx=PROJ_DATA.findIndex(function(p){return p.id===PROJ_EDIT_ID;});
+      if(idx>-1) PROJ_DATA[idx]=Object.assign(PROJ_DATA[idx],data);
+      toast(name+' updated!','success');
+    } else {
+      var res=await sbInsert('projects',data);
+      if(res&&res[0]) PROJ_DATA.unshift(res[0]);
+      toast(name+' created!','success');
+    }
+    closeProjSheet(); renderProjList();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+function openProjDetail(id){
+  var p=PROJ_DATA.find(function(x){return x.id===id;}); if(!p) return;
+  var si=projStatusInfo(p.status);
+  function fmt(v){return v||'—';}
+  function fmtM(v){return v?'&#8377;'+parseFloat(v).toLocaleString('en-IN'):'—';}
+  document.getElementById('proj-sheet-title').textContent=p.name;
+  document.getElementById('proj-sheet-body').innerHTML=
+    '<div style="background:'+si.col+'15;border:1px solid '+si.col+'30;border-radius:14px;padding:14px;margin-bottom:14px;">'+
+      '<div style="font-size:11px;font-family:monospace;color:'+si.col+';">'+(p.code||'—')+'</div>'+
+      '<div style="font-size:18px;font-weight:900;margin-top:2px;">'+p.name+'</div>'+
+      '<div style="font-size:12px;color:var(--text2);margin-top:4px;">'+(p.client||'—')+' &bull; '+(p.location||'—')+'</div>'+
+      '<div style="margin-top:8px;"><span class="badge" style="background:'+si.col+'20;color:'+si.col+';">'+si.label+'</span></div>'+
+    '</div>'+
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:10px;">'+
+      ir('Client',fmt(p.client),true)+ir('Length',p.length?p.length+' km':'—')+ir('Location',fmt(p.location))+
+      ir('Tender Price',fmtM(p.tender_price))+ir('Contract Price',fmtM(p.contract_price))+
+      ir('% Below/Above',fmt(p.pct_below))+ir('Performance Security',fmtM(p.perf_security))+
+      ir('LOA Date',fmt(p.loa_date))+ir('Work Order Date',fmt(p.wo_date))+
+      ir('Construction Period',p.construction_period?p.construction_period+' days':'—')+
+      ir('SCD',fmt(p.scd))+ir('Maintenance Period',p.maintenance_period?p.maintenance_period+' days':'—')+
+      ir('DLP Date',fmt(p.dlp_date))+ir('Is Subcontract',fmt(p.subcontract))+
+      (p.main_contractor?ir('Main Contractor',p.main_contractor):'')+
+    '</div>'+
+    (p.documents&&p.documents.length?
+      '<div style="font-size:11px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">&#128206; Documents</div>'+
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">'+
+        p.documents.map(function(d){return '<a href="'+d.url+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#F3E5F5;border-radius:10px;padding:8px 12px;font-size:12px;font-weight:700;color:#6A1B9A;text-decoration:none;">&#128196; '+d.name+'</a>';}).join('')+
+      '</div>' : '');
+  document.getElementById('proj-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeProjSheet()">Close</button>'+
+    '<button class="btn btn-red" onclick="deleteProjConfirm(\''+p.id+'\')">&#128465; Delete</button>'+
+    '<button class="btn btn-navy" onclick="editProj(\''+p.id+'\')">&#9998; Edit</button>';
+  openProjSheet();
+}
+
+function editProj(id){
+  var p=PROJ_DATA.find(function(x){return x.id===id;}); if(!p) return;
+  closeProjSheet();
+  setTimeout(function(){openProjForm(p);},320);
+}
+
+async function deleteProjConfirm(id){
+  var p=PROJ_DATA.find(function(x){return x.id===id;}); if(!p) return;
+  if(!confirm('Delete project "'+p.name+'"? This cannot be undone.')) return;
+  PROJ_DATA=PROJ_DATA.filter(function(x){return x.id!==id;});
+  closeProjSheet(); renderProjList();
+  toast(p.name+' deleted','success');
+  try{await sbDelete('projects',id);}catch(e){console.error(e);}
+}
 // ═══════════════════════════════════════════════════════════
 var ACC_TAB='dash';
 var ACC_ACCOUNTS=[], ACC_VOUCHERS=[], ACC_ITEMS=[], ACC_GST=[], ACC_TDS=[];
@@ -6034,6 +6226,10 @@ function accGstHTML(){
     <div class="drawer-item" onclick="showApp('attendance');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E3F2FD;">📋</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Attendance</div><div class="drawer-item-sub">Punch in/out & records</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">&#127959;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
       <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
