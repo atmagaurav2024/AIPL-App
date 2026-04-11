@@ -2,14 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>AIPL — Construction Management</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+
 /* ═══════════════════════════════════════════
-   CORE STYLES & SHARED UI
+   SHARED
 ═══════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+
+/* App-level screens */
+.app-screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:10;background:var(--bg,#F0F4F8);}
+.app-screen.on{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.app-screen.on{animation:fadeIn .25s ease;}
+
+/* Bottom nav */
+.app-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E2E8F0;display:flex;z-index:500;}
+.an-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;border:none;background:transparent;}
+.an-ic{font-size:22px;line-height:1;}
+.an-lb{font-size:10px;font-weight:700;color:#94A3B8;font-family:Nunito,sans-serif;}
+.an-item.on .an-lb{color:#1565C0;}
+
+/* ═══════════════════════════════════════════
+   LOGIN / AUTH CSS
+═══════════════════════════════════════════ */
+
 :root{
   --navy:#0D2137;--navy2:#122840;--navy3:#1A3A5C;--blue:#1565C0;--blue2:#1976D2;
   --green:#2E7D32;--greenl:#E8F5E9;--amber:#F57F17;--amberl:#FFF8E1;
@@ -21,130 +42,123 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;font-family:Nunito,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
 
-/* Screen Management */
-.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow-y:auto;z-index:10;}
-.screen.on{display:flex;animation:fadeIn .3s ease;}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow-y:auto;}
+.screen.on{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.screen.on{animation:fadeIn .3s ease;}
 
-/* Bottom Nav */
-.app-nav{position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:1px solid #E2E8F0;display:none;z-index:500;}
-.app-nav.on{display:flex;}
-.an-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;}
-.an-ic{font-size:22px;}
-.an-lb{font-size:10px;font-weight:700;color:#94A3B8;}
-.an-item.on .an-lb{color:var(--blue);}
-
-/* ═══════════════════════════════════════════
-   SPLASH & AUTH SCREENS
-═══════════════════════════════════════════ */
+/* SPLASH */
 #scr-splash{background:linear-gradient(160deg,var(--navy) 0%,var(--navy3) 60%,#1565C0 100%);align-items:center;justify-content:center;}
-.splash-logo{width:80px;height:80px;border-radius:24px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:36px;}
+.splash-logo{width:80px;height:80px;border-radius:24px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:20px;}
+.splash-name{font-size:32px;font-weight:900;color:white;letter-spacing:-1px;}
+.splash-dots{display:flex;gap:8px;margin-top:40px;}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);animation:pulse 1.4s infinite;}
+@keyframes pulse{0%,100%{background:rgba(255,255,255,.2)}50%{background:rgba(255,255,255,.8)}}
 
-#scr-login{background:linear-gradient(160deg,var(--navy) 0%,var(--navy3) 50%,#1565C0 100%);}
-.login-card{flex:1;background:var(--white);border-radius:28px 28px 0 0;padding:24px;overflow-y:auto;}
+/* LOGIN & FORM STYLES */
+.login-card{flex:1;background:var(--white);border-radius:28px 28px 0 0;padding:24px 24px 40px;overflow-y:auto;}
+.finp, .fsel {width:100%;padding:14px 16px;background:var(--bg);border:1.5px solid var(--border);border-radius:14px;font-size:16px;margin-bottom:14px;outline:none;}
+.btn-primary{width:100%;padding:16px;background:linear-gradient(135deg,var(--navy),var(--blue));border:none;border-radius:14px;color:white;font-weight:800;cursor:pointer;}
 
 /* ═══════════════════════════════════════════
-   DASHBOARD & MODULES
+   ACCOUNT SPECIFIC STYLES (NEW)
+═══════════════════════════════════════════ */
+.acc-sub-nav { display: flex; gap: 8px; padding: 10px 16px; background: white; border-bottom: 1px solid var(--border); }
+.acc-tab-btn { flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg); font-size: 12px; font-weight: 800; cursor: pointer; color: var(--text2); }
+.acc-tab-btn.on { background: var(--navy); color: white; border-color: var(--navy); }
+.acc-card { background: white; border-radius: 16px; border: 1px solid var(--border); padding: 16px; margin: 12px; box-shadow: var(--shadow); }
+.master-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.master-table th { text-align: left; font-size: 10px; color: var(--text3); padding: 8px; border-bottom: 2px solid var(--bg); }
+.master-table td { padding: 12px 8px; font-size: 13px; border-bottom: 1px solid var(--bg); }
+.code-tag { font-family: 'JetBrains Mono'; background: #EEF2FF; color: var(--blue); padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+/* ═══════════════════════════════════════════
+   DASHBOARD / ATTENDANCE STYLES (AS PER YOUR ORIGINAL)
 ═══════════════════════════════════════════ */
 .dash-top{background:linear-gradient(135deg,var(--navy),var(--navy3));padding:48px 16px 20px;}
 .mod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px;}
-.mod-item{background:white;border-radius:14px;border:1px solid var(--border);padding:12px;text-align:center;box-shadow:var(--shadow);}
-
-/* ═══════════════════════════════════════════
-   ACCOUNT MODULE (YOUR CUSTOMIZED SECTION)
-═══════════════════════════════════════════ */
-.sub-nav{display:flex;gap:8px;padding:10px 14px;background:white;border-bottom:1px solid var(--border);}
-.sn-btn{flex:1;padding:8px;border-radius:10px;border:1px solid var(--border);background:var(--bg);font-size:12px;font-weight:700;cursor:pointer;}
-.sn-btn.on{background:var(--navy);color:white;border-color:var(--navy);}
-
-.card{background:white;border-radius:16px;border:1px solid var(--border);padding:16px;margin:12px;box-shadow:var(--shadow);}
-.finput, .fselect{width:100%;padding:14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:15px;margin-bottom:12px;outline:none;}
-.btn-primary{width:100%;padding:16px;background:var(--navy);color:white;border:none;border-radius:14px;font-weight:800;cursor:pointer;}
-
-.master-table{width:100%;border-collapse:collapse;}
-.master-table th{text-align:left;font-size:10px;color:var(--text3);padding:8px;border-bottom:2px solid var(--bg);}
-.master-table td{padding:12px 8px;font-size:13px;border-bottom:1px solid var(--bg);}
-.code-badge{font-family:'JetBrains Mono';background:var(--bg);color:var(--blue);padding:2px 6px;border-radius:4px;font-weight:700;}
-
-/* ═══════════════════════════════════════════
-   ATTENDANCE SYSTEM
-═══════════════════════════════════════════ */
-.punch-hero{background:linear-gradient(135deg,var(--navy) 0%,#1A3A5C 100%);padding:32px 28px;text-align:center;}
-.punch-ring{width:140px;height:140px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;background:var(--green);color:white;font-weight:900;box-shadow:0 8px 32px rgba(46,125,50,0.4);}
+.mod-item{background:white;border-radius:14px;border:1px solid var(--border);padding:12px;text-align:center;}
 </style>
 </head>
 <body>
 
 <div id="scr-splash" class="screen on">
     <div class="splash-logo">🏗️</div>
-    <div style="color:white; font-weight:900; font-size:24px; margin-top:20px;">AIPL INFRA</div>
+    <div class="splash-name">AIPL INFRA</div>
+    <div class="splash-dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
 </div>
 
 <div id="scr-login" class="screen">
     <div style="height:35vh; display:flex; align-items:center; justify-content:center; color:white; font-weight:900; font-size:32px;">LOGIN</div>
     <div class="login-card">
-        <input type="text" class="finput" placeholder="Username/Phone">
-        <input type="password" class="finput" placeholder="Password">
-        <button class="btn-primary" onclick="showApp('dash')">SIGN IN</button>
+        <input type="text" class="finp" placeholder="Username">
+        <input type="password" class="finp" placeholder="Password">
+        <button class="btn-primary" onclick="showScreen('dash')">SIGN IN</button>
     </div>
 </div>
 
-<div id="scr-dash" class="screen">
+<div id="scr-dash" class="app-screen">
     <div class="dash-top">
-        <div style="color:white; font-weight:900; font-size:22px;">AIPL Dashboard</div>
+        <div style="color:white; font-weight:900; font-size:22px;">AIPL DASHBOARD</div>
     </div>
     <div class="mod-grid">
-        <div class="mod-item" onclick="showApp('att')">📍<br>Attendance</div>
-        <div class="mod-item" onclick="showApp('acc')">💰<br>Accounts</div>
-        <div class="mod-item">🏗️<br>Projects</div>
+        <div class="mod-item" onclick="showScreen('att')">📍<br><small>Attendance</small></div>
+        <div class="mod-item" onclick="showScreen('acc')">💰<br><small>Accounts</small></div>
+        <div class="mod-item">🏗️<br><small>Projects</small></div>
     </div>
 </div>
 
-<div id="scr-att" class="screen">
-    <div class="punch-hero">
-        <div class="punch-ring">PUNCH IN</div>
-        <p style="color:rgba(255,255,255,0.6); margin-top:20px;">NH-44 Highway Site</p>
+<div id="scr-att" class="app-screen">
+    <div class="dash-top">
+        <div style="color:white; font-weight:900; font-size:22px;">SITE ATTENDANCE</div>
+    </div>
+    <div style="padding:40px; text-align:center;">
+        <div style="width:120px;height:120px;border-radius:50%;background:var(--green);margin:0 auto;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;">PUNCH IN</div>
     </div>
 </div>
 
-<div id="scr-acc" class="screen">
-    <div class="sub-nav">
-        <button id="tab-vouch" class="sn-btn on" onclick="setAccTab('vouch')">Voucher</button>
-        <button id="tab-master" class="sn-btn" onclick="setAccTab('master')">Manage Codes</button>
+<div id="scr-acc" class="app-screen">
+    <div class="dash-top" style="padding:40px 16px 15px;">
+        <div style="color:white; font-weight:900; font-size:20px;">ACCOUNTS MODULE</div>
+    </div>
+    
+    <div class="acc-sub-nav">
+        <button id="tab-vouch" class="acc-tab-btn on" onclick="switchAccTab('vouch')">Voucher Entry</button>
+        <button id="tab-master" class="acc-tab-btn" onclick="switchAccTab('master')">Manage Codes</button>
     </div>
 
-    <div id="view-vouch" style="display:block; padding-bottom:80px;">
-        <div class="card">
-            <div style="font-size:11px; font-weight:800; color:var(--text3); margin-bottom:8px;">SELECT ACCOUNT HEAD</div>
-            <select id="v-dropdown" class="fselect">
+    <div id="acc-vouch-view" style="display:block; overflow-y:auto;">
+        <div class="acc-card">
+            <p style="font-size:11px; font-weight:800; color:var(--text3); margin-bottom:8px;">SELECT ACCOUNT HEAD</p>
+            <select id="voucher-dropdown" class="fsel">
                 <option value="">-- Loading Codes --</option>
             </select>
-            <input type="number" class="finput" placeholder="Amount (₹)">
-            <input type="text" class="finput" placeholder="Narration">
-            <button class="btn-primary" onclick="alert('Voucher Saved!')">SUBMIT</button>
+            <input type="number" class="finp" placeholder="Amount (₹)">
+            <input type="text" class="finp" placeholder="Narration/Remarks">
+            <button class="btn-primary" onclick="alert('Voucher Saved Locally')">SAVE VOUCHER</button>
         </div>
     </div>
 
-    <div id="view-master" style="display:none; padding-bottom:80px;">
-        <div class="card">
-            <div style="font-size:11px; font-weight:800; color:var(--text3); margin-bottom:8px;">ADD NEW CODE MANUALLY</div>
-            <input type="text" id="m-code" class="finput" placeholder="Code (e.g. DSL-001)">
-            <input type="text" id="m-name" class="finput" placeholder="Name (e.g. Site Diesel)">
-            <button class="btn-primary" onclick="saveNewHead()">+ ADD CODE</button>
+    <div id="acc-master-view" style="display:none; overflow-y:auto;">
+        <div class="acc-card">
+            <p style="font-size:11px; font-weight:800; color:var(--text3); margin-bottom:8px;">ADD NEW ACCOUNT CODE</p>
+            <input type="text" id="new-code-inp" class="finp" placeholder="Code (e.g. DSL-01)">
+            <input type="text" id="new-name-inp" class="finp" placeholder="Head Name (e.g. Diesel Expense)">
+            <button class="btn-primary" onclick="addNewAccountHead()">+ ADD TO MASTER</button>
         </div>
-        <div class="card">
+        <div class="acc-card">
             <table class="master-table">
-                <thead><tr><th>CODE</th><th>NAME</th></tr></thead>
-                <tbody id="master-rows"></tbody>
+                <thead><tr><th>CODE</th><th>HEAD NAME</th></tr></thead>
+                <tbody id="master-table-body"></tbody>
             </table>
         </div>
     </div>
 </div>
 
-<div class="app-nav" id="main-nav">
-    <div class="an-item" onclick="showApp('dash')">🏠<div class="an-lb">Home</div></div>
-    <div class="an-item" onclick="showApp('att')">📍<div class="an-lb">Att.</div></div>
-    <div class="an-item" onclick="showApp('acc')">💰<div class="an-lb">Acc.</div></div>
+<div class="app-nav" id="main-nav" style="display:none;">
+    <div class="an-item on" onclick="showScreen('dash')"><div class="an-ic">📊</div><div class="an-lb">Dashboard</div></div>
+    <div class="an-item" onclick="showScreen('att')"><div class="an-ic">📍</div><div class="an-lb">Attendance</div></div>
+    <div class="an-item" onclick="showScreen('acc')"><div class="an-ic">💰</div><div class="an-lb">Accounts</div></div>
 </div>
 
 <script>
@@ -152,65 +166,73 @@ html,body{height:100%;font-family:Nunito,sans-serif;background:var(--bg);color:v
    APP LOGIC
 ═══════════════════════════════════════════ */
 
-// Manual Code Storage
-let heads = [
-    {code:'SITE-01', name:'General Site Expense'},
-    {code:'LABR-22', name:'Masonry Labor'}
+// 1. Data Store for Account Heads
+let accountHeads = [
+    {code: 'LBR-01', name: 'General Labor'},
+    {code: 'MAT-01', name: 'Cement Supply'}
 ];
 
-// Navigation Logic
-function showApp(scrId) {
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
-    document.getElementById('scr-' + scrId).classList.add('on');
-    document.getElementById('main-nav').classList.add('on');
-    if(scrId === 'acc') refreshUI();
+// 2. Navigation
+function showScreen(id) {
+    document.querySelectorAll('.screen, .app-screen').forEach(s => s.classList.remove('on'));
+    const target = document.getElementById('scr-' + id);
+    if(target) target.classList.add('on');
+    
+    // Show/Hide Nav
+    const nav = document.getElementById('main-nav');
+    nav.style.display = (id === 'splash' || id === 'login') ? 'none' : 'flex';
+    
+    if(id === 'acc') refreshAccountUI();
 }
 
-// Account Tab Management
-function setAccTab(tab) {
-    document.getElementById('view-vouch').style.display = tab === 'vouch' ? 'block' : 'none';
-    document.getElementById('view-master').style.display = tab === 'master' ? 'block' : 'none';
+// 3. Accounts Tab Switching
+function switchAccTab(tab) {
+    document.getElementById('acc-vouch-view').style.display = tab === 'vouch' ? 'block' : 'none';
+    document.getElementById('acc-master-view').style.display = tab === 'master' ? 'block' : 'none';
+    
     document.getElementById('tab-vouch').classList.toggle('on', tab === 'vouch');
     document.getElementById('tab-master').classList.toggle('on', tab === 'master');
-    refreshUI();
+    refreshAccountUI();
 }
 
-// Add New Code Logic
-function saveNewHead() {
-    const code = document.getElementById('m-code').value.toUpperCase();
-    const name = document.getElementById('m-name').value;
-    if(code && name) {
-        heads.push({code, name});
-        document.getElementById('m-code').value = '';
-        document.getElementById('m-name').value = '';
-        refreshUI();
-        alert("Account Code Added!");
-    }
+// 4. Manual Code Logic
+function addNewAccountHead() {
+    const code = document.getElementById('new-code-inp').value.toUpperCase().trim();
+    const name = document.getElementById('new-name-inp').value.trim();
+    
+    if(!code || !name) return alert("Enter both Code and Name");
+    
+    accountHeads.push({code, name});
+    document.getElementById('new-code-inp').value = '';
+    document.getElementById('new-name-inp').value = '';
+    
+    refreshAccountUI();
+    alert("Head Added Successfully!");
 }
 
-// Refresh Dropdowns and Tables
-function refreshUI() {
-    // Refresh Voucher Dropdown
-    const dropdown = document.getElementById('v-dropdown');
-    dropdown.innerHTML = '<option value="">-- Select Code --</option>';
-    heads.forEach(h => {
+function refreshAccountUI() {
+    // Update Dropdown in Voucher View
+    const dropdown = document.getElementById('voucher-dropdown');
+    dropdown.innerHTML = '<option value="">-- Select Account Head --</option>';
+    accountHeads.forEach(h => {
         const opt = document.createElement('option');
         opt.value = h.code;
         opt.innerText = `[${h.code}] ${h.name}`;
         dropdown.appendChild(opt);
     });
 
-    // Refresh Master Table
-    document.getElementById('master-rows').innerHTML = heads.map(h => `
-        <tr><td><span class="code-badge">${h.code}</span></td><td>${h.name}</td></tr>
+    // Update Table in Master View
+    const tableBody = document.getElementById('master-table-body');
+    tableBody.innerHTML = accountHeads.map(h => `
+        <tr>
+            <td><span class="code-tag">${h.code}</span></td>
+            <td>${h.name}</td>
+        </tr>
     `).join('');
 }
 
-// Auto-Splash Transition
-setTimeout(() => {
-    document.getElementById('scr-splash').classList.remove('on');
-    document.getElementById('scr-login').classList.add('on');
-}, 1500);
+// 5. Initial Load (Splash to Login)
+setTimeout(() => showScreen('login'), 2000);
 
 </script>
 </body>
