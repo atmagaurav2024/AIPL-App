@@ -2542,6 +2542,7 @@ input,select,textarea{font-size:16px !important;}
     <div class="acc-tab" onclick="accSwitchTab('reports',this)">Reports</div>
     <div class="acc-tab" onclick="accSwitchTab('gst',this)">GST / TDS</div>
     <div class="acc-tab" onclick="accSwitchTab('coa',this)">Chart of Accounts</div>
+    <div class="acc-tab" onclick="accSwitchTab('codes',this)">Codes</div>
   </div>
   <div class="acc-scroll" id="acc-content">
     <div style="text-align:center;padding:40px;color:var(--text3);">⏳ Loading...</div>
@@ -9469,6 +9470,7 @@ async function accAutoFromPettyCash(expense){
 var ACC_TAB = 'dash';
 var ACC_VOUCHERS = [], ACC_ACCOUNTS = [], ACC_ITEMS = [];
 var ACC_GST = [], ACC_TDS = [];
+var ACC_CODES = []; // custom expense/asset codes for voucher entry
 var ACC_BOOK_TYPE = 'cash'; // cash / bank / day
 var ACC_REP_TYPE  = 'trial';
 var ACC_LEDGER_PARTY = null;
@@ -9505,6 +9507,11 @@ async function initAccounts(){
     ACC_GST       = Array.isArray(r[3])?r[3]:[];
     ACC_TDS       = Array.isArray(r[4])?r[4]:[];
   }catch(e){ console.error(e); }
+  try{
+    var rawCodes = localStorage.getItem('AIPL_ACC_CODES');
+    ACC_CODES = rawCodes ? JSON.parse(rawCodes) : [];
+    if(!Array.isArray(ACC_CODES)) ACC_CODES = [];
+  }catch(e){ ACC_CODES = []; }
   accSwitchTab('dash', document.querySelector('.acc-tab'));
 }
 
@@ -9524,6 +9531,7 @@ function accRender(){
   else if(ACC_TAB==='reports') el.innerHTML = accReportsHTML();
   else if(ACC_TAB==='gst')     el.innerHTML = accGstHTML();
   else if(ACC_TAB==='coa')     el.innerHTML = accCoaHTML();
+  else if(ACC_TAB==='codes')   el.innerHTML = accCodesHTML();
 }
 
 // ── HELPER: account balance ──────────────────────────
@@ -10017,6 +10025,68 @@ function accViewAccount(id){
   openAccSheet();
 }
 
+// ── CUSTOM CODES TAB ──────────────────────────────────
+function accCodesHTML(){
+  var rows = ACC_CODES.map(function(c, idx){
+    var acc = ACC_ACCOUNTS.find(function(a){ return a.id===c.account_id; });
+    return '<div style="display:grid;grid-template-columns:78px 90px 1fr 28px;gap:8px;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);">'+
+      '<div style="font-size:12px;font-weight:900;color:var(--navy);">'+(c.code||'')+'</div>'+
+      '<div><span class="badge '+(c.head==='asset'?'b-navy':'b-amber')+'">'+(c.head==='asset'?'Asset':'Expense')+'</span></div>'+
+      '<div style="font-size:12px;line-height:1.35;">'+(c.name||'')+
+        '<div style="font-size:10px;color:var(--text3);margin-top:2px;">'+(acc?(acc.code+' — '+acc.name):'No account linked')+'</div>'+
+      '</div>'+
+      '<button onclick="accDeleteCode('+idx+')" title="Delete" style="border:none;background:#FFEBEE;color:#C62828;width:26px;height:26px;border-radius:7px;cursor:pointer;font-size:14px;">×</button>'+
+    '</div>';
+  }).join('') || '<div style="text-align:center;padding:18px;color:var(--text3);font-size:12px;">No custom codes yet.</div>';
+
+  var accOpts = '<option value="">— Link Ledger Account —</option>' + ACC_ACCOUNTS
+    .filter(function(a){ return a.account_type==='expense' || a.account_type==='asset'; })
+    .map(function(a){ return '<option value="'+a.id+'">'+a.code+' — '+a.name+'</option>'; })
+    .join('');
+
+  return '<div class="acc-card" style="margin-bottom:10px;">'+
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">+ Add Custom Code</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Head *</label><select id="ac-code-head" class="fsel"><option value="expense">Expense</option><option value="asset">Asset</option></select></div>'+
+      '<div><label class="flbl">Code *</label><input id="ac-code-code" class="finp" placeholder="e.g. EXP-001"></div>'+
+    '</div>'+
+    '<label class="flbl">Code Name *</label><input id="ac-code-name" class="finp" placeholder="e.g. Diesel for DG">'+
+    '<label class="flbl">Ledger Link *</label><select id="ac-code-account" class="fsel">'+accOpts+'</select>'+
+    '<button onclick="accSaveCode()" style="width:100%;margin-top:10px;padding:11px;background:var(--navy);color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Save Code</button>'+
+  '</div>'+
+  '<div class="acc-card">'+
+    '<div style="font-size:11px;font-weight:800;color:var(--navy);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Saved Codes</div>'+
+    rows+
+  '</div>'+
+  '<div style="font-size:11px;color:var(--text3);margin-top:8px;">These codes are used in Voucher Entry → Select Expense/Asset.</div>';
+}
+
+function accPersistCodes(){
+  try{ localStorage.setItem('AIPL_ACC_CODES', JSON.stringify(ACC_CODES)); }catch(e){}
+}
+
+function accSaveCode(){
+  var head = ((document.getElementById('ac-code-head')||{}).value||'').trim();
+  var code = ((document.getElementById('ac-code-code')||{}).value||'').trim().toUpperCase();
+  var name = ((document.getElementById('ac-code-name')||{}).value||'').trim();
+  var accountId = ((document.getElementById('ac-code-account')||{}).value||'').trim();
+  if(!head || !code || !name || !accountId){ toast('Head, code, name and linked ledger are required','warning'); return; }
+  var dup = ACC_CODES.find(function(c){ return c.code.toUpperCase()===code; });
+  if(dup){ toast('Code already exists. Use a unique code.','warning'); return; }
+  ACC_CODES.unshift({ head:head, code:code, name:name, account_id:accountId });
+  accPersistCodes();
+  toast('Code saved','success');
+  accRender();
+}
+
+function accDeleteCode(idx){
+  if(idx<0 || idx>=ACC_CODES.length) return;
+  ACC_CODES.splice(idx,1);
+  accPersistCodes();
+  toast('Code removed','info');
+  accRender();
+}
+
 // ── NEW VOUCHER FORM ─────────────────────────────────
 async function accOpenVoucher(type){
   accVouLineCount = 2;
@@ -10497,9 +10567,15 @@ function accSmartEntries(vType){
     }).join('');
 
   var expenseOpts = '<option value="">— Select Expense/Asset —</option>'+
-    ACC_ACCOUNTS.filter(function(a){return a.account_type==='expense'||a.account_type==='asset';}).map(function(a){
-      return '<option value="'+a.id+'">'+a.code+' — '+a.name+'</option>';
-    }).join('');
+    (ACC_CODES.length
+      ? ACC_CODES.map(function(c){
+          var acc = ACC_ACCOUNTS.find(function(a){ return a.id===c.account_id; });
+          return '<option value="'+(c.account_id||'')+'">'+c.code+' — '+c.name+' ('+(c.head==='asset'?'Asset':'Expense')+')'+(acc?' · '+acc.name:'')+'</option>';
+        }).join('')
+      : ACC_ACCOUNTS.filter(function(a){return a.account_type==='expense'||a.account_type==='asset';}).map(function(a){
+          return '<option value="'+a.id+'">'+a.code+' — '+a.name+'</option>';
+        }).join('')
+    );
 
   var incomeOpts = '<option value="">— Select Income —</option>'+
     ACC_ACCOUNTS.filter(function(a){return a.account_type==='income';}).map(function(a){
