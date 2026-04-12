@@ -2314,6 +2314,7 @@ function showApp(name){
   });
   if(name==='attendance'&&!window._attInit){window._attInit=true;initAttendance();}
   if(name==='registry'){initRegistry();startSync();}
+  else if(name==='employees'){initEmpMgmt();}
   else if(name==='projects'){initProjects();}
   else if(name==='boq'){initBOQ();}
   else if(name==='jm'){initJM();}
@@ -5285,38 +5286,42 @@ function closeDrawer(){
     </div>
     <div class="drawer-item" onclick="showApp('registry');closeDrawer();">
       <div class="drawer-item-ic" style="background:#F3E5F5;">📚</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, SC, Employees</div></div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Master Registry</div><div class="drawer-item-sub">Vendors, Materials, Subcontractors</div></div>
+    </div>
+    <div class="drawer-item" onclick="showApp('employees');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E8F5E9;">&#128101;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Employee Management</div><div class="drawer-item-sub">Registration, Pay Fixation, HR</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8F5E9;">🏗️</div>
+      <div class="drawer-item-ic" style="background:#E8F5E9;">&#127959;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#EDE7F6;">📋</div>
+      <div class="drawer-item-ic" style="background:#EDE7F6;">&#128203;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">BOQ Items</div><div class="drawer-item-sub">Bill of Quantities</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8EAF6;">📐</div>
+      <div class="drawer-item-ic" style="background:#E8EAF6;">&#128208;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E3F2FD;">📦</div>
+      <div class="drawer-item-ic" style="background:#E3F2FD;">&#128230;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resources per BOQ item</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF3E0;">📝</div>
+      <div class="drawer-item-ic" style="background:#FFF3E0;">&#128221;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to SC / Labour</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('petty-cash');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF8E1;">💵</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Petty Cash</div><div class="drawer-item-sub">Cash in hand & site expenses</div></div>
+      <div class="drawer-item-ic" style="background:#FFF8E1;">&#128181;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Petty Cash</div><div class="drawer-item-sub">Cash in hand &amp; site expenses</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('accounts');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8EAF6;">💰</div>
+      <div class="drawer-item-ic" style="background:#E8EAF6;">&#128176;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Accounts</div><div class="drawer-item-sub">Vouchers, Ledger, GST, TDS</div></div>
     </div>
     <div class="drawer-item" onclick="showApp('access');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#EDE7F6;">🔐</div>
+      <div class="drawer-item-ic" style="background:#EDE7F6;">&#128274;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Access Control</div><div class="drawer-item-sub">Module permissions</div></div>
     </div>
     <div class="drawer-item" onclick="toast('DPR module coming soon','info');closeDrawer();">
@@ -5360,131 +5365,584 @@ function closeDrawer(){
 </div>
 
 </body>
-</html>
-<!-- ═══════════ NEW MODULES ═══════════ -->
 
-<!-- PROJECTS -->
-<div class="app-screen" id="app-projects">
+
+<!-- ═══════════ EMPLOYEE MANAGEMENT MODULE ═══════════ -->
+<div class="app-screen" id="app-employees">
   <div style="background:#1B5E20;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127959; Projects</div>
-    <button class="tb-btn" onclick="openProjForm(null)" style="font-size:20px;">&#43;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128101; Employee Management</div>
+    <button class="tb-btn" id="emp-add-btn" onclick="empOpenForm(null)" style="font-size:20px;">&#43;</button>
   </div>
-  <div style="padding:10px 14px 6px;flex-shrink:0;">
-    <div class="search-bar"><span style="font-size:16px;color:var(--text3);">&#128269;</span><input type="text" id="proj-search" placeholder="Search projects..." oninput="searchProj(this.value)"></div>
+  <!-- Tab Bar -->
+  <div id="emp-tab-bar" style="display:flex;overflow-x:auto;background:#1B5E20;padding:0 14px 10px;flex-shrink:0;scrollbar-width:none;gap:4px;">
+    <button onclick="empTab('active',this)"   id="emp-t-active"   style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:rgba(255,255,255,.2);color:white;">&#9989; Active</button>
+    <button onclick="empTab('pending',this)"  id="emp-t-pending"  style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#9203; Pending</button>
+    <button onclick="empTab('pay',this)"      id="emp-t-pay"      style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128178; Pay Fixation</button>
+    <button onclick="empTab('resigned',this)" id="emp-t-resigned" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128683; Resigned</button>
   </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 90px;" id="proj-list"><div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div></div>
-</div>
-<div class="sh-overlay" id="ov-proj" onclick="closeProjSheet()"></div>
-<div class="sheet" id="sh-proj" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
-
-<!-- BOQ -->
-<div class="app-screen" id="app-boq">
-  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128203; BOQ Items</div>
-    <button class="tb-btn" onclick="boqOpenAddItem(null)" style="font-size:20px;">&#43;</button>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select>
-  </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="boq-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
-<div class="sheet" id="sh-boq" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
-
-<!-- JM -->
-<div class="app-screen" id="app-jm">
-  <div style="background:#283593;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128208; Joint Measurements</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select>
-  </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="jm-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
-<div class="sheet" id="sh-jm" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
-
-<!-- PLANNING -->
-<div class="app-screen" id="app-planning">
-  <div style="background:#1565C0;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128230; Planning</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select>
-  </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="plan-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-plan" onclick="closeSheet('ov-plan','sh-plan')"></div>
-<div class="sheet" id="sh-plan" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
-
-<!-- WORK ALLOTMENT -->
-<div class="app-screen" id="app-execution">
-  <div style="background:#E65100;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128221; Work Allotment</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;">
-    <select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select>
-  </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="exec-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-exec" onclick="closeSheet('ov-exec','sh-exec')"></div>
-<div class="sheet" id="sh-exec" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
-
-<!-- PETTY CASH -->
-<div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;overflow:hidden;">
-  <div style="display:flex;align-items:center;padding:18px 18px 10px;background:#EFEBE4;flex-shrink:0;">
-    <span onclick="showApp('dashboard')" style="font-size:28px;color:#1E2547;cursor:pointer;margin-right:10px;line-height:1;">&#8249;</span>
-    <div style="flex:1;"><div style="font-size:20px;font-weight:900;color:#1E2547;">Site Cash Manager</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Atmagaurav Infra Pvt Ltd</div></div>
-  </div>
-  <div id="pc-site-tabs" style="display:flex;gap:10px;padding:2px 18px 14px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;-webkit-overflow-scrolling:touch;"></div>
-  <div id="pc-main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;"><div style="text-align:center;padding:40px;color:#9CA3AF;">Loading...</div></div>
-  <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
-</div>
-<div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
-<div class="sheet" id="sh-pc" style="max-height:92vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div><div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div><div class="sh-foot" id="pc-sheet-foot"></div></div>
-
-<!-- ACCOUNTS (with Head/Sub Head/Account COA) -->
-<div class="app-screen" id="app-accounts">
-  <div style="background:#1A237E;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128176; Accounts</div>
-    <button class="tb-btn" id="acc-add-btn" onclick="accQuickAdd()" style="font-size:20px;">&#43;</button>
-  </div>
-  <div id="acc-tab-bar" style="display:flex;overflow-x:auto;background:#1A237E;padding:0 14px 10px;flex-shrink:0;scrollbar-width:none;gap:4px;"></div>
-  <div id="acc-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;background:#F0F4F8;"><div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div></div>
-</div>
-<div class="sh-overlay" id="ov-acc" onclick="closeAccSheet()"></div>
-<div class="sheet" id="sh-acc" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
-
-<!-- ACCESS CONTROL -->
-<div class="app-screen" id="app-access">
-  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128274; Access Control</div>
-  </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
-      <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
-    </div>
-    <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select></div>
-    <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
-  </div>
-  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
-    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
+  <div id="emp-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px;background:#F0F4F8;">
+    <div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>
   </div>
 </div>
 
-<style>
-.vou-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;display:inline-block;}
-.vou-payment{background:#FFEBEE;color:#C62828;}.vou-receipt{background:#E8F5E9;color:#2E7D32;}
-.vou-purchase{background:#E3F2FD;color:#1565C0;}.vou-journal{background:#F3E5F5;color:#6A1B9A;}.vou-contra{background:#FFF3E0;color:#E65100;}
-</style>
+<!-- Employee Form Sheet -->
+<div class="sh-overlay" id="ov-emp" onclick="closeEmpSheet()"></div>
+<div class="sheet" id="sh-emp" style="max-height:96vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="emp-sheet-title">New Employee</div><span class="sh-close" onclick="closeEmpSheet()">&#10005;</span></div>
+  <div class="sh-body" id="emp-sheet-body"></div>
+  <div class="sh-foot" id="emp-sheet-foot"></div>
+</div>
+
+<!-- Pay Fixation Sheet -->
+<div class="sh-overlay" id="ov-pay" onclick="closeSheet('ov-pay','sh-pay')"></div>
+<div class="sheet" id="sh-pay" style="max-height:96vh;">
+  <div class="sh-handle"></div>
+  <div class="sh-head"><div class="sh-title" id="pay-sheet-title">Pay Fixation</div><span class="sh-close" onclick="closeSheet('ov-pay','sh-pay')">&#10005;</span></div>
+  <div class="sh-body" id="pay-sheet-body"></div>
+  <div class="sh-foot" id="pay-sheet-foot"></div>
+</div>
+
+<!-- ═══════════ EMPLOYEE MANAGEMENT JS ═══════════ -->
+<script>
+var EMP_LIST=[], EMP_PAY=[], EMP_TAB='active', EMP_EDIT_ID=null;
+
+var EMP_DEPTS=['Site','Finance','HR/Admin','QC/Safety','Procurement','Planning','Management','Other'];
+var EMP_GRADES=['Grade-1','Grade-2','Grade-3','Grade-4','Grade-5','Manager','Sr. Manager','DGM','GM','Other'];
+var EMP_CATS=['Permanent','Contract','Probation','Daily Wage','Consultant'];
+var EMP_ROLES=['Admin','Project Manager','Site Engineer','Junior Engineer','QC Engineer','Safety Officer','Finance / Accounts','HR / Admin','Viewer (Read Only)','Surveyor','Store Keeper','Driver','Labour','Other'];
+
+function openEmpSheet(){openSheet('ov-emp','sh-emp');}
+function closeEmpSheet(){closeSheet('ov-emp','sh-emp');}
+
+async function initEmpMgmt(){
+  var el=document.getElementById('emp-content');
+  if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>';
+  try{
+    var r=await Promise.all([
+      sbFetch('employees',{select:'*',order:'created_at.desc'}),
+      sbFetch('employee_pay',{select:'*',order:'effective_date.desc'})
+    ]);
+    EMP_LIST=Array.isArray(r[0])?r[0]:[];
+    EMP_PAY=Array.isArray(r[1])?r[1]:[];
+  }catch(e){EMP_LIST=[];console.error(e);}
+  empTab('active',document.getElementById('emp-t-active'));
+}
+
+function empTab(tab,btn){
+  EMP_TAB=tab;
+  var tb=document.getElementById('emp-tab-bar');
+  if(tb)Array.from(tb.children).forEach(function(b){b.style.background='transparent';b.style.color='rgba(255,255,255,.6)';});
+  if(btn){btn.style.background='rgba(255,255,255,.2)';btn.style.color='white';}
+  var addBtn=document.getElementById('emp-add-btn');
+  if(addBtn)addBtn.style.display=(tab==='active'||tab==='pending')?'':'none';
+  empRender();
+}
+
+function empRender(){
+  var el=document.getElementById('emp-content');if(!el)return;
+  if(EMP_TAB==='active')   el.innerHTML=empListHTML('active');
+  else if(EMP_TAB==='pending') el.innerHTML=empListHTML('pending');
+  else if(EMP_TAB==='pay')     el.innerHTML=empPayHTML();
+  else if(EMP_TAB==='resigned')el.innerHTML=empListHTML('resigned');
+}
+
+// ── EMPLOYEE LIST ────────────────────────────────────
+function empListHTML(status){
+  var statusMap={active:'active',pending:'pending',resigned:'resigned',inactive:'inactive'};
+  var list=EMP_LIST.filter(function(e){
+    if(status==='pending') return e.status==='pending'||!e.status;
+    return e.status===status;
+  });
+  var col={active:'#2E7D32',pending:'#F57F17',resigned:'#C62828'}[status]||'#37474F';
+
+  // Stats
+  var total=EMP_LIST.length;
+  var active=EMP_LIST.filter(function(e){return e.status==='active';}).length;
+  var pending=EMP_LIST.filter(function(e){return e.status==='pending'||!e.status;}).length;
+
+  var stats='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #2E7D32;"><div style="font-size:10px;color:var(--text3);font-weight:700;">ACTIVE</div><div style="font-size:20px;font-weight:900;color:#2E7D32;">'+active+'</div></div>'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #F57F17;cursor:pointer;" onclick="empTab(\'pending\',document.getElementById(\'emp-t-pending\'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">PENDING</div><div style="font-size:20px;font-weight:900;color:#F57F17;">'+pending+'</div></div>'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #37474F;"><div style="font-size:10px;color:var(--text3);font-weight:700;">TOTAL</div><div style="font-size:20px;font-weight:900;color:#37474F;">'+total+'</div></div>'+
+  '</div>';
+
+  if(!list.length){
+    return (status==='active'?stats:'')+
+      '<div style="text-align:center;padding:40px;color:var(--text3);">'+
+        '<div style="font-size:36px;margin-bottom:10px;">&#128101;</div>'+
+        '<div style="font-weight:700;">No '+status+' employees</div>'+
+        (status==='pending'?'<div style="font-size:12px;margin-top:6px;">New registrations will appear here for approval</div>':'')+
+      '</div>';
+  }
+
+  var rows=list.map(function(e){
+    var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var init=name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'?';
+    var hasPay=EMP_PAY.some(function(p){return p.employee_id===e.id;});
+    var roleColors={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A'};
+    var rc=roleColors[e.role||e.designation]||'#37474F';
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" onclick="empViewDetail(\''+e.id+'\')">'+
+      '<div style="padding:12px 14px;display:flex;align-items:center;gap:12px;">'+
+        '<div style="width:44px;height:44px;border-radius:12px;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
+          (e.photo_url?'<img src="'+e.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">':init)+
+        '</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:14px;font-weight:800;color:var(--text);">'+name+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
+          '<div style="display:flex;gap:6px;margin-top:5px;flex-wrap:wrap;">'+
+            (e.department?'<span style="background:#F0F4F8;color:var(--text2);border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;">'+e.department+'</span>':'')+
+            (e.project_name||e.project?'<span style="background:#E3F2FD;color:#1565C0;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;">&#127959; '+(e.project_name||e.project)+'</span>':'')+
+            (hasPay?'<span style="background:#E8F5E9;color:#2E7D32;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;">&#128178; Pay Fixed</span>':'<span style="background:#FFF3E0;color:#E65100;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:700;">&#9888; No Pay</span>')+
+          '</div>'+
+        '</div>'+
+        (status==='pending'?
+          '<div style="display:flex;flex-direction:column;gap:6px;" onclick="event.stopPropagation()">'+
+            '<button onclick="empApprove(\''+e.id+'\')" style="background:#2E7D32;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#10003; Approve</button>'+
+            '<button onclick="empReject(\''+e.id+'\')" style="background:#C62828;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#10005; Reject</button>'+
+          '</div>':
+          '<div style="font-size:20px;color:var(--text3);">&#8250;</div>'
+        )+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return (status==='active'?stats:'')+rows;
+}
+
+// ── PAY FIXATION LIST ─────────────────────────────────
+function empPayHTML(){
+  var active=EMP_LIST.filter(function(e){return e.status==='active';});
+  if(!active.length)return '<div style="text-align:center;padding:40px;color:var(--text3);">No active employees. Approve employees first.</div>';
+
+  return active.map(function(e){
+    var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+    var latest=pays[0];
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:12px 14px;background:#F8FAFC;display:flex;align-items:center;gap:10px;">'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:14px;font-weight:800;">'+name+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div>'+
+        '</div>'+
+        '<button onclick="empOpenPay(\''+e.id+'\',\''+name.replace(/'/g,'&#39;')+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">'+
+          (latest?'&#9998; Revise':'+ Fix Pay')+
+        '</button>'+
+      '</div>'+
+      (latest?
+        '<div style="padding:10px 14px;">'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">'+
+            payMini('Basic',latest.basic,'#1565C0')+
+            payMini('DA',latest.da,'#2E7D32')+
+            payMini('HRA',latest.hra,'#6A1B9A')+
+          '</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">'+
+            payMini('Conveyance',latest.conveyance,'#E65100')+
+            payMini('Special Allow.',latest.special_allowance,'#F57F17')+
+            payMini('Other Allow.',latest.other_allowance,'#37474F')+
+          '</div>'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#E8F5E9;border-radius:10px;margin-bottom:6px;">'+
+            '<div style="font-size:12px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
+            '<div style="font-size:16px;font-weight:900;color:#2E7D32;">&#8377;'+Number(latest.gross||0).toLocaleString('en-IN')+'</div>'+
+          '</div>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">'+
+            payMini('PF (Emp)',latest.pf_employee,'#C62828')+
+            payMini('ESIC (Emp)',latest.esic_employee,'#C62828')+
+            payMini('TDS',latest.tds,'#C62828')+
+          '</div>'+
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#1B5E2015;border-radius:10px;">'+
+            '<div style="font-size:12px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
+            '<div style="font-size:16px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
+          '</div>'+
+          '<div style="font-size:10px;color:var(--text3);margin-top:6px;">w.e.f. '+latest.effective_date+'</div>'+
+        '</div>'
+      :'<div style="padding:12px 14px;font-size:12px;color:var(--text3);">No pay structure fixed yet</div>')+
+    '</div>';
+  }).join('');
+}
+
+function payMini(lbl,val,col){
+  return '<div style="background:'+col+'10;border-radius:8px;padding:7px 8px;text-align:center;">'+
+    '<div style="font-size:9px;color:var(--text3);font-weight:700;text-transform:uppercase;">'+lbl+'</div>'+
+    '<div style="font-size:12px;font-weight:900;color:'+col+';">&#8377;'+Number(val||0).toLocaleString('en-IN')+'</div>'+
+  '</div>';
+}
+
+// ── EMPLOYEE FORM ─────────────────────────────────────
+function empOpenForm(emp){
+  EMP_EDIT_ID=emp?emp.id:null;
+  var v=emp||{};
+  document.getElementById('emp-sheet-title').textContent=emp?'Edit Employee':'New Employee Registration';
+
+  var deptOpts=EMP_DEPTS.map(function(d){return '<option value="'+d+'"'+(v.department===d?' selected':'')+'>'+d+'</option>';}).join('');
+  var gradeOpts=EMP_GRADES.map(function(g){return '<option value="'+g+'"'+(v.grade===g?' selected':'')+'>'+g+'</option>';}).join('');
+  var catOpts=EMP_CATS.map(function(c){return '<option value="'+c+'"'+(v.category===c?' selected':'')+'>'+c+'</option>';}).join('');
+  var roleOpts=EMP_ROLES.map(function(r){return '<option value="'+r+'"'+((v.designation===r||v.role===r)?' selected':'')+'>'+r+'</option>';}).join('');
+
+  document.getElementById('emp-sheet-body').innerHTML=
+
+  // Personal Details
+  '<div style="font-size:11px;font-weight:800;color:#1B5E20;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #1B5E2020;">&#128100; Personal Details</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">First Name *</label><input id="ef-fname" class="finp" value="'+(v.first_name||'')+'"></div>'+
+    '<div><label class="flbl">Last Name</label><input id="ef-lname" class="finp" value="'+(v.last_name||'')+'"></div>'+
+  '</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">Date of Birth</label><input id="ef-dob" class="finp" type="date" value="'+(v.date_of_birth?v.date_of_birth.slice(0,10):'')+'"></div>'+
+    '<div><label class="flbl">Gender</label><select id="ef-gender" class="fsel"><option value="">Select</option><option value="Male"'+(v.gender==='Male'?' selected':'')+'>Male</option><option value="Female"'+(v.gender==='Female'?' selected':'')+'>Female</option><option value="Other"'+(v.gender==='Other'?' selected':'')+'>Other</option></select></div>'+
+  '</div>'+
+  '<label class="flbl">Mobile Number *</label><input id="ef-mobile" class="finp" type="tel" value="'+(v.mobile||v.phone||'')+'">'+
+  '<label class="flbl">Email</label><input id="ef-email" class="finp" type="email" value="'+(v.email||'')+'">'+
+  '<label class="flbl">Address</label><textarea id="ef-addr" class="ftxt" style="min-height:50px;">'+(v.address||'')+'</textarea>'+
+  '<label class="flbl">Emergency Contact</label><input id="ef-emg" class="finp" placeholder="Name & Number" value="'+(v.emergency_contact||'')+'">'+
+
+  // Job Details
+  '<div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #1565C020;">&#127959; Job Details</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">Employee Code</label><input id="ef-code" class="finp" placeholder="e.g. AIPL-001" value="'+(v.employee_code||v.emp_id||'')+'"></div>'+
+    '<div><label class="flbl">Date of Joining</label><input id="ef-doj" class="finp" type="date" value="'+(v.date_of_joining?v.date_of_joining.slice(0,10):'')+'"></div>'+
+  '</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">Designation / Role *</label><select id="ef-role" class="fsel"><option value="">Select</option>'+roleOpts+'</select></div>'+
+    '<div><label class="flbl">Department</label><select id="ef-dept" class="fsel"><option value="">Select</option>'+deptOpts+'</select></div>'+
+  '</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">Grade</label><select id="ef-grade" class="fsel"><option value="">Select</option>'+gradeOpts+'</select></div>'+
+    '<div><label class="flbl">Category</label><select id="ef-cat" class="fsel"><option value="">Select</option>'+catOpts+'</select></div>'+
+  '</div>'+
+  '<label class="flbl">Reporting To</label><input id="ef-reporting" class="finp" placeholder="Manager / HOD name" value="'+(v.reporting_to||'')+'">'+
+
+  // Documents
+  '<div style="font-size:11px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #6A1B9A20;">&#128196; Documents & IDs</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">PAN Number</label><input id="ef-pan" class="finp" placeholder="ABCDE1234F" value="'+(v.pan_no||'')+'"></div>'+
+    '<div><label class="flbl">Aadhaar Number</label><input id="ef-aadhar" class="finp" placeholder="XXXX XXXX XXXX" value="'+(v.aadhar_no||'')+'"></div>'+
+  '</div>'+
+  '<div class="g2">'+
+    '<div><label class="flbl">UAN Number (PF)</label><input id="ef-uan" class="finp" placeholder="PF UAN No." value="'+(v.uan_no||'')+'"></div>'+
+    '<div><label class="flbl">ESIC Number</label><input id="ef-esic" class="finp" placeholder="ESIC No." value="'+(v.esic_no||'')+'"></div>'+
+  '</div>'+
+
+  // Bank Details
+  '<div style="font-size:11px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #E6510020;">&#127981; Bank Details</div>'+
+  '<label class="flbl">Bank Name</label><input id="ef-bank" class="finp" placeholder="e.g. SBI, HDFC..." value="'+(v.bank_name||'')+'">'+
+  '<div class="g2">'+
+    '<div><label class="flbl">Account Number</label><input id="ef-acc" class="finp" value="'+(v.bank_account||'')+'"></div>'+
+    '<div><label class="flbl">IFSC Code</label><input id="ef-ifsc" class="finp" placeholder="e.g. SBIN0001234" value="'+(v.ifsc||'')+'"></div>'+
+  '</div>';
+
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSaveForm()">&#10003; '+(emp?'Save Changes':'Submit for Approval')+'</button>';
+  openEmpSheet();
+}
+
+async function empSaveForm(){
+  var fname=document.getElementById('ef-fname')?document.getElementById('ef-fname').value.trim():'';
+  var mobile=document.getElementById('ef-mobile')?document.getElementById('ef-mobile').value.trim():'';
+  var role=document.getElementById('ef-role')?document.getElementById('ef-role').value:'';
+  if(!fname){toast('First name is required','warning');return;}
+  if(!mobile){toast('Mobile number is required','warning');return;}
+
+  var data={
+    first_name:fname,
+    last_name:document.getElementById('ef-lname').value.trim()||null,
+    date_of_birth:document.getElementById('ef-dob').value||null,
+    gender:document.getElementById('ef-gender').value||null,
+    mobile:mobile, phone:mobile,
+    email:document.getElementById('ef-email').value.trim()||null,
+    address:document.getElementById('ef-addr').value.trim()||null,
+    emergency_contact:document.getElementById('ef-emg').value.trim()||null,
+    employee_code:document.getElementById('ef-code').value.trim()||null,
+    emp_id:document.getElementById('ef-code').value.trim()||null,
+    date_of_joining:document.getElementById('ef-doj').value||null,
+    designation:role||null, role:empMapRole(role),
+    department:document.getElementById('ef-dept').value||null,
+    grade:document.getElementById('ef-grade').value||null,
+    category:document.getElementById('ef-cat').value||null,
+    reporting_to:document.getElementById('ef-reporting').value.trim()||null,
+    pan_no:document.getElementById('ef-pan').value.trim()||null,
+    aadhar_no:document.getElementById('ef-aadhar').value.trim()||null,
+    uan_no:document.getElementById('ef-uan').value.trim()||null,
+    esic_no:document.getElementById('ef-esic').value.trim()||null,
+    bank_name:document.getElementById('ef-bank').value.trim()||null,
+    bank_account:document.getElementById('ef-acc').value.trim()||null,
+    ifsc:document.getElementById('ef-ifsc').value.trim()||null,
+    status:EMP_EDIT_ID?undefined:'pending'
+  };
+  if(EMP_EDIT_ID) delete data.status;
+
+  try{
+    toast('Saving...','info');
+    if(EMP_EDIT_ID){
+      await sbUpdate('employees',EMP_EDIT_ID,data);
+      var idx=EMP_LIST.findIndex(function(e){return e.id===EMP_EDIT_ID;});
+      if(idx>-1)EMP_LIST[idx]=Object.assign(EMP_LIST[idx],data);
+      toast(fname+' updated!','success');
+    } else {
+      var res=await sbInsert('employees',data);
+      if(res&&res[0])EMP_LIST.unshift(res[0]);
+      toast(fname+' submitted for approval!','success');
+    }
+    closeEmpSheet();
+    empRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+function empMapRole(designation){
+  var map={'Admin':'admin','Project Manager':'pm','Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer'};
+  return map[designation]||'viewer';
+}
+
+// ── APPROVE / REJECT ──────────────────────────────────
+async function empApprove(id){
+  var e=EMP_LIST.find(function(x){return x.id===id;});if(!e)return;
+  var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+  if(!confirm('Approve "'+name+'" as active employee?'))return;
+  try{
+    await sbUpdate('employees',id,{status:'active'});
+    var idx=EMP_LIST.findIndex(function(x){return x.id===id;});
+    if(idx>-1)EMP_LIST[idx].status='active';
+    toast(name+' approved!','success');
+    empRender();
+    // Ask if want to fix pay now
+    setTimeout(function(){
+      if(confirm('Fix salary for '+name+' now?')){
+        empTab('pay',document.getElementById('emp-t-pay'));
+        setTimeout(function(){empOpenPay(id,name);},400);
+      }
+    },500);
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+async function empReject(id){
+  var e=EMP_LIST.find(function(x){return x.id===id;});if(!e)return;
+  var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+  var reason=prompt('Rejection reason (optional):');
+  if(reason===null)return; // cancelled
+  try{
+    await sbUpdate('employees',id,{status:'rejected',rejection_reason:reason||null});
+    var idx=EMP_LIST.findIndex(function(x){return x.id===id;});
+    if(idx>-1)EMP_LIST[idx].status='rejected';
+    toast(name+' rejected','info');
+    empRender();
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+// ── EMPLOYEE DETAIL VIEW ──────────────────────────────
+function empViewDetail(id){
+  var e=EMP_LIST.find(function(x){return x.id===id;});if(!e)return;
+  var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+  var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+  var latest=pays[0];
+  var statusCol={active:'#2E7D32',pending:'#F57F17',rejected:'#C62828',resigned:'#37474F'}[e.status]||'#37474F';
+
+  function row(l,v){return v?'<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F0F4F8;font-size:12px;"><span style="color:var(--text3);flex-shrink:0;margin-right:10px;">'+l+'</span><span style="font-weight:700;text-align:right;">'+v+'</span></div>':'';}
+
+  document.getElementById('emp-sheet-title').textContent=name;
+  document.getElementById('emp-sheet-body').innerHTML=
+    // Header
+    '<div style="background:'+statusCol+';border-radius:14px;padding:16px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;">'+
+      '<div style="width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0;overflow:hidden;">'+
+        (e.photo_url?'<img src="'+e.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">':name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase())+
+      '</div>'+
+      '<div>'+
+        '<div style="font-size:18px;font-weight:900;">'+name+'</div>'+
+        '<div style="font-size:12px;opacity:.8;margin-top:2px;">'+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div>'+
+        '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">'+
+          '<span style="background:rgba(255,255,255,.2);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800;">'+(e.status||'pending').toUpperCase()+'</span>'+
+          (e.employee_code||e.emp_id?'<span style="background:rgba(255,255,255,.2);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800;">'+(e.employee_code||e.emp_id)+'</span>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>'+
+
+    // Personal
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Personal</div>'+
+      row('Date of Birth',e.date_of_birth||null)+row('Gender',e.gender||null)+row('Mobile',e.mobile||e.phone||null)+row('Email',e.email||null)+row('Address',e.address||null)+row('Emergency Contact',e.emergency_contact||null)+
+    '</div>'+
+
+    // Job
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Job Details</div>'+
+      row('Date of Joining',e.date_of_joining||null)+row('Grade',e.grade||null)+row('Category',e.category||null)+row('Reporting To',e.reporting_to||null)+
+    '</div>'+
+
+    // Documents
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Documents</div>'+
+      row('PAN',e.pan_no||null)+row('Aadhaar',e.aadhar_no||null)+row('UAN (PF)',e.uan_no||null)+row('ESIC No',e.esic_no||null)+
+    '</div>'+
+
+    // Bank
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Bank Details</div>'+
+      row('Bank',e.bank_name||null)+row('Account No',e.bank_account||null)+row('IFSC',e.ifsc||null)+
+    '</div>'+
+
+    // Current Pay
+    (latest?
+      '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+        '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Current Pay Structure (w.e.f. '+latest.effective_date+')</div>'+
+        row('Basic','\u20b9'+Number(latest.basic||0).toLocaleString('en-IN'))+
+        row('DA','\u20b9'+Number(latest.da||0).toLocaleString('en-IN'))+
+        row('HRA','\u20b9'+Number(latest.hra||0).toLocaleString('en-IN'))+
+        row('Conveyance','\u20b9'+Number(latest.conveyance||0).toLocaleString('en-IN'))+
+        row('Special Allowance','\u20b9'+Number(latest.special_allowance||0).toLocaleString('en-IN'))+
+        row('Other Allowance','\u20b9'+Number(latest.other_allowance||0).toLocaleString('en-IN'))+
+        '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #2E7D32;color:#2E7D32;"><span>Gross</span><span>\u20b9'+Number(latest.gross||0).toLocaleString('en-IN')+'</span></div>'+
+        row('PF Employee','\u20b9'+Number(latest.pf_employee||0).toLocaleString('en-IN'))+
+        row('PF Employer','\u20b9'+Number(latest.pf_employer||0).toLocaleString('en-IN'))+
+        row('ESIC Employee','\u20b9'+Number(latest.esic_employee||0).toLocaleString('en-IN'))+
+        row('ESIC Employer','\u20b9'+Number(latest.esic_employer||0).toLocaleString('en-IN'))+
+        row('TDS','\u20b9'+Number(latest.tds||0).toLocaleString('en-IN'))+
+        '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #1B5E20;color:#1B5E20;"><span>Net Take Home</span><span>\u20b9'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</span></div>'+
+      '</div>'
+    :'<div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;"><div style="font-size:12px;font-weight:700;color:#E65100;">&#9888; Pay structure not fixed yet</div><button onclick="closeEmpSheet();empTab(\'pay\',document.getElementById(\'emp-t-pay\'));setTimeout(function(){empOpenPay(\''+e.id+'\',\''+name.replace(/'/g,'&#39;')+'\');},400);" style="margin-top:8px;padding:8px 16px;background:#E65100;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Fix Pay Now</button></div>');
+
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>'+
+    (e.status==='active'?'<button class="btn" style="background:#E65100;color:white;" onclick="closeEmpSheet();setTimeout(function(){empOpenPay(\''+e.id+'\',\''+name.replace(/'/g,'&#39;')+'\');},300);">&#128178; Pay</button>':'')+''+
+    '<button class="btn btn-navy" onclick="closeEmpSheet();setTimeout(function(){empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}));},300);">&#9998; Edit</button>';
+  openEmpSheet();
+}
+
+// ── PAY FIXATION FORM ─────────────────────────────────
+function empOpenPay(empId, empName){
+  var existing=EMP_PAY.filter(function(p){return p.employee_id===empId;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+  var v=existing[0]||{};
+
+  document.getElementById('pay-sheet-title').textContent='&#128178; Pay Fixation — '+empName;
+  document.getElementById('pay-sheet-body').innerHTML=
+    '<div style="background:#E8F5E9;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1B5E20;">'+
+      '&#128161; PF = 12% of Basic, ESIC = 0.75% employee / 3.25% employer (on gross up to &#8377;21,000). TDS calculated on annual income.'+
+    '</div>'+
+
+    '<label class="flbl">Effective Date *</label>'+
+    '<input id="pf-date" class="finp" type="date" value="'+(new Date().toISOString().slice(0,10))+'">'+
+
+    '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Earnings</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Basic *</label><input id="pf-basic" class="finp" type="number" step="1" value="'+(v.basic||'')+'" oninput="payAutoCalc()"></div>'+
+      '<div><label class="flbl">DA</label><input id="pf-da" class="finp" type="number" step="1" value="'+(v.da||0)+'" oninput="payAutoCalc()"></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">HRA</label><input id="pf-hra" class="finp" type="number" step="1" value="'+(v.hra||0)+'" oninput="payAutoCalc()"></div>'+
+      '<div><label class="flbl">Conveyance</label><input id="pf-conv" class="finp" type="number" step="1" value="'+(v.conveyance||0)+'" oninput="payAutoCalc()"></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Special Allowance</label><input id="pf-spec" class="finp" type="number" step="1" value="'+(v.special_allowance||0)+'" oninput="payAutoCalc()"></div>'+
+      '<div><label class="flbl">Medical Allowance</label><input id="pf-med" class="finp" type="number" step="1" value="'+(v.medical_allowance||0)+'" oninput="payAutoCalc()"></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Other Allowance</label><input id="pf-other" class="finp" type="number" step="1" value="'+(v.other_allowance||0)+'" oninput="payAutoCalc()"></div>'+
+      '<div></div>'+
+    '</div>'+
+
+    // Gross
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#E8F5E9;border-radius:10px;margin:8px 0;">'+
+      '<div style="font-size:13px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
+      '<div id="pf-gross-display" style="font-size:18px;font-weight:900;color:#2E7D32;">&#8377;0</div>'+
+    '</div>'+
+
+    '<div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Deductions (Auto Calculated)</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">PF Employee (12% of Basic)</label><input id="pf-pfe" class="finp" type="number" step="1" value="'+(v.pf_employee||0)+'" oninput="payNetCalc()"></div>'+
+      '<div><label class="flbl">PF Employer (12% of Basic)</label><input id="pf-pfr" class="finp" type="number" step="1" value="'+(v.pf_employer||0)+'" style="opacity:.7;" readonly></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">ESIC Employee (0.75%)</label><input id="pf-esice" class="finp" type="number" step="1" value="'+(v.esic_employee||0)+'" oninput="payNetCalc()"></div>'+
+      '<div><label class="flbl">ESIC Employer (3.25%)</label><input id="pf-esicr" class="finp" type="number" step="1" value="'+(v.esic_employer||0)+'" style="opacity:.7;" readonly></div>'+
+    '</div>'+
+    '<label class="flbl">TDS (Monthly)</label>'+
+    '<input id="pf-tds" class="finp" type="number" step="1" value="'+(v.tds||0)+'" oninput="payNetCalc()">'+
+
+    // Net
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#1B5E2015;border-radius:10px;margin:8px 0;border:1.5px solid #1B5E2030;">'+
+      '<div style="font-size:13px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
+      '<div id="pf-net-display" style="font-size:20px;font-weight:900;color:#1B5E20;">&#8377;0</div>'+
+    '</div>'+
+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="pf-remarks" class="finp" placeholder="e.g. Revised w.e.f. April 2025" value="'+(v.remarks||'')+'">'+
+
+    '<input type="hidden" id="pf-emp-id" value="'+empId+'">';
+
+  document.getElementById('pay-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeSheet(\'ov-pay\',\'sh-pay\')">Cancel</button>'+
+    '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSavePay()">&#128190; Save Pay Structure</button>';
+
+  openSheet('ov-pay','sh-pay');
+  payAutoCalc();
+}
+
+function gn(id){var el=document.getElementById(id);return parseFloat(el?el.value:0)||0;}
+
+function payAutoCalc(){
+  var basic=gn('pf-basic'),da=gn('pf-da'),hra=gn('pf-hra'),conv=gn('pf-conv'),spec=gn('pf-spec'),med=gn('pf-med'),other=gn('pf-other');
+  var gross=basic+da+hra+conv+spec+med+other;
+
+  // PF = 12% of basic
+  var pfEmp=Math.round(basic*0.12);
+  var pfEmr=Math.round(basic*0.12);
+
+  // ESIC = applicable if gross <= 21000
+  var esicEmp=gross<=21000?Math.round(gross*0.0075):0;
+  var esicEmr=gross<=21000?Math.round(gross*0.0325):0;
+
+  var pfEEl=document.getElementById('pf-pfe');if(pfEEl)pfEEl.value=pfEmp;
+  var pfREl=document.getElementById('pf-pfr');if(pfREl)pfREl.value=pfEmr;
+  var esicEEl=document.getElementById('pf-esice');if(esicEEl)esicEEl.value=esicEmp;
+  var esicREl=document.getElementById('pf-esicr');if(esicREl)esicREl.value=esicEmr;
+
+  var gDisp=document.getElementById('pf-gross-display');if(gDisp)gDisp.innerHTML='&#8377;'+gross.toLocaleString('en-IN');
+  payNetCalc();
+}
+
+function payNetCalc(){
+  var basic=gn('pf-basic'),da=gn('pf-da'),hra=gn('pf-hra'),conv=gn('pf-conv'),spec=gn('pf-spec'),med=gn('pf-med'),other=gn('pf-other');
+  var gross=basic+da+hra+conv+spec+med+other;
+  var pfEmp=gn('pf-pfe'),esicEmp=gn('pf-esice'),tds=gn('pf-tds');
+  var net=gross-pfEmp-esicEmp-tds;
+  var nDisp=document.getElementById('pf-net-display');if(nDisp)nDisp.innerHTML='&#8377;'+Math.max(0,net).toLocaleString('en-IN');
+}
+
+async function empSavePay(){
+  var empId=document.getElementById('pf-emp-id')?document.getElementById('pf-emp-id').value:'';
+  var date=document.getElementById('pf-date')?document.getElementById('pf-date').value:'';
+  var basic=gn('pf-basic');
+  if(!empId||!date){toast('Missing data','error');return;}
+  if(!basic){toast('Basic salary is required','warning');return;}
+
+  var da=gn('pf-da'),hra=gn('pf-hra'),conv=gn('pf-conv'),spec=gn('pf-spec'),med=gn('pf-med'),other=gn('pf-other');
+  var gross=basic+da+hra+conv+spec+med+other;
+  var pfEmp=gn('pf-pfe'),pfEmr=gn('pf-pfr'),esicEmp=gn('pf-esice'),esicEmr=gn('pf-esicr'),tds=gn('pf-tds');
+  var net=Math.max(0,gross-pfEmp-esicEmp-tds);
+  var remarks=document.getElementById('pf-remarks')?document.getElementById('pf-remarks').value.trim():'';
+
+  var data={
+    employee_id:empId, effective_date:date,
+    basic:basic, da:da, hra:hra, conveyance:conv,
+    special_allowance:spec, medical_allowance:med, other_allowance:other,
+    gross:gross, pf_employee:pfEmp, pf_employer:pfEmr,
+    esic_employee:esicEmp, esic_employer:esicEmr,
+    tds:tds, net_salary:net, pay_type:'fixed',
+    remarks:remarks||null,
+    created_by:currentUser?currentUser.name:null
+  };
+
+  try{
+    toast('Saving pay structure...','info');
+    var res=await sbInsert('employee_pay',data);
+    if(res&&res[0])EMP_PAY.unshift(res[0]);
+    toast('Pay structure saved!','success');
+    closeSheet('ov-pay','sh-pay');
+    empRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+</script>
+
 <script>
 
 // ════ HELPERS ════════════════════════════════════════════
@@ -6352,4 +6810,117 @@ async function acSavePermissions(){
 }
 
 </script>
+
+<!-- PROJECTS -->
+<div class="app-screen" id="app-projects">
+  <div style="background:#1B5E20;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127959; Projects</div>
+    <button class="tb-btn" onclick="openProjForm(null)" style="font-size:20px;">&#43;</button>
+  </div>
+  <div style="padding:10px 14px 6px;flex-shrink:0;"><div class="search-bar"><span style="font-size:16px;color:var(--text3);">&#128269;</span><input type="text" id="proj-search" placeholder="Search projects..." oninput="searchProj(this.value)"></div></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 90px;" id="proj-list"><div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div></div>
+</div>
+<div class="sh-overlay" id="ov-proj" onclick="closeProjSheet()"></div>
+<div class="sheet" id="sh-proj" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
+
+<!-- BOQ -->
+<div class="app-screen" id="app-boq">
+  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128203; BOQ Items</div>
+    <button class="tb-btn" onclick="boqOpenAddItem(null)" style="font-size:20px;">&#43;</button>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="boq-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
+<div class="sheet" id="sh-boq" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
+
+<!-- JM -->
+<div class="app-screen" id="app-jm">
+  <div style="background:#283593;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128208; Joint Measurements</div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="jm-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
+<div class="sheet" id="sh-jm" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
+
+<!-- PLANNING -->
+<div class="app-screen" id="app-planning">
+  <div style="background:#1565C0;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128230; Planning</div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="plan-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-plan" onclick="closeSheet('ov-plan','sh-plan')"></div>
+<div class="sheet" id="sh-plan" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
+
+<!-- WORK ALLOTMENT -->
+<div class="app-screen" id="app-execution">
+  <div style="background:#E65100;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128221; Work Allotment</div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="exec-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-exec" onclick="closeSheet('ov-exec','sh-exec')"></div>
+<div class="sheet" id="sh-exec" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
+
+<!-- PETTY CASH -->
+<div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;overflow:hidden;">
+  <div style="display:flex;align-items:center;padding:18px 18px 10px;background:#EFEBE4;flex-shrink:0;">
+    <span onclick="showApp('dashboard')" style="font-size:28px;color:#1E2547;cursor:pointer;margin-right:10px;line-height:1;">&#8249;</span>
+    <div style="flex:1;"><div style="font-size:20px;font-weight:900;color:#1E2547;">Site Cash Manager</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Atmagaurav Infra Pvt Ltd</div></div>
+  </div>
+  <div id="pc-site-tabs" style="display:flex;gap:10px;padding:2px 18px 14px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;-webkit-overflow-scrolling:touch;"></div>
+  <div id="pc-main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;"><div style="text-align:center;padding:40px;color:#9CA3AF;">Loading...</div></div>
+  <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
+</div>
+<div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
+<div class="sheet" id="sh-pc" style="max-height:92vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div><div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div><div class="sh-foot" id="pc-sheet-foot"></div></div>
+
+<!-- ACCOUNTS -->
+<div class="app-screen" id="app-accounts">
+  <div style="background:#1A237E;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128176; Accounts</div>
+    <button class="tb-btn" id="acc-add-btn" onclick="accQuickAdd()" style="font-size:20px;">&#43;</button>
+  </div>
+  <div id="acc-tab-bar" style="display:flex;overflow-x:auto;background:#1A237E;padding:0 14px 10px;flex-shrink:0;scrollbar-width:none;gap:4px;"></div>
+  <div id="acc-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;background:#F0F4F8;"><div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div></div>
+</div>
+<div class="sh-overlay" id="ov-acc" onclick="closeAccSheet()"></div>
+<div class="sheet" id="sh-acc" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
+
+<!-- ACCESS CONTROL -->
+<div class="app-screen" id="app-access">
+  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128274; Access Control</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
+      <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
+    </div>
+    <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select></div>
+    <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
+  </div>
+  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
+    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
+  </div>
+</div>
+
+<style>
+.vou-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;display:inline-block;}
+.vou-payment{background:#FFEBEE;color:#C62828;}.vou-receipt{background:#E8F5E9;color:#2E7D32;}
+.vou-purchase{background:#E3F2FD;color:#1565C0;}.vou-journal{background:#F3E5F5;color:#6A1B9A;}.vou-contra{background:#FFF3E0;color:#E65100;}
+</style>
 </html>
