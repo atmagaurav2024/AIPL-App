@@ -4222,7 +4222,7 @@ function openAdd(){
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
       '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj">'+
       '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
-      '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option>All Projects</option><option>Head Office</option><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option></select>'+
+      '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel" id="emp-proj-sel"><option value="">All Projects</option></select>'+
       '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option>Head Office</option><option>NH-48 Bypass Site</option><option>Municipal Office Site</option><option>Riverfront Drain Site</option><option>Bridge Rehab Site</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
       '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional"></div></div>'+
@@ -5681,7 +5681,7 @@ function empOpenForm(emp){
     '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
     '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj" value="'+(isEdit?u.doj||'':'')+'">'+
     '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
-    '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option>All Projects</option><option>Head Office</option><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option></select>'+
+    '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel" id="emp-proj-sel"><option value="">All Projects</option></select>'+
     '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(isEdit&&u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel">'+['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'].map(function(l){return '<option'+(isEdit&&u.location===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select></div></div>'+
     '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
     '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+(isEdit?u.phone||'':'')+'"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional" value="'+(isEdit?u.phone2||'':'')+'"></div></div>'+
@@ -5729,17 +5729,41 @@ function empOpenForm(emp){
       (isEdit?'&#10003; Save Changes':'&#10003; Register Employee')+
     '</button>';
 
-  // Pre-select role and dept for edit
-  if(isEdit){
-    setTimeout(function(){
-      var rs=document.getElementById('f-urole');
-      if(rs&&u.access)for(var i=0;i<rs.options.length;i++){if(rs.options[i].text===u.access||rs.options[i].value===u.access){rs.selectedIndex=i;break;}}
-      var ds=document.getElementById('f-udept');
-      if(ds&&u.dept)for(var j=0;j<ds.options.length;j++){if(ds.options[j].text===u.dept||ds.options[j].value===u.dept){ds.selectedIndex=j;break;}}
-    },100);
-  }
-
   openEmpSheet();
+
+  // Load dynamic dropdowns after sheet opens
+  setTimeout(function(){
+    // Role dropdown — from CAT_DATA
+    var rs=document.getElementById('f-urole');
+    if(rs){
+      var roleVal=isEdit?(u.access||u.role||''):''; 
+      rs.innerHTML='<option value="">-- Select --</option>'+catOptions('role');
+      if(roleVal)for(var i=0;i<rs.options.length;i++){if(rs.options[i].value===roleVal||rs.options[i].text.indexOf(roleVal)>=0){rs.selectedIndex=i;break;}}
+    }
+    // Dept dropdown — from CAT_DATA
+    var ds=document.getElementById('f-udept');
+    if(ds){
+      var deptVal=isEdit?(u.dept||''):'';
+      ds.innerHTML='<option value="">-- Select --</option>'+catOptions('dept');
+      if(deptVal)for(var j=0;j<ds.options.length;j++){if(ds.options[j].value===deptVal||ds.options[j].text.indexOf(deptVal)>=0){ds.selectedIndex=j;break;}}
+    }
+    // Projects dropdown — from PROJ_DATA or Supabase
+    var ps=document.getElementById('f-uproject');
+    if(ps){
+      var projVal=isEdit?(u.project||''):'';
+      var projList=typeof PROJ_DATA!=='undefined'?PROJ_DATA:[];
+      if(projList.length){
+        ps.innerHTML='<option value="">All Projects</option>'+projList.map(function(p){return '<option value="'+p.id+'"'+(projVal===p.id?' selected':'')+'>'+p.name+'</option>';}).join('');
+      } else {
+        // Load from Supabase
+        sbFetch('projects',{select:'id,name',order:'name.asc'}).then(function(d){
+          if(Array.isArray(d)&&d.length){
+            ps.innerHTML='<option value="">All Projects</option>'+d.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+          }
+        }).catch(function(){});
+      }
+    }
+  },100);
 }
 
 // Save from Employee Management form (new or edit)
