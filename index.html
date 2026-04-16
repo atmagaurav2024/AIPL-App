@@ -5584,27 +5584,29 @@ function empIncrementHTML(){
   }).join('');
 }
 
+
 function empOpenIncrement(empId, empName, curBasic){
   document.getElementById('emp-sheet-title').textContent = 'Increment — '+empName;
   document.getElementById('emp-sheet-body').innerHTML =
     '<div style="background:#E3F2FD;border-radius:12px;padding:12px 14px;margin-bottom:14px;">'+
       '<div style="font-size:12px;color:var(--text3);">Current Basic</div>'+
-      '<div style="font-size:22px;font-weight:900;color:#1565C0;">&#8377;'+Number(curBasic).toLocaleString('en-IN')+'</div>'+
+      '<div style="font-size:22px;font-weight:900;color:#1565C0;">₹'+Number(curBasic).toLocaleString('en-IN')+'</div>'+
     '</div>'+
     '<label class="flbl">Effective Date *</label>'+
     '<input id="inc-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
       '<div><label class="flbl">% Increment</label>'+
-        '<input id="inc-pct" class="finp" type="number" step="0.1" placeholder="e.g. 10" oninput="var p=parseFloat(this.value)||0;var nb=Math.round('+curBasic+'*(1+p/100));var nel=document.getElementById('inc-new-basic');if(nel)nel.value=nb;var dn=document.getElementById('inc-diff');if(dn)dn.textContent='+ &#8377;'+(nb-'+curBasic+').toLocaleString('en-IN');">'+
+        '<input id="inc-pct" class="finp" type="number" step="0.1" placeholder="e.g. 10" oninput="incCalcFromPct()">'+
       '</div>'+
-      '<div><label class="flbl">New Basic (&#8377;)</label>'+
-        '<input id="inc-new-basic" class="finp" type="number" step="1" value="'+curBasic+'" oninput="var nb=parseFloat(this.value)||0;var p='+curBasic+'>0?((nb-'+curBasic+')/'+curBasic+'*100).toFixed(1):0;var pe=document.getElementById('inc-pct');if(pe)pe.value=p;var dn=document.getElementById('inc-diff');if(dn)dn.textContent='+ &#8377;'+(nb-'+curBasic+').toLocaleString('en-IN');">'+
+      '<div><label class="flbl">New Basic (₹)</label>'+
+        '<input id="inc-new-basic" class="finp" type="number" step="1" value="'+curBasic+'" oninput="incCalcFromAmt()">'+
       '</div>'+
     '</div>'+
     '<div id="inc-diff" style="font-size:13px;font-weight:800;color:#2E7D32;margin:6px 0 12px;"></div>'+
     '<label class="flbl">Reason / Remarks</label>'+
     '<input id="inc-remarks" class="finp" placeholder="e.g. Annual increment, Performance based...">'+
-    '<input type="hidden" id="inc-emp-id" value="'+empId+'">';
+    '<input type="hidden" id="inc-emp-id" value="'+empId+'">'+
+    '<input type="hidden" id="inc-cur-basic" value="'+curBasic+'">';
 
   document.getElementById('emp-sheet-foot').innerHTML =
     '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
@@ -5612,15 +5614,16 @@ function empOpenIncrement(empId, empName, curBasic){
   openEmpSheet();
 }
 
-
-function incCalcFromPct(curBasic){
+function incCalcFromPct(){
+  var curBasic=parseFloat((document.getElementById('inc-cur-basic')||{value:0}).value)||0;
   var p=parseFloat((document.getElementById('inc-pct')||{}).value)||0;
   var nb=Math.round(curBasic*(1+p/100));
   var nel=document.getElementById('inc-new-basic');if(nel)nel.value=nb;
   var dn=document.getElementById('inc-diff');
   if(dn)dn.textContent='+ ₹'+(nb-curBasic).toLocaleString('en-IN');
 }
-function incCalcFromAmt(curBasic){
+function incCalcFromAmt(){
+  var curBasic=parseFloat((document.getElementById('inc-cur-basic')||{value:0}).value)||0;
   var nb=parseFloat((document.getElementById('inc-new-basic')||{}).value)||0;
   var p=curBasic>0?((nb-curBasic)/curBasic*100).toFixed(1):0;
   var pe=document.getElementById('inc-pct');if(pe)pe.value=p;
