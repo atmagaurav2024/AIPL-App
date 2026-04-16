@@ -2334,7 +2334,7 @@ function showProfile(){
     // Avatar + name hero
     '<div style="background:'+col+'15;border:1px solid '+col+'30;border-radius:16px;padding:16px;margin-bottom:14px;display:flex;align-items:center;gap:14px;">' +
       '<div style="width:68px;height:68px;border-radius:18px;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">' +
-        (u.photoUrl ? '<img src="'+u.photoUrl+'" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">' : initials) +
+        (u.photoUrl ? '<img src="'+(emp.profile_photo||emp.photo_url||emp.photoUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:18px;">' : initials) +
       '</div>' +
       '<div>' +
         '<div style="font-size:18px;font-weight:900;">'+u.name+'</div>' +
@@ -5668,39 +5668,106 @@ function payMini(lbl,val,col){
 // ── EMPLOYEE FORM ─────────────────────────────────────
 function empOpenForm(emp){
   var isEdit=!!emp;
-  var u=isEdit?(USERS.find(function(x){return x.id===emp.id;})||{}):null;
+  var e=emp||{};
 
   document.getElementById('emp-sheet-title').textContent=isEdit?'Edit Employee':'Register New Employee';
 
-  // Exact same form HTML as original openAdd for 'users'
-  document.getElementById('emp-sheet-body').innerHTML=
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #1565C020;margin:0 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div><div style="font-size:12px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
-    '<div class="g2"><div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name" value="'+(isEdit?(u.name||'').split(' ')[0]||'':'')+'"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name" value="'+(isEdit?(u.name||'').split(' ').slice(1).join(' '):'')+'"></div></div>'+
-    '<div class="g2"><div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="f-udob" value="'+(isEdit?u.dob||'':'')+'"></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option'+(isEdit&&u.gender==='Male'?' selected':'')+'>Male</option><option'+(isEdit&&u.gender==='Female'?' selected':'')+'>Female</option><option'+(isEdit&&u.gender==='Other'?' selected':'')+'>Other</option></select></div></div>'+
-    '<div class="g2"><div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option>'+['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(function(b){return '<option'+(isEdit&&u.blood===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div><div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option>'+['Single','Married','Other'].map(function(m){return '<option'+(isEdit&&u.marital===m?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div></div>'+
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
-    '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj" value="'+(isEdit?u.doj||'':'')+'">'+
-    '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
-    '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel" id="emp-proj-sel"><option value="">All Projects</option></select>'+
-    '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(isEdit&&u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel">'+['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'].map(function(l){return '<option'+(isEdit&&u.location===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select></div></div>'+
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
-    '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+(isEdit?u.phone||'':'')+'"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional" value="'+(isEdit?u.phone2||'':'')+'"></div></div>'+
-    '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address...">'+(isEdit?u.address||'':'')+'</textarea>'+
-    '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)...">'+(isEdit?u.permanent||'':'')+'</textarea>'+
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #6A1B9A20;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#6A1B9A20;display:flex;align-items:center;justify-content:center;font-size:14px;">🪪</div><div style="font-size:12px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.7px;">KYC Details</div></div>'+
-    '<div class="g2"><div><label class="flbl">Aadhar Number</label><input id="f-uaadhar" class="finp" placeholder="XXXX XXXX XXXX" value="'+(isEdit?u.aadhar||'':'')+'"></div><div><label class="flbl">PAN Number</label><input id="f-upan" class="finp" placeholder="ABCDE1234F" value="'+(isEdit?u.pan||'':'')+'"></div></div>'+
-    '<div class="g2"><div><label class="flbl">PF Number</label><input id="f-upf" class="finp" placeholder="Optional" value="'+(isEdit?u.pf||'':'')+'"></div><div><label class="flbl">ESIC Number</label><input id="f-uesic" class="finp" placeholder="Optional" value="'+(isEdit?u.esic||'':'')+'"></div></div>'+
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #C6282820;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:14px;">🏦</div><div style="font-size:12px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Bank Details</div></div>'+
-    '<label class="flbl">Bank Name</label><input id="f-ubank" class="finp" placeholder="e.g. State Bank of India" value="'+(isEdit?u.bank||'':'')+'">'+
-    '<div class="g2"><div><label class="flbl">Account Number</label><input id="f-uaccno" class="finp" placeholder="Bank account number" value="'+(isEdit?u.accNo||'':'')+'"></div><div><label class="flbl">IFSC Code</label><input id="f-uifsc" class="finp" placeholder="e.g. SBIN0001234" value="'+(isEdit?u.ifsc||'':'')+'"></div></div>'+
-    '<label class="flbl">Account Holder Name</label><input id="f-uaccname" class="finp" placeholder="As per bank records" value="'+(isEdit?u.accName||'':'')+'">'+
-    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #C6282820;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:14px;">🚨</div><div style="font-size:12px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Emergency Contact</div></div>'+
-    '<div class="g2"><div><label class="flbl">Contact Name</label><input id="f-uecname" class="finp" placeholder="Full name" value="'+(isEdit?u.ecName||'':'')+'"></div><div><label class="flbl">Relationship</label><select id="f-uecrel" class="fsel"><option value="">-- Select --</option>'+['Spouse','Father','Mother','Sibling','Other'].map(function(r){return '<option'+(isEdit&&u.ecRel===r?' selected':'')+'>'+r+'</option>';}).join('')+'</select></div></div>'+
-    '<label class="flbl">Emergency Mobile</label><input id="f-uecphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+(isEdit?u.ecPhone||'':'')+'">'+
-    '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #1565C020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:12px;">📎</div><div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Documents & Photo</div></div>'+
+  var fname=isEdit?(e.first_name||''):'';
+  var lname=isEdit?(e.last_name||''):'';
+  var dob=isEdit?(e.date_of_birth||e.dob||''):'';
+  var doj=isEdit?(e.date_of_joining||e.doj||''):'';
+  var gender=isEdit?(e.gender||''):'';
+  var blood=isEdit?(e.blood_group||e.blood||''):'';
+  var marital=isEdit?(e.marital_status||e.marital||''):'';
+  var empType=isEdit?(e.emp_type||e.empType||''):'';
+  var workLoc=isEdit?(e.work_location||e.location||''):'';
+  var phone=isEdit?(e.phone||e.mobile||''):'';
+  var phone2=isEdit?(e.phone2||''):'';
+  var address=isEdit?(e.address||''):'';
+  var permanent=isEdit?(e.permanent_address||e.permanent||''):'';
+  var aadhar=isEdit?(e.aadhar||e.aadhar_no||''):'';
+  var pan=isEdit?(e.pan||e.pan_no||''):'';
+  var pf=isEdit?(e.pf_no||e.pf||''):'';
+  var esic=isEdit?(e.esic_no||e.esic||''):'';
+  var bankName=isEdit?(e.bank_name||e.bank||''):'';
+  var accNo=isEdit?(e.account_no||e.accNo||''):'';
+  var ifsc=isEdit?(e.ifsc||''):'';
+  var accHolder=isEdit?(e.account_holder||e.accName||''):'';
+  var ecName=isEdit?(e.emergency_name||e.ecName||''):'';
+  var ecRel=isEdit?(e.emergency_relation||e.ecRel||''):'';
+  var ecPhone=isEdit?(e.emergency_phone||e.ecPhone||''):'';
+  var photoUrl=isEdit?(e.profile_photo||e.photo_url||e.photoUrl||''):'';
+
+  function sel(val,options){
+    return options.map(function(o){
+      return '<option value="'+o+'"'+(o===val?' selected':'')+'>'+o+'</option>';
+    }).join('');
+  }
+  function hdr(icon,label,color){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid '+color+'20;margin:14px 0 10px;">'+
+      '<div style="width:28px;height:28px;border-radius:8px;background:'+color+'20;display:flex;align-items:center;justify-content:center;font-size:14px;">'+icon+'</div>'+
+      '<div style="font-size:12px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.7px;">'+label+'</div>'+
+    '</div>';
+  }
+
+  var html=
+    hdr('👤','Personal Details','#1565C0')+
+    '<div class="g2">'+
+      '<div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name" value="'+safeN(fname)+'"></div>'+
+      '<div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name" value="'+safeN(lname)+'"></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="f-udob" value="'+dob+'"></div>'+
+      '<div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option>'+sel(gender,['Male','Female','Other'])+'</select></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option>'+sel(blood,['A+','A-','B+','B-','O+','O-','AB+','AB-'])+'</select></div>'+
+      '<div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option>'+sel(marital,['Single','Married','Other'])+'</select></div>'+
+    '</div>'+
+    hdr('🏗️','Employment Details','#2E7D32')+
+    '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj" value="'+doj+'">'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel"><option value="">Loading...</option></select></div>'+
+      '<div><label class="flbl">Department</label><select id="f-udept" class="fsel"><option value="">Loading...</option></select></div>'+
+    '</div>'+
+    '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option value="">Loading...</option></select>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option value="">-- Select --</option>'+sel(empType,['Full Time','Part Time','Contract','Daily Wage'])+'</select></div>'+
+      '<div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option value="">-- Select --</option>'+sel(workLoc,['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'])+'</select></div>'+
+    '</div>'+
+    hdr('📞','Contact Details','#E65100')+
+    '<div class="g2">'+
+      '<div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+safeN(phone)+'"></div>'+
+      '<div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional" value="'+safeN(phone2)+'"></div>'+
+    '</div>'+
+    '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address...">'+safeN(address)+'</textarea>'+
+    '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)...">'+safeN(permanent)+'</textarea>'+
+    hdr('🪪','KYC Details','#6A1B9A')+
+    '<div class="g2">'+
+      '<div><label class="flbl">Aadhar Number</label><input id="f-uaadhar" class="finp" placeholder="XXXX XXXX XXXX" value="'+safeN(aadhar)+'"></div>'+
+      '<div><label class="flbl">PAN Number</label><input id="f-upan" class="finp" placeholder="ABCDE1234F" value="'+safeN(pan)+'"></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">PF Number</label><input id="f-upf" class="finp" placeholder="Optional" value="'+safeN(pf)+'"></div>'+
+      '<div><label class="flbl">ESIC Number</label><input id="f-uesic" class="finp" placeholder="Optional" value="'+safeN(esic)+'"></div>'+
+    '</div>'+
+    hdr('🏦','Bank Details','#C62828')+
+    '<label class="flbl">Bank Name</label><input id="f-ubank" class="finp" placeholder="e.g. State Bank of India" value="'+safeN(bankName)+'">'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Account Number</label><input id="f-uaccno" class="finp" placeholder="Bank account number" value="'+safeN(accNo)+'"></div>'+
+      '<div><label class="flbl">IFSC Code</label><input id="f-uifsc" class="finp" placeholder="e.g. SBIN0001234" value="'+safeN(ifsc)+'"></div>'+
+    '</div>'+
+    '<label class="flbl">Account Holder Name</label><input id="f-uaccname" class="finp" placeholder="As per bank records" value="'+safeN(accHolder)+'">'+
+    hdr('🚨','Emergency Contact','#C62828')+
+    '<div class="g2">'+
+      '<div><label class="flbl">Contact Name</label><input id="f-uecname" class="finp" placeholder="Full name" value="'+safeN(ecName)+'"></div>'+
+      '<div><label class="flbl">Relationship</label><select id="f-uecrel" class="fsel"><option value="">-- Select --</option>'+sel(ecRel,['Spouse','Father','Mother','Sibling','Other'])+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Emergency Mobile</label><input id="f-uecphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+safeN(ecPhone)+'">'+
+    hdr('📎','Documents & Photo','#1565C0')+
     '<label class="flbl">Passport Photo</label>'+
     '<div class="upload-box" onclick="document.getElementById(\'f-uphoto\').click()">'+
-      '<div class="photo-preview" id="f-uphoto-prev">'+(isEdit&&u.photoUrl?'<img src="'+u.photoUrl+'" style="width:100%;height:100%;object-fit:cover;">':'📷')+'</div>'+
+      '<div class="photo-preview" id="f-uphoto-prev">'+(photoUrl?'<img src="'+photoUrl+'" style="width:100%;height:100%;object-fit:cover;">':'📷')+'</div>'+
       '<input type="file" id="f-uphoto" accept="image/*" onchange="handleFilePreview(\'f-uphoto\',\'f-uphoto-prev\')">'+
       '<div class="upload-label">Tap to upload passport photo</div>'+
       '<div class="upload-progress-wrap" id="f-uphoto-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-uphoto-prog-name"></span><span class="upload-progress-pct" id="f-uphoto-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-uphoto-prog-fill"></div></div></div>'+
@@ -5721,20 +5788,21 @@ function empOpenForm(emp){
         '<div class="upload-progress-wrap" id="f-upan-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-upan-doc-prog-name"></span><span class="upload-progress-pct" id="f-upan-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-upan-doc-prog-fill"></div></div></div>'+
       '</div></div>'+
     '</div>'+
-    '<input type="hidden" id="f-uedit-id" value="'+(isEdit?emp.id:'')+'">';
+    '<input type="hidden" id="f-uedit-id" value="'+(isEdit?e.id:'')+'">';
+
+  document.getElementById('emp-sheet-body').innerHTML=html;
 
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
-    '<button class="btn btn-indigo" onclick="empFormSave()" style="flex:1;">'+
-      (isEdit?'&#10003; Save Changes':'&#10003; Register Employee')+
-    '</button>';
+    (isEdit?'<button class="btn" style="background:#C62828;color:white;" onclick="empDeleteEmployee(\''+e.id+'\',\''+safeN(fname+' '+lname)+'\')">🗑 Delete</button>':'')+
+    '<button class="btn btn-indigo" onclick="empFormSave()" style="flex:1;">'+(isEdit?'✓ Save Changes':'✓ Register Employee')+'</button>';
 
   openEmpSheet();
 
-  // Load all 3 dropdowns fresh from Supabase every time
-  var roleVal=isEdit?(u.access||u.role||''):'';
-  var deptVal=isEdit?(u.dept||''):'';
-  var projVal=isEdit?(u.project||''):'';
+  // Load Role, Dept, Project dropdowns from Supabase
+  var roleVal=isEdit?(e.designation||e.role||''):'';
+  var deptVal=isEdit?(e.department||e.dept||''):'';
+  var projVal=isEdit?(e.project_id||e.project||''):'';
 
   Promise.all([
     sbFetch('categories',{select:'name,icon',filter:'type=eq.role&active=eq.true',order:'name.asc'}),
@@ -5745,46 +5813,43 @@ function empOpenForm(emp){
     var depts=Array.isArray(results[1])?results[1]:[];
     var projs=Array.isArray(results[2])?results[2]:[];
 
-    // Role dropdown
     var rs=document.getElementById('f-urole');
     if(rs){
       rs.innerHTML='<option value="">-- Select Role --</option>'+
-        roles.map(function(r){
-          return '<option value="'+r.name+'"'+(r.name===roleVal?' selected':'')+'>'+
-            (r.icon?r.icon+' ':'')+r.name+'</option>';
-        }).join('');
+        roles.map(function(r){return '<option value="'+r.name+'"'+(r.name===roleVal?' selected':'')+'>'+r.name+'</option>';}).join('');
     }
-
-    // Dept dropdown
     var ds=document.getElementById('f-udept');
     if(ds){
       ds.innerHTML='<option value="">-- Select Department --</option>'+
-        depts.map(function(d){
-          return '<option value="'+d.name+'"'+(d.name===deptVal?' selected':'')+'>'+
-            (d.icon?d.icon+' ':'')+d.name+'</option>';
-        }).join('');
+        depts.map(function(d){return '<option value="'+d.name+'"'+(d.name===deptVal?' selected':'')+'>'+d.name+'</option>';}).join('');
     }
-
-    // Project dropdown
     var ps=document.getElementById('f-uproject');
     if(ps){
       ps.innerHTML='<option value="">All Projects</option>'+
-        projs.map(function(p){
-          return '<option value="'+p.id+'"'+(p.id===projVal||p.name===projVal?' selected':'')+'>'+
-            p.name+'</option>';
-        }).join('');
+        projs.map(function(p){return '<option value="'+p.id+'"'+(p.id===projVal||p.name===projVal?' selected':'')+'>'+p.name+'</option>';}).join('');
     }
-  }).catch(function(e){
-    // Fallback to CAT_DATA if Supabase fails
+  }).catch(function(err){
     var rs=document.getElementById('f-urole');
     if(rs) rs.innerHTML='<option value="">-- Select Role --</option>'+catOptions('role');
     var ds=document.getElementById('f-udept');
-    if(ds) ds.innerHTML='<option value="">-- Select Department --</option>'+catOptions('dept');
-    console.warn('Dropdown load error:',e);
+    if(ds) ds.innerHTML='<option value="">-- Select Dept --</option>'+catOptions('dept');
+    console.warn('Dropdown load error:',err);
   });
 }
 
-// Save from Employee Management form (new or edit)
+async function empDeleteEmployee(id,name){
+  if(!confirm('Delete "'+name+'"? This cannot be undone.'))return;
+  try{
+    toast('Deleting...','info');
+    await sbDelete('employees',id);
+    EMP_LIST=EMP_LIST.filter(function(e){return e.id!==id;});
+    USERS=USERS.filter(function(u){return u.id!==id;});
+    closeEmpSheet();
+    empRender();
+    toast(name+' deleted','success');
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
 async function empFormSave(){
   var editId=(document.getElementById('f-uedit-id')||{}).value||'';
   var fname=gv('f-ufname'), lname=gv('f-ulname');
