@@ -2770,7 +2770,7 @@ function renderAdminList(){
     }
     return '<div class="reg-card">'+
       '<div class="rc-head">'+
-        '<div class="rc-avatar" style="background:'+r.col+'">'+r.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="rc-avatar" style="background:'+r.col+'">'+(r.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div class="rc-info">'+
           '<div class="rc-name">'+r.name+'</div>'+
           '<div class="rc-sub">'+catIc+' '+(r.company||'AIPL')+' &bull; '+r.project+'</div>'+
@@ -3433,10 +3433,10 @@ function mapMaterial(m){
     unit:m.unit,uom:m.uom,spec:m.spec,col:catColor(m.category)};
 }
 function mapSC(s){
-  return {id:s.id,scId:s.sc_id,name:s.name,trade:s.trade,rating:s.rating||0,
-    gst:s.gst,contact:s.contact_person,phone:s.phone,email:s.email,address:s.address,
-    exp:s.experience,turnover:s.turnover,workers:s.workers||0,speciality:s.speciality,
-    pbgAvail:s.pbg_available,emdAvail:s.emd_available,status:s.status,col:'#1565C0'};
+  return {id:s.id,scId:s.sc_id,name:s.name||'Unknown',trade:s.trade||'',rating:s.rating||0,
+    gst:s.gst||'',contact:s.contact_person||'',phone:s.phone||'',email:s.email||'',address:s.address||'',
+    exp:s.experience||'',turnover:s.turnover||'',workers:s.workers||0,speciality:s.speciality||'',
+    pbgAvail:s.pbg_available,emdAvail:s.emd_available,status:s.status||'active',col:'#1565C0'};
 }
 function mapEmployee(e){
   return {id:e.id,empId:e.emp_id,name:((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown',
@@ -3559,10 +3559,10 @@ function renderSC(list){
     return '<div class="reg-card" onclick="openDetail(\'sc\',\''+s.id+'\')">'+
       '<div class="rc-accent" style="background:'+s.col+'"></div>'+
       '<div class="rc-body">'+
-        '<div class="avatar" style="background:'+s.col+'">'+s.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="background:'+s.col+'">'+(s.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div class="rc-info">'+
           '<div class="rc-name">'+s.name+'</div>'+
-          '<div class="rc-sub">'+s.speciality.split(',')[0]+'</div>'+
+          '<div class="rc-sub">'+(s.speciality||'').split(',')[0]+'</div>'+
           '<div class="rc-tags">'+
             '<span class="badge b-purple">'+s.trade+'</span>'+
             (s.pbgAvail?'<span class="badge b-teal">PBG &#10003;</span>':'<span class="badge b-amber">No PBG</span>')+
@@ -3608,7 +3608,7 @@ function renderUsers(list){
     return '<div class="reg-card" onclick="openDetail(\'user\',\''+u.id+'\')">'+
       '<div class="rc-accent" style="background:'+col+'"></div>'+
       '<div class="rc-body">'+
-        '<div class="avatar" style="background:'+col+'">'+u.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="background:'+col+'">'+(u.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div class="rc-info" style="min-width:0;flex:1;">'+
           '<div class="rc-name" style="white-space:normal;word-break:break-word;">'+u.name+'</div>'+
           '<div class="rc-sub">'+u.access+' &bull; '+u.dept+'</div>'+
@@ -3637,10 +3637,10 @@ function renderSCInUsers(forceShow){
     return '<div class="reg-card" onclick="openDetail(\'sc\',\''+s.id+'\')" style="opacity:.92;">'+
       '<div class="rc-accent" style="background:'+s.col+'"></div>'+
       '<div class="rc-body">'+
-        '<div class="avatar" style="background:'+s.col+';font-size:13px;">'+s.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="background:'+s.col+';font-size:13px;">'+(s.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div class="rc-info">'+
           '<div class="rc-name">'+s.name+'</div>'+
-          '<div class="rc-sub">'+s.speciality.split(',')[0]+'</div>'+
+          '<div class="rc-sub">'+(s.speciality||'').split(',')[0]+'</div>'+
           '<div class="rc-tags">'+
             '<span class="badge b-purple">'+s.trade+'</span>'+
             (s.pbgAvail?'<span class="badge b-teal">PBG &#10003;</span>':'')+
@@ -3805,7 +3805,7 @@ function openDetail(type,id){
     document.getElementById('det-title').textContent=s.name;
     document.getElementById('det-body').innerHTML=
       '<div style="background:'+s.col+'1A;border:1px solid '+s.col+'40;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">'+
-        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+s.col+'">'+s.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+s.col+'">'+(s.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div><div style="font-size:17px;font-weight:800;">'+s.name+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">'+s.speciality+'</div>'+
           '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><span class="badge b-purple">'+s.trade+'</span></div>'+
         '</div>'+
@@ -3835,7 +3835,7 @@ function openDetail(type,id){
     document.getElementById('det-title').textContent=u.name;
     document.getElementById('det-body').innerHTML=
       '<div style="background:'+col+'1A;border:1px solid '+col+'40;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">'+
-        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+col+'">'+u.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+col+'">'+(u.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div><div style="font-size:17px;font-weight:800;">'+u.name+'</div>'+
         '<div style="font-size:12px;color:var(--text2);margin-top:2px;">'+u.access+' &bull; '+u.dept+'</div>'+
         '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;"><span class="badge '+(stBadge[u.status]||'b-navy')+'">'+u.status+'</span><span class="badge b-navy">'+u.id+'</span>'+(u.badge?'<span class="badge b-teal">'+u.badge+'</span>':'')+'</div>'+
@@ -3992,7 +3992,7 @@ function editRecord(type,id){
   else if(type==='user'){
     var u=USERS.find(function(x){return x.id===id;});if(!u)return;
     title='Edit Employee \u2014 '+u.id;
-    var nameParts=u.name.split(' ');
+    var nameParts=(u.name||'').split(' ');
     var projOpts=['All Projects','Head Office','NH-48 Bypass','Municipal Office','Riverfront Drain','Bridge Rehab'].map(function(p){
       return '<option'+(u.project===p?' selected':'')+'>'+p+'</option>';
     }).join('');
@@ -4008,10 +4008,10 @@ function editRecord(type,id){
     html='<div class="section-title">&#128101; Edit Employee</div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #1565C020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:12px;">👤</div><div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
       '<div class="g2"><div><label class="flbl">First Name</label><input id="e-ufname" class="finp" value="'+esc(nameParts[0]||'')+'"></div><div><label class="flbl">Last Name</label><input id="e-ulname" class="finp" value="'+esc(nameParts.slice(1).join(' '))+'"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Date of Birth</label><div class="date-wrap"><input class="finp" type="text" id="e-udob-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="e-udob" value="'+(u.dob||'')+'" onchange="updateDateDisplay(this)"></div></div><div><label class="flbl">Gender</label><select id="e-ugender" class="fsel"><option value="">-- Select --</option>'+['Male','Female','Other'].map(function(g){return '<option'+(u.gender===g?' selected':'')+'>'+g+'</option>';}).join('')+'</select></div></div>'+
+      '<div class="g2"><div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="e-udob" value="'+(u.dob||'')+'"></div><div><label class="flbl">Gender</label><select id="e-ugender" class="fsel"><option value="">-- Select --</option>'+['Male','Female','Other'].map(function(g){return '<option'+(u.gender===g?' selected':'')+'>'+g+'</option>';}).join('')+'</select></div></div>'+
       '<div class="g2"><div><label class="flbl">Blood Group</label><select id="e-ublood" class="fsel"><option value="">--</option>'+['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(function(b){return '<option'+(u.blood===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div><div><label class="flbl">Marital Status</label><select id="e-umarital" class="fsel"><option value="">--</option>'+['Single','Married','Other'].map(function(m){return '<option'+(u.marital===m?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #2E7D3220;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:12px;">🏗️</div><div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
-      '<label class="flbl">Date of Joining</label><div class="date-wrap"><input class="finp" type="text" id="e-udoj-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="e-udoj" value="'+(u.doj||'')+'" onchange="updateDateDisplay(this)"></div>'+
+      '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="e-udoj" value="'+(u.doj||'')+'">'+
       '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="e-urole" class="fsel">'+roleOpts+'</select></div><div><label class="flbl">Status</label><select id="e-ustatus" class="fsel">'+stOpts+'</select></div></div>'+
       '<div class="g2"><div><label class="flbl">Department</label><select id="e-udept" class="fsel">'+deptOpts+'</select></div><div><label class="flbl">Project</label><select id="e-uproject" class="fsel">'+projOpts+'</select></div></div>'+
       '<div class="g2"><div><label class="flbl">Employment Type</label><select id="e-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location</label><select id="e-ulocation" class="fsel">'+['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'].map(function(l){return '<option'+(u.location===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select></div></div>'+
@@ -4065,13 +4065,7 @@ function editRecord(type,id){
       '</div>'+
       '';
     saveCall='updateUser(\''+id+'\')'; 
-    setTimeout(function(){
-      ['udob','udoj'].forEach(function(f){
-        var inp=document.getElementById('e-'+f);
-        var disp=document.getElementById('e-'+f+'-display');
-        if(inp&&disp&&inp.value){var p=inp.value.split('-');disp.value=p[2]+' / '+p[1]+' / '+p[0];}
-      });
-    },100);
+
   }
   document.getElementById('add-title').textContent=title;
   document.getElementById('add-body').innerHTML=html;
@@ -4224,10 +4218,10 @@ function openAdd(){
       '<div class="section-title">&#128101; Register New Employee</div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #1565C020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div><div style="font-size:12px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
       '<div class="g2"><div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name"></div></div>'+
-      '<div class="g2"><div><label class="flbl">Date of Birth</label><div class="date-wrap"><input class="finp" type="text" id="f-udob-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="f-udob" onchange="updateDateDisplay(this)"></div></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option>Male</option><option>Female</option><option>Other</option></select></div></div>'+
+      '<div class="g2"><div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="f-udob"></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option>Male</option><option>Female</option><option>Other</option></select></div></div>'+
       '<div class="g2"><div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div><div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option><option>Single</option><option>Married</option><option>Other</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
-      '<label class="flbl">Date of Joining</label><div class="date-wrap"><input class="finp" type="text" id="f-udoj-display" placeholder="DD / MM / YYYY" readonly><input type="date" id="f-udoj" onchange="updateDateDisplay(this)"></div>'+
+      '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj">'+
       '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
       '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option>All Projects</option><option>Head Office</option><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option></select>'+
       '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option>Head Office</option><option>NH-48 Bypass Site</option><option>Municipal Office Site</option><option>Riverfront Drain Site</option><option>Bridge Rehab Site</option></select></div></div>'+
@@ -5828,100 +5822,236 @@ function empOpenPay(empId, empName){
   var existing=EMP_PAY.filter(function(p){return p.employee_id===empId;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
   var v=existing[0]||{};
 
-  document.getElementById('pay-sheet-title').textContent='&#128178; Pay Fixation — '+empName;
-  document.getElementById('pay-sheet-body').innerHTML=
-    '<div style="background:#E8F5E9;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#1B5E20;">'+
-      '&#128161; PF = 12% of Basic, ESIC = 0.75% employee / 3.25% employer (on gross up to &#8377;21,000). TDS calculated on annual income.'+
-    '</div>'+
+  // Load extra_earnings and extra_deductions from previous record if any
+  var extraEarnings=v.extra_earnings?JSON.parse(v.extra_earnings):[];
+  var extraDeductions=v.extra_deductions?JSON.parse(v.extra_deductions):[];
 
+  var pfApplicable=v.pf_employee>0||extraEarnings.length===0?true:v.pf_applicable!==false;
+  var esicApplicable=v.esic_employee>0||extraEarnings.length===0?true:v.esic_applicable!==false;
+
+  document.getElementById('pay-sheet-title').textContent='\u{1F4B8} Pay Fixation \u2014 '+empName;
+
+  document.getElementById('pay-sheet-body').innerHTML=
     '<label class="flbl">Effective Date *</label>'+
     '<input id="pf-date" class="finp" type="date" value="'+(new Date().toISOString().slice(0,10))+'">'+
 
-    '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Earnings</div>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">Basic *</label><input id="pf-basic" class="finp" type="number" step="1" value="'+(v.basic||'')+'" oninput="payAutoCalc()"></div>'+
-      '<div><label class="flbl">DA</label><input id="pf-da" class="finp" type="number" step="1" value="'+(v.da||0)+'" oninput="payAutoCalc()"></div>'+
-    '</div>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">HRA</label><input id="pf-hra" class="finp" type="number" step="1" value="'+(v.hra||0)+'" oninput="payAutoCalc()"></div>'+
-      '<div><label class="flbl">Conveyance</label><input id="pf-conv" class="finp" type="number" step="1" value="'+(v.conveyance||0)+'" oninput="payAutoCalc()"></div>'+
-    '</div>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">Special Allowance</label><input id="pf-spec" class="finp" type="number" step="1" value="'+(v.special_allowance||0)+'" oninput="payAutoCalc()"></div>'+
-      '<div><label class="flbl">Medical Allowance</label><input id="pf-med" class="finp" type="number" step="1" value="'+(v.medical_allowance||0)+'" oninput="payAutoCalc()"></div>'+
-    '</div>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">Other Allowance</label><input id="pf-other" class="finp" type="number" step="1" value="'+(v.other_allowance||0)+'" oninput="payAutoCalc()"></div>'+
-      '<div></div>'+
+    // ─ EARNINGS ─
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;">&#128197; Earnings</div>'+
+      '<button onclick="payAddEarning()" style="background:#2E7D32;color:white;border:none;border-radius:7px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ Add</button>'+
     '</div>'+
 
-    // Gross
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#E8F5E9;border-radius:10px;margin:8px 0;">'+
+    // Fixed earnings - Basic (cannot delete)
+    '<div style="background:#F8FFF8;border-radius:10px;border:1px solid #2E7D3220;padding:10px 12px;margin-bottom:6px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div style="flex:1;font-size:13px;font-weight:800;color:#2E7D32;">Basic <span style="font-size:10px;font-weight:600;color:var(--text3);">(Required)</span></div>'+
+        '<input id="pf-basic" class="finp" type="number" step="1" placeholder="0" value="'+(v.basic||'')+'" oninput="payCalc()" style="width:120px;margin-bottom:0;text-align:right;font-weight:900;">'+
+      '</div>'+
+    '</div>'+
+
+    // Dynamic extra earnings container
+    '<div id="pay-earnings-list"></div>'+
+
+    // Gross display
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#E8F5E9;border-radius:10px;margin:10px 0;">'+
       '<div style="font-size:13px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
-      '<div id="pf-gross-display" style="font-size:18px;font-weight:900;color:#2E7D32;">&#8377;0</div>'+
+      '<div id="pf-gross-display" style="font-size:18px;font-weight:900;color:#2E7D32;">\u20b90</div>'+
     '</div>'+
 
-    '<div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;">Deductions (Auto Calculated)</div>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">PF Employee (12% of Basic)</label><input id="pf-pfe" class="finp" type="number" step="1" value="'+(v.pf_employee||0)+'" oninput="payNetCalc()"></div>'+
-      '<div><label class="flbl">PF Employer (12% of Basic)</label><input id="pf-pfr" class="finp" type="number" step="1" value="'+(v.pf_employer||0)+'" style="opacity:.7;" readonly></div>'+
+    // ─ PF ─
+    '<div style="background:#E3F2FD;border-radius:10px;padding:10px 14px;margin-bottom:8px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="font-size:12px;font-weight:800;color:#1565C0;">&#128204; PF (Provident Fund)</div>'+
+        '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">'+
+          '<input type="checkbox" id="pf-applicable" onchange="payCalc()" style="width:16px;height:16px;"'+(pfApplicable?' checked':'')+'>'+
+          '<span style="font-size:12px;font-weight:700;">Applicable</span>'+
+        '</label>'+
+      '</div>'+
+      '<div id="pf-fields">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+          '<div><label class="flbl">Employee (12% of Basic)</label><input id="pf-pfe" class="finp" type="number" step="1" value="'+(v.pf_employee||0)+'" oninput="payCalc()" style="margin-bottom:0;"></div>'+
+          '<div><label class="flbl">Employer (12% of Basic)</label><input id="pf-pfr" class="finp" type="number" step="1" value="'+(v.pf_employer||0)+'" readonly style="margin-bottom:0;opacity:.7;"></div>'+
+        '</div>'+
+      '</div>'+
     '</div>'+
-    '<div class="g2">'+
-      '<div><label class="flbl">ESIC Employee (0.75%)</label><input id="pf-esice" class="finp" type="number" step="1" value="'+(v.esic_employee||0)+'" oninput="payNetCalc()"></div>'+
-      '<div><label class="flbl">ESIC Employer (3.25%)</label><input id="pf-esicr" class="finp" type="number" step="1" value="'+(v.esic_employer||0)+'" style="opacity:.7;" readonly></div>'+
+
+    // ─ ESIC ─
+    '<div style="background:#F3E5F5;border-radius:10px;padding:10px 14px;margin-bottom:8px;">'+
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
+        '<div style="font-size:12px;font-weight:800;color:#6A1B9A;">&#128204; ESIC</div>'+
+        '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">'+
+          '<input type="checkbox" id="esic-applicable" onchange="payCalc()" style="width:16px;height:16px;"'+(esicApplicable?' checked':'')+'>'+
+          '<span style="font-size:12px;font-weight:700;">Applicable</span>'+
+        '</label>'+
+      '</div>'+
+      '<div id="esic-fields">'+
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+          '<div><label class="flbl">Employee (0.75%)</label><input id="pf-esice" class="finp" type="number" step="1" value="'+(v.esic_employee||0)+'" oninput="payCalc()" style="margin-bottom:0;"></div>'+
+          '<div><label class="flbl">Employer (3.25%)</label><input id="pf-esicr" class="finp" type="number" step="1" value="'+(v.esic_employer||0)+'" readonly style="margin-bottom:0;opacity:.7;"></div>'+
+        '</div>'+
+      '</div>'+
     '</div>'+
-    '<label class="flbl">TDS (Monthly)</label>'+
-    '<input id="pf-tds" class="finp" type="number" step="1" value="'+(v.tds||0)+'" oninput="payNetCalc()">'+
+
+    // ─ OTHER DEDUCTIONS ─
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;">Other Deductions</div>'+
+      '<button onclick="payAddDeduction()" style="background:#C62828;color:white;border:none;border-radius:7px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ Add</button>'+
+    '</div>'+
+    '<div id="pay-deductions-list"></div>'+
+
+    // TDS
+    '<div style="background:#FFF3E0;border-radius:10px;padding:10px 12px;margin-bottom:8px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div style="flex:1;font-size:13px;font-weight:800;color:#E65100;">TDS (Monthly)</div>'+
+        '<input id="pf-tds" class="finp" type="number" step="1" value="'+(v.tds||0)+'" oninput="payCalc()" style="width:120px;margin-bottom:0;text-align:right;">'+
+      '</div>'+
+    '</div>'+
 
     // Net
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#1B5E2015;border-radius:10px;margin:8px 0;border:1.5px solid #1B5E2030;">'+
       '<div style="font-size:13px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
-      '<div id="pf-net-display" style="font-size:20px;font-weight:900;color:#1B5E20;">&#8377;0</div>'+
+      '<div id="pf-net-display" style="font-size:20px;font-weight:900;color:#1B5E20;">\u20b90</div>'+
     '</div>'+
 
     '<label class="flbl">Remarks</label>'+
     '<input id="pf-remarks" class="finp" placeholder="e.g. Revised w.e.f. April 2025" value="'+(v.remarks||'')+'">'+
-
     '<input type="hidden" id="pf-emp-id" value="'+empId+'">';
 
   document.getElementById('pay-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeSheet(\'ov-pay\',\'sh-pay\')">Cancel</button>'+
-    '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSavePay()">&#128190; Save Pay Structure</button>';
+    '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSavePay()">\u{1F4BE} Save Pay Structure</button>';
 
   openSheet('ov-pay','sh-pay');
-  payAutoCalc();
+
+  // Restore extra earnings and deductions
+  PAY_EARNINGS=[];PAY_DEDUCTIONS=[];
+  if(extraEarnings.length){
+    extraEarnings.forEach(function(e){payAddEarning(e.label,e.amount);});
+  } else {
+    // Default earnings
+    payAddEarning('DA',v.da||0);
+    payAddEarning('HRA',v.hra||0);
+    payAddEarning('Conveyance',v.conveyance||0);
+    payAddEarning('Special Allowance',v.special_allowance||0);
+  }
+  if(extraDeductions.length){
+    extraDeductions.forEach(function(d){payAddDeduction(d.label,d.amount);});
+  }
+
+  payCalc();
+}
+
+// ── Dynamic earnings/deductions ──────────────────────
+var PAY_EARNINGS=[], PAY_DEDUCTIONS=[];
+var PAY_EARN_ID=0, PAY_DED_ID=0;
+
+function payAddEarning(label,amount){
+  var id='pe_'+(++PAY_EARN_ID);
+  PAY_EARNINGS.push({id:id,label:label||'',amount:amount||0});
+  payRenderEarnings();
+}
+function payAddDeduction(label,amount){
+  var id='pd_'+(++PAY_DED_ID);
+  PAY_DEDUCTIONS.push({id:id,label:label||'',amount:amount||0});
+  payRenderDeductions();
+}
+function payRemoveEarning(id){
+  PAY_EARNINGS=PAY_EARNINGS.filter(function(e){return e.id!==id;});
+  payRenderEarnings();payCalc();
+}
+function payRemoveDeduction(id){
+  PAY_DEDUCTIONS=PAY_DEDUCTIONS.filter(function(d){return d.id!==id;});
+  payRenderDeductions();payCalc();
+}
+
+function payRenderEarnings(){
+  var el=document.getElementById('pay-earnings-list');if(!el)return;
+  el.innerHTML=PAY_EARNINGS.map(function(e){
+    return '<div style="background:#F8FFF8;border-radius:10px;border:1px solid #2E7D3220;padding:8px 12px;margin-bottom:6px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<input value="'+e.label+'" oninput="payUpdateEarning(\''+e.id+'\',\'label\',this.value)" placeholder="e.g. HRA, DA..." class="finp" style="flex:1;margin-bottom:0;font-size:12px;">'+
+        '<input value="'+(e.amount||0)+'" oninput="payUpdateEarning(\''+e.id+'\',\'amount\',this.value);payCalc()" type="number" step="1" class="finp" style="width:100px;margin-bottom:0;text-align:right;font-weight:800;">'+
+        '<button onclick="payRemoveEarning(\''+e.id+'\')" style="background:#FFEBEE;border:none;border-radius:7px;color:#C62828;font-size:16px;width:30px;height:30px;cursor:pointer;flex-shrink:0;">\u00d7</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function payRenderDeductions(){
+  var el=document.getElementById('pay-deductions-list');if(!el)return;
+  el.innerHTML=PAY_DEDUCTIONS.map(function(d){
+    return '<div style="background:#FFF8F8;border-radius:10px;border:1px solid #C6282820;padding:8px 12px;margin-bottom:6px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<input value="'+d.label+'" oninput="payUpdateDeduction(\''+d.id+'\',\'label\',this.value)" placeholder="e.g. Loan, Advance..." class="finp" style="flex:1;margin-bottom:0;font-size:12px;">'+
+        '<input value="'+(d.amount||0)+'" oninput="payUpdateDeduction(\''+d.id+'\',\'amount\',this.value);payCalc()" type="number" step="1" class="finp" style="width:100px;margin-bottom:0;text-align:right;font-weight:800;">'+
+        '<button onclick="payRemoveDeduction(\''+d.id+'\')" style="background:#FFEBEE;border:none;border-radius:7px;color:#C62828;font-size:16px;width:30px;height:30px;cursor:pointer;flex-shrink:0;">\u00d7</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function payUpdateEarning(id,key,val){
+  var e=PAY_EARNINGS.find(function(x){return x.id===id;});
+  if(e){e[key]=(key==='amount'?parseFloat(val)||0:val);}
+}
+function payUpdateDeduction(id,key,val){
+  var d=PAY_DEDUCTIONS.find(function(x){return x.id===id;});
+  if(d){d[key]=(key==='amount'?parseFloat(val)||0:val);}
 }
 
 function gn(id){var el=document.getElementById(id);return parseFloat(el?el.value:0)||0;}
 
-function payAutoCalc(){
-  var basic=gn('pf-basic'),da=gn('pf-da'),hra=gn('pf-hra'),conv=gn('pf-conv'),spec=gn('pf-spec'),med=gn('pf-med'),other=gn('pf-other');
-  var gross=basic+da+hra+conv+spec+med+other;
+function payCalc(){
+  var basic=gn('pf-basic');
+  var extraTotal=PAY_EARNINGS.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  var gross=basic+extraTotal;
 
-  // PF = 12% of basic
-  var pfEmp=Math.round(basic*0.12);
-  var pfEmr=Math.round(basic*0.12);
+  var pfOn=document.getElementById('pf-applicable')&&document.getElementById('pf-applicable').checked;
+  var esicOn=document.getElementById('esic-applicable')&&document.getElementById('esic-applicable').checked;
 
-  // ESIC = applicable if gross <= 21000
-  var esicEmp=gross<=21000?Math.round(gross*0.0075):0;
-  var esicEmr=gross<=21000?Math.round(gross*0.0325):0;
+  // PF
+  var pfEmp=pfOn?Math.round(basic*0.12):0;
+  var pfEmr=pfOn?Math.round(basic*0.12):0;
+  var pfPF=document.getElementById('pf-fields');
+  if(pfPF)pfPF.style.display=pfOn?'block':'none';
+  var pfEEl=document.getElementById('pf-pfe');if(pfEEl&&pfOn)pfEEl.value=pfEmp;
+  var pfREl=document.getElementById('pf-pfr');if(pfREl)pfREl.value=pfOn?pfEmr:0;
+  if(!pfOn&&pfEEl)pfEEl.value=0;
 
-  var pfEEl=document.getElementById('pf-pfe');if(pfEEl)pfEEl.value=pfEmp;
-  var pfREl=document.getElementById('pf-pfr');if(pfREl)pfREl.value=pfEmr;
-  var esicEEl=document.getElementById('pf-esice');if(esicEEl)esicEEl.value=esicEmp;
-  var esicREl=document.getElementById('pf-esicr');if(esicREl)esicREl.value=esicEmr;
+  // ESIC
+  var esicEmp=esicOn&&gross<=21000?Math.round(gross*0.0075):0;
+  var esicEmr=esicOn&&gross<=21000?Math.round(gross*0.0325):0;
+  var esicF=document.getElementById('esic-fields');
+  if(esicF)esicF.style.display=esicOn?'block':'none';
+  var esicEEl=document.getElementById('pf-esice');if(esicEEl&&esicOn)esicEEl.value=esicEmp;
+  var esicREl=document.getElementById('pf-esicr');if(esicREl)esicREl.value=esicOn?esicEmr:0;
+  if(!esicOn&&esicEEl)esicEEl.value=0;
 
-  var gDisp=document.getElementById('pf-gross-display');if(gDisp)gDisp.innerHTML='&#8377;'+gross.toLocaleString('en-IN');
-  payNetCalc();
+  // ESIC note if gross > 21000
+  if(esicOn&&gross>21000){
+    var esicF2=document.getElementById('esic-fields');
+    if(esicF2&&!document.getElementById('esic-note')){
+      var note=document.createElement('div');note.id='esic-note';
+      note.style.cssText='font-size:11px;color:#6A1B9A;margin-top:4px;';
+      note.textContent='Gross > \u20b921,000 \u2014 ESIC not applicable';
+      esicF2.appendChild(note);
+    }
+  } else {
+    var n=document.getElementById('esic-note');if(n)n.remove();
+  }
+
+  var extraDedTotal=PAY_DEDUCTIONS.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
+  var tds=gn('pf-tds');
+  var totalDed=pfEmp+esicEmp+extraDedTotal+tds;
+  var net=Math.max(0,gross-totalDed);
+
+  var gDisp=document.getElementById('pf-gross-display');if(gDisp)gDisp.innerHTML='\u20b9'+gross.toLocaleString('en-IN');
+  var nDisp=document.getElementById('pf-net-display');if(nDisp)nDisp.innerHTML='\u20b9'+net.toLocaleString('en-IN');
 }
 
-function payNetCalc(){
-  var basic=gn('pf-basic'),da=gn('pf-da'),hra=gn('pf-hra'),conv=gn('pf-conv'),spec=gn('pf-spec'),med=gn('pf-med'),other=gn('pf-other');
-  var gross=basic+da+hra+conv+spec+med+other;
-  var pfEmp=gn('pf-pfe'),esicEmp=gn('pf-esice'),tds=gn('pf-tds');
-  var net=gross-pfEmp-esicEmp-tds;
-  var nDisp=document.getElementById('pf-net-display');if(nDisp)nDisp.innerHTML='&#8377;'+Math.max(0,net).toLocaleString('en-IN');
-}
+// Old name kept for compatibility
+function payAutoCalc(){payCalc();}
+function payNetCalc(){payCalc();}
 
 async function empSavePay(){
   var empId=document.getElementById('pf-emp-id')?document.getElementById('pf-emp-id').value:'';
@@ -5930,12 +6060,32 @@ async function empSavePay(){
   if(!empId||!date){toast('Missing data','error');return;}
   if(!basic){toast('Basic salary is required','warning');return;}
 
-  var da=gn('pf-da'),hra=gn('pf-hra'),conv=gn('pf-conv'),spec=gn('pf-spec'),med=gn('pf-med'),other=gn('pf-other');
-  var gross=basic+da+hra+conv+spec+med+other;
-  var pfEmp=gn('pf-pfe'),pfEmr=gn('pf-pfr'),esicEmp=gn('pf-esice'),esicEmr=gn('pf-esicr'),tds=gn('pf-tds');
-  var net=Math.max(0,gross-pfEmp-esicEmp-tds);
-  var remarks=document.getElementById('pf-remarks')?document.getElementById('pf-remarks').value.trim():'';
+  var pfOn=document.getElementById('pf-applicable')&&document.getElementById('pf-applicable').checked;
+  var esicOn=document.getElementById('esic-applicable')&&document.getElementById('esic-applicable').checked;
 
+  var extraTotal=PAY_EARNINGS.reduce(function(s,e){return s+(parseFloat(e.amount)||0);},0);
+  var gross=basic+extraTotal;
+  var pfEmp=pfOn?gn('pf-pfe'):0;
+  var pfEmr=pfOn?gn('pf-pfr'):0;
+  var esicEmp=esicOn?gn('pf-esice'):0;
+  var esicEmr=esicOn?gn('pf-esicr'):0;
+  var extraDedTotal=PAY_DEDUCTIONS.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
+  var tds=gn('pf-tds');
+  var net=Math.max(0,gross-pfEmp-esicEmp-extraDedTotal-tds);
+
+  // Build da/hra/etc from extra earnings for backward compat
+  var da=0,hra=0,conv=0,spec=0,med=0,other=0;
+  PAY_EARNINGS.forEach(function(e){
+    var l=(e.label||'').toLowerCase();
+    if(l==='da')da=e.amount;
+    else if(l==='hra')hra=e.amount;
+    else if(l==='conveyance')conv=e.amount;
+    else if(l==='special allowance'||l==='special')spec=e.amount;
+    else if(l==='medical allowance'||l==='medical')med=e.amount;
+    else other+=parseFloat(e.amount)||0;
+  });
+
+  var remarks=document.getElementById('pf-remarks')?document.getElementById('pf-remarks').value.trim():'';
   var data={
     employee_id:empId, effective_date:date,
     basic:basic, da:da, hra:hra, conveyance:conv,
@@ -5943,6 +6093,9 @@ async function empSavePay(){
     gross:gross, pf_employee:pfEmp, pf_employer:pfEmr,
     esic_employee:esicEmp, esic_employer:esicEmr,
     tds:tds, net_salary:net, pay_type:'fixed',
+    pf_applicable:pfOn, esic_applicable:esicOn,
+    extra_earnings:JSON.stringify(PAY_EARNINGS),
+    extra_deductions:JSON.stringify(PAY_DEDUCTIONS),
     remarks:remarks||null,
     created_by:currentUser?currentUser.name:null
   };
