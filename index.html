@@ -5482,8 +5482,8 @@ function empDirectoryHTML(){
 
   var statsRow='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
     '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #2E7D32;"><div style="font-size:10px;color:var(--text3);font-weight:700;">TOTAL</div><div style="font-size:20px;font-weight:900;color:#2E7D32;">'+EMP_LIST.filter(function(e){return e.status==='active';}).length+'</div></div>'+
-    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #F57F17;cursor:pointer;" onclick="empTab('pending',document.getElementById('emp-t-pending'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">PENDING</div><div style="font-size:20px;font-weight:900;color:#F57F17;">'+EMP_LIST.filter(function(e){return e.status==='pending'||!e.status;}).length+'</div></div>'+
-    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #C62828;cursor:pointer;" onclick="empTab('resigned',document.getElementById('emp-t-resigned'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">RESIGNED</div><div style="font-size:20px;font-weight:900;color:#C62828;">'+EMP_LIST.filter(function(e){return e.status==='resigned';}).length+'</div></div>'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #F57F17;cursor:pointer;" onclick="empTab(\'pending\',document.getElementById(\'emp-t-pending\'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">PENDING</div><div style="font-size:20px;font-weight:900;color:#F57F17;">'+EMP_LIST.filter(function(e){return e.status==='pending'||!e.status;}).length+'</div></div>'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #C62828;cursor:pointer;" onclick="empTab(\'resigned\',document.getElementById(\'emp-t-resigned\'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">RESIGNED</div><div style="font-size:20px;font-weight:900;color:#C62828;">'+EMP_LIST.filter(function(e){return e.status==='resigned';}).length+'</div></div>'+
   '</div>';
 
   var searchBar='<div style="display:flex;gap:8px;margin-bottom:10px;">'+
@@ -5504,7 +5504,7 @@ function empDirectoryHTML(){
     var latest=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);})[0];
     var roleCol={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A','QC Engineer':'#E65100','Safety Officer':'#F57F17'}[e.designation||e.role]||'#37474F';
 
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;" onclick="empViewDetail(''+e.id+'')">'+
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;" onclick="empViewDetail(\''+e.id+'\')">'+
       '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">'+
         '<div style="width:46px;height:46px;border-radius:12px;background:'+roleCol+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
           (e.photo_url||e.photoUrl?'<img src="'+(e.photo_url||e.photoUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">':init)+
