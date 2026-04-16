@@ -3441,7 +3441,7 @@ function mapSC(s){
 function mapEmployee(e){
   return {id:e.id,empId:e.emp_id,name:((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown',
     role:e.role||'viewer',access:e.designation||e.role,dept:e.department||'',
-    phone:e.phone,phone2:e.phone2,dob:e.dob,gender:e.gender,blood:e.blood_group,
+    phone:e.phone,phone2:e.phone2,dob:e.dob||e.date_of_birth,gender:e.gender,blood:e.blood_group,
     marital:e.marital_status,doj:e.date_of_joining,
     empType:e.emp_type,location:e.work_location,project:e.work_location||'',
     address:e.address,permanent:e.permanent_address,
@@ -4155,7 +4155,22 @@ function updateUser(id){
     if(urls[0]) u.photoUrl=urls[0];
     if(urls[1]) u.aadharUrl=urls[1];
     if(urls[2]) u.panUrl=urls[2];
-    try{ await sbUpdate('employees',u.id,{profile_photo:u.photoUrl,aadhar_doc_url:u.aadharUrl,pan_doc_url:u.panUrl}); }catch(e){}
+    try{
+      await sbUpdate('employees',u.id,{
+        first_name:fname, last_name:lname||null,
+        phone:u.phone||null, phone2:u.phone2||null,
+        date_of_birth:u.dob||null, gender:u.gender||null,
+        marital_status:u.marital||null, blood_group:u.blood||null,
+        designation:u.access||null, role:u.role||null,
+        status:u.status||'active', department:u.dept||null,
+        emp_type:u.empType||null, work_location:u.location||null,
+        address:u.address||null, permanent_address:u.permanent||null,
+        aadhar:u.aadhar||null, pan:u.pan||null, pf_no:u.pf||null, esic_no:u.esic||null,
+        bank_name:u.bank||null, account_no:u.accNo||null, ifsc:u.ifsc||null, account_holder:u.accName||null,
+        emergency_name:u.ecName||null, emergency_relation:u.ecRel||null, emergency_phone:u.ecPhone||null,
+        profile_photo:u.photoUrl||null, aadhar_doc_url:u.aadharUrl||null, pan_doc_url:u.panUrl||null
+      });
+    }catch(e){console.error(e);}
     renderUsers(); closeSheet('ov-add','sh-add'); toast(u.name+' updated!','success');
   });
 }
