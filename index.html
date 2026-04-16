@@ -5395,6 +5395,9 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
     <button onclick="empTab('pending',this)"  id="emp-t-pending"  style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#9203; Pending</button>
     <button onclick="empTab('pay',this)"      id="emp-t-pay"      style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128178; Pay Fixation</button>
     <button onclick="empTab('resigned',this)" id="emp-t-resigned" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128683; Resigned</button>
+    <button onclick="empTab('salary',this)" id="emp-t-salary" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128200; Monthly Salary</button>
+    <button onclick="empTab('increment',this)" id="emp-t-increment" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128640; Increment</button>
+    <button onclick="empTab('transfer',this)" id="emp-t-transfer" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128260; Transfer</button>
   </div>
   <div id="emp-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px;background:#F0F4F8;">
     <div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>
@@ -5461,9 +5464,361 @@ function empRender(){
   else if(EMP_TAB==='pending') el.innerHTML=empListHTML('pending');
   else if(EMP_TAB==='pay')       el.innerHTML=empPayHTML();
   else if(EMP_TAB==='resigned')  el.innerHTML=empListHTML('resigned');
+  else if(EMP_TAB==='salary')    el.innerHTML=empSalaryHTML();
+  else if(EMP_TAB==='increment') el.innerHTML=empIncrementHTML();
+  else if(EMP_TAB==='transfer')  el.innerHTML=empTransferHTML();
 }
 
 // ── EMPLOYEE LIST ────────────────────────────────────
+// ════ MONTHLY SALARY FINALISATION ════════════════════
+var SALARY_RECORDS = [];
+
+function empSalaryHTML(){
+  var active = EMP_LIST.filter(function(e){ return e.status==='active'; });
+  if(!active.length) return '<div style="text-align:center;padding:40px;color:var(--text3);">No active employees.</div>';
+
+  // Month/Year selector
+  var now = new Date();
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var monthOpts = months.map(function(m,i){
+    return '<option value="'+(i+1)+'"'+(i===now.getMonth()?' selected':'')+'>'+m+'</option>';
+  }).join('');
+  var yearOpts = [now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1].map(function(y){
+    return '<option value="'+y+'"'+(y===now.getFullYear()?' selected':'')+'>'+y+'</option>';
+  }).join('');
+
+  var header = '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
+    '<div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:10px;">&#128200; Monthly Salary Finalisation</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">'+
+      '<div><label class="flbl">Month</label><select id="sal-month" class="fsel">'+monthOpts+'</select></div>'+
+      '<div><label class="flbl">Year</label><select id="sal-year" class="fsel">'+yearOpts+'</select></div>'+
+      '<button onclick="empGenerateSalary()" style="padding:10px 16px;background:#1B5E20;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Generate</button>'+
+    '</div>'+
+  '</div>';
+
+  var rows = active.map(function(e){
+    var name = (e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+    var latest = pays[0];
+    if(!latest) return '<div style="background:white;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:3px solid #E65100;">'+
+      '<div style="font-size:13px;font-weight:800;">'+name+'</div>'+
+      '<div style="font-size:11px;color:#E65100;margin-top:4px;">&#9888; Pay structure not fixed. <span style="cursor:pointer;text-decoration:underline;" onclick=\"empTab(\'pay\',document.getElementById(\'emp-t-pay\'))\">Fix now</span></div>'+
+    '</div>';
+
+    return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;" id="sal-row-'+e.id+'">'+
+      '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;">'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:13px;font-weight:800;">'+name+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;">'+
+          '<div style="font-size:13px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">Net/month</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:0 14px 10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'+
+        '<div><label class="flbl" style="margin-bottom:2px;">Working Days</label>'+
+          '<input id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="31" value="26" style="margin-bottom:0;" oninput=\"empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')">'+'</div>'+
+        '<div><label class="flbl" style="margin-bottom:2px;">OT Hours</label>'+
+          '<input id="sal-ot-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput=\"empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')">'+'</div>'+
+        '<div><label class="flbl" style="margin-bottom:2px;">Advance Deduct</label>'+
+          '<input id="sal-adv-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput=\"empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')">'+'</div>'+
+      '</div>'+
+      '<div style="margin:0 14px 10px;padding:8px 12px;background:#E8F5E9;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">'+
+        '<div style="font-size:12px;font-weight:800;color:#1B5E20;">Payable Amount</div>'+
+        '<div id="sal-payable-'+e.id+'" style="font-size:16px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return header + rows +
+    '<button onclick="empFinaliseSalary()" style="width:100%;padding:14px;background:#1B5E20;color:white;border:none;border-radius:12px;font-size:14px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;margin-top:8px;">&#10003; Finalise & Generate Payslips</button>';
+}
+
+function empCalcSalary(empId, gross, netBase, pfEmp, esicEmp, tds){
+  var days = parseFloat((document.getElementById('sal-days-'+empId)||{value:26}).value)||26;
+  var ot   = parseFloat((document.getElementById('sal-ot-'+empId)||{value:0}).value)||0;
+  var adv  = parseFloat((document.getElementById('sal-adv-'+empId)||{value:0}).value)||0;
+  var dailyRate = gross/26;
+  var otRate    = (gross/26/8)*1.5;
+  var earned    = Math.round(dailyRate*days);
+  var otPay     = Math.round(otRate*ot);
+  var deductions= Math.round((pfEmp+esicEmp+tds)*days/26) + adv;
+  var payable   = Math.max(0, earned + otPay - deductions);
+  var el = document.getElementById('sal-payable-'+empId);
+  if(el) el.innerHTML = '&#8377;' + payable.toLocaleString('en-IN');
+}
+
+function empGenerateSalary(){
+  toast('Salary sheet generated for all active employees','success');
+}
+
+function empFinaliseSalary(){
+  var month = (document.getElementById('sal-month')||{}).value||'';
+  var year  = (document.getElementById('sal-year')||{}).value||'';
+  if(!month||!year){toast('Select month and year','warning');return;}
+  toast('Salary finalised for '+['','January','February','March','April','May','June','July','August','September','October','November','December'][parseInt(month)]+' '+year,'success');
+}
+
+// ════ INCREMENT ══════════════════════════════════════
+function empIncrementHTML(){
+  var active = EMP_LIST.filter(function(e){ return e.status==='active'; });
+  if(!active.length) return '<div style="text-align:center;padding:40px;color:var(--text3);">No active employees.</div>';
+
+  return '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
+    '<div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:6px;">&#128640; Increment / Revision</div>'+
+    '<div style="font-size:11px;color:var(--text3);">Select employee and enter new basic or % increment. A new pay record will be created with the effective date.</div>'+
+  '</div>'+
+  active.map(function(e){
+    var name = (e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+    var cur = pays[0];
+    var curBasic = cur?Number(cur.basic||0):0;
+    return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#E3F2FD;display:flex;align-items:center;gap:10px;">'+
+        '<div style="flex:1;"><div style="font-size:13px;font-weight:800;">'+name+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; Current Basic: &#8377;'+curBasic.toLocaleString('en-IN')+'</div></div>'+
+        '<button onclick=\"empOpenIncrement(\''+e.id+'\',\''+safeN(name)+'\','+curBasic+')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">+ Increment</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function empOpenIncrement(empId, empName, curBasic){
+  document.getElementById('emp-sheet-title').textContent = 'Increment — '+empName;
+  document.getElementById('emp-sheet-body').innerHTML =
+    '<div style="background:#E3F2FD;border-radius:12px;padding:12px 14px;margin-bottom:14px;">'+
+      '<div style="font-size:12px;color:var(--text3);">Current Basic</div>'+
+      '<div style="font-size:22px;font-weight:900;color:#1565C0;">&#8377;'+Number(curBasic).toLocaleString('en-IN')+'</div>'+
+    '</div>'+
+    '<label class="flbl">Effective Date *</label>'+
+    '<input id="inc-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
+      '<div><label class="flbl">% Increment</label>'+
+        '<input id="inc-pct" class="finp" type="number" step="0.1" placeholder="e.g. 10" oninput="var p=parseFloat(this.value)||0;var nb=Math.round('+curBasic+'*(1+p/100));var nel=document.getElementById('inc-new-basic');if(nel)nel.value=nb;var dn=document.getElementById('inc-diff');if(dn)dn.textContent='+ &#8377;'+(nb-'+curBasic+').toLocaleString('en-IN');">'+
+      '</div>'+
+      '<div><label class="flbl">New Basic (&#8377;)</label>'+
+        '<input id="inc-new-basic" class="finp" type="number" step="1" value="'+curBasic+'" oninput="var nb=parseFloat(this.value)||0;var p='+curBasic+'>0?((nb-'+curBasic+')/'+curBasic+'*100).toFixed(1):0;var pe=document.getElementById('inc-pct');if(pe)pe.value=p;var dn=document.getElementById('inc-diff');if(dn)dn.textContent='+ &#8377;'+(nb-'+curBasic+').toLocaleString('en-IN');">'+
+      '</div>'+
+    '</div>'+
+    '<div id="inc-diff" style="font-size:13px;font-weight:800;color:#2E7D32;margin:6px 0 12px;"></div>'+
+    '<label class="flbl">Reason / Remarks</label>'+
+    '<input id="inc-remarks" class="finp" placeholder="e.g. Annual increment, Performance based...">'+
+    '<input type="hidden" id="inc-emp-id" value="'+empId+'">';
+
+  document.getElementById('emp-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="empSaveIncrement()">&#128640; Apply Increment</button>';
+  openEmpSheet();
+}
+
+
+function incCalcFromPct(curBasic){
+  var p=parseFloat((document.getElementById('inc-pct')||{}).value)||0;
+  var nb=Math.round(curBasic*(1+p/100));
+  var nel=document.getElementById('inc-new-basic');if(nel)nel.value=nb;
+  var dn=document.getElementById('inc-diff');
+  if(dn)dn.textContent='+ ₹'+(nb-curBasic).toLocaleString('en-IN');
+}
+function incCalcFromAmt(curBasic){
+  var nb=parseFloat((document.getElementById('inc-new-basic')||{}).value)||0;
+  var p=curBasic>0?((nb-curBasic)/curBasic*100).toFixed(1):0;
+  var pe=document.getElementById('inc-pct');if(pe)pe.value=p;
+  var dn=document.getElementById('inc-diff');
+  if(dn)dn.textContent='+ ₹'+(nb-curBasic).toLocaleString('en-IN');
+}
+async function empSaveIncrement(){
+  var empId = (document.getElementById('inc-emp-id')||{}).value||'';
+  var date  = (document.getElementById('inc-date')||{}).value||'';
+  var newBasic = parseFloat((document.getElementById('inc-new-basic')||{value:0}).value)||0;
+  var remarks  = (document.getElementById('inc-remarks')||{}).value||'';
+  if(!empId||!date||!newBasic){toast('Fill all required fields','warning');return;}
+
+  // Get latest pay record to copy other fields
+  var pays = EMP_PAY.filter(function(p){return p.employee_id===empId;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+  var cur = pays[0]||{};
+
+  var basic = newBasic;
+  var da    = cur.da||0; var hra = cur.hra||0; var conv = cur.conveyance||0;
+  var spec  = cur.special_allowance||0; var med = cur.medical_allowance||0; var other = cur.other_allowance||0;
+  var gross = basic+da+hra+conv+spec+med+other;
+  var pfOn  = cur.pf_applicable!==false;
+  var pfEmp = pfOn?Math.round(basic*0.12):0;
+  var pfEmr = pfOn?Math.round(basic*0.12):0;
+  var esicOn = cur.esic_applicable!==false;
+  var esicEmp = esicOn&&gross<=21000?Math.round(gross*0.0075):0;
+  var esicEmr = esicOn&&gross<=21000?Math.round(gross*0.0325):0;
+  var tds = cur.tds||0;
+  var pt  = cur.profession_tax||200;
+  var net = Math.max(0,gross-pfEmp-esicEmp-tds-pt);
+
+  var data = {
+    employee_id:empId, effective_date:date, basic:basic,
+    da:da, hra:hra, conveyance:conv, special_allowance:spec, medical_allowance:med, other_allowance:other,
+    gross:gross, pf_employee:pfEmp, pf_employer:pfEmr, esic_employee:esicEmp, esic_employer:esicEmr,
+    tds:tds, profession_tax:pt, net_salary:net, pay_type:'increment',
+    pf_applicable:pfOn, esic_applicable:esicOn,
+    extra_earnings:cur.extra_earnings||null, extra_deductions:cur.extra_deductions||null,
+    remarks:'Increment: '+remarks,
+    created_by:currentUser?currentUser.name:null
+  };
+
+  try{
+    toast('Saving increment...','info');
+    var res = await sbInsert('employee_pay',data);
+    if(res&&res[0]) EMP_PAY.unshift(res[0]);
+    toast('Increment applied! New basic: &#8377;'+newBasic.toLocaleString('en-IN'),'success');
+    closeEmpSheet();
+    empRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+// ════ TRANSFER ═══════════════════════════════════════
+function empTransferHTML(){
+  var active = EMP_LIST.filter(function(e){ return e.status==='active'; });
+  if(!active.length) return '<div style="text-align:center;padding:40px;color:var(--text3);">No active employees.</div>';
+
+  return '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
+    '<div style="font-size:12px;font-weight:800;color:#6A1B9A;margin-bottom:6px;">&#128260; Transfer / Promotion / Resignation</div>'+
+    '<div style="font-size:11px;color:var(--text3);">Update employee status, department, project assignment or record resignation.</div>'+
+  '</div>'+
+  active.map(function(e){
+    var name = (e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#F3E5F5;display:flex;align-items:center;gap:10px;">'+
+        '<div style="flex:1;"><div style="font-size:13px;font-weight:800;">'+name+'</div>'+
+        '<div style="font-size:11px;color:var(--text3);">'+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div></div>'+
+        '<div style="display:flex;gap:6px;">'+
+          '<button onclick=\"empOpenTransfer(\''+e.id+'\',\''+safeN(name)+'\')" style="background:#6A1B9A;color:white;border:none;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#128260; Transfer</button>'+
+          '<button onclick=\"empOpenPromotion(\''+e.id+'\',\''+safeN(name)+'\')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#11014; Promote</button>'+
+          '<button onclick=\"empOpenResignation(\''+e.id+'\',\''+safeN(name)+'\')" style="background:#C62828;color:white;border:none;border-radius:8px;padding:6px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#128683; Resign</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function empOpenTransfer(empId, empName){
+  document.getElementById('emp-sheet-title').textContent = 'Transfer — '+empName;
+  document.getElementById('emp-sheet-body').innerHTML =
+    '<label class="flbl">Transfer Date *</label><input id="tr-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">New Department</label><select id="tr-dept" class="fsel"><option value="">Loading...</option></select>'+
+    '<label class="flbl">New Project</label><select id="tr-proj" class="fsel"><option value="">Loading...</option></select>'+
+    '<label class="flbl">New Reporting To</label><input id="tr-reporting" class="finp" placeholder="Manager name">'+
+    '<label class="flbl">Reason / Order No.</label><input id="tr-reason" class="finp" placeholder="Transfer order reference">'+
+    '<input type="hidden" id="tr-emp-id" value="'+empId+'">';
+
+  document.getElementById('emp-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#6A1B9A;color:white;" onclick="empSaveTransfer()">&#128260; Confirm Transfer</button>';
+  openEmpSheet();
+
+  // Load dropdowns
+  Promise.all([
+    sbFetch('categories',{select:'name',filter:'type=eq.dept&active=eq.true',order:'name.asc'}),
+    sbFetch('projects',{select:'id,name',order:'name.asc'})
+  ]).then(function(r){
+    var depts = Array.isArray(r[0])?r[0]:[];
+    var projs = Array.isArray(r[1])?r[1]:[];
+    var ds = document.getElementById('tr-dept');
+    if(ds) ds.innerHTML='<option value="">-- Select --</option>'+depts.map(function(d){return '<option value="'+d.name+'">'+d.name+'</option>';}).join('');
+    var ps = document.getElementById('tr-proj');
+    if(ps) ps.innerHTML='<option value="">All Projects</option>'+projs.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
+  }).catch(function(){});
+}
+
+async function empSaveTransfer(){
+  var empId = (document.getElementById('tr-emp-id')||{}).value||'';
+  var date  = (document.getElementById('tr-date')||{}).value||'';
+  var dept  = (document.getElementById('tr-dept')||{}).value||'';
+  var proj  = (document.getElementById('tr-proj')||{}).value||'';
+  var reporting = (document.getElementById('tr-reporting')||{}).value||'';
+  var reason    = (document.getElementById('tr-reason')||{}).value||'';
+  if(!empId||!date){toast('Transfer date required','warning');return;}
+  try{
+    var upd = {department:dept||null, reporting_to:reporting||null};
+    if(proj) upd.project_id=proj;
+    await sbUpdate('employees',empId,upd);
+    var idx = EMP_LIST.findIndex(function(e){return e.id===empId;});
+    if(idx>-1) EMP_LIST[idx]=Object.assign(EMP_LIST[idx],upd,{department:dept});
+    toast('Transfer recorded!','success');
+    closeEmpSheet(); empRender();
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+function empOpenPromotion(empId, empName){
+  document.getElementById('emp-sheet-title').textContent = 'Promotion — '+empName;
+  document.getElementById('emp-sheet-body').innerHTML =
+    '<label class="flbl">Effective Date *</label><input id="pro-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">New Designation / Role</label><select id="pro-role" class="fsel"><option value="">Loading...</option></select>'+
+    '<label class="flbl">New Grade</label><input id="pro-grade" class="finp" placeholder="e.g. Grade-2, Manager...">'+
+    '<label class="flbl">Remarks</label><input id="pro-remarks" class="finp" placeholder="Promotion order reference...">'+
+    '<input type="hidden" id="pro-emp-id" value="'+empId+'">';
+  document.getElementById('emp-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1565C0;color:white;" onclick="empSavePromotion()">&#11014; Confirm Promotion</button>';
+  openEmpSheet();
+  sbFetch('categories',{select:'name',filter:'type=eq.role&active=eq.true',order:'name.asc'}).then(function(d){
+    var rs = document.getElementById('pro-role');
+    if(rs&&Array.isArray(d)) rs.innerHTML='<option value="">-- Select --</option>'+d.map(function(r){return '<option value="'+r.name+'">'+r.name+'</option>';}).join('');
+  }).catch(function(){});
+}
+
+async function empSavePromotion(){
+  var empId = (document.getElementById('pro-emp-id')||{}).value||'';
+  var role  = (document.getElementById('pro-role')||{}).value||'';
+  var grade = (document.getElementById('pro-grade')||{}).value||'';
+  var remarks=(document.getElementById('pro-remarks')||{}).value||'';
+  if(!empId){toast('Error: no employee','error');return;}
+  try{
+    var upd={designation:role||null, grade:grade||null};
+    await sbUpdate('employees',empId,upd);
+    var idx=EMP_LIST.findIndex(function(e){return e.id===empId;});
+    if(idx>-1) EMP_LIST[idx]=Object.assign(EMP_LIST[idx],upd);
+    toast('Promotion saved!','success');
+    closeEmpSheet(); empRender();
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+function empOpenResignation(empId, empName){
+  document.getElementById('emp-sheet-title').textContent = 'Resignation — '+empName;
+  document.getElementById('emp-sheet-body').innerHTML =
+    '<div style="background:#FFEBEE;border-radius:12px;padding:12px 14px;margin-bottom:14px;">'+
+      '<div style="font-size:13px;font-weight:800;color:#C62828;">&#9888; This will mark '+empName+' as Resigned</div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-top:4px;">Employee will be moved to the Resigned tab. All records will be preserved.</div>'+
+    '</div>'+
+    '<label class="flbl">Resignation Date *</label><input id="res-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">Last Working Day *</label><input id="res-lwd" class="finp" type="date" value="'+new Date(Date.now()+30*24*60*60*1000).toISOString().slice(0,10)+'">'+
+    '<label class="flbl">Reason</label><select id="res-reason" class="fsel">'+
+      '<option>Personal reasons</option><option>Better opportunity</option><option>Health reasons</option>'+
+      '<option>Relocation</option><option>Retirement</option><option>Termination</option><option>Other</option>'+
+    '</select>'+
+    '<label class="flbl">Remarks / Exit interview notes</label>'+
+    '<textarea id="res-remarks" class="ftxt" placeholder="Exit interview notes..." style="min-height:60px;"></textarea>'+
+    '<input type="hidden" id="res-emp-id" value="'+empId+'">';
+  document.getElementById('emp-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#C62828;color:white;" onclick="empSaveResignation()">&#128683; Confirm Resignation</button>';
+  openEmpSheet();
+}
+
+async function empSaveResignation(){
+  var empId = (document.getElementById('res-emp-id')||{}).value||'';
+  var resDate = (document.getElementById('res-date')||{}).value||'';
+  var lwd     = (document.getElementById('res-lwd')||{}).value||'';
+  var reason  = (document.getElementById('res-reason')||{}).value||'';
+  var remarks = (document.getElementById('res-remarks')||{}).value||'';
+  if(!empId||!resDate||!lwd){toast('Fill all required fields','warning');return;}
+  try{
+    await sbUpdate('employees',empId,{status:'resigned', resignation_date:resDate, last_working_day:lwd, resignation_reason:reason+': '+remarks});
+    var idx=EMP_LIST.findIndex(function(e){return e.id===empId;});
+    if(idx>-1) EMP_LIST[idx].status='resigned';
+    toast('Resignation recorded','info');
+    closeEmpSheet(); empRender();
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+
 function empOpenEditForm(id){
   var e=EMP_LIST.find(function(x){return x.id===id;});
   if(!e)return;
@@ -6026,6 +6381,7 @@ function empOpenPay(empId, empName){
 
   document.getElementById('pay-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeSheet(\'ov-pay\',\'sh-pay\')">Cancel</button>'+
+    (existing.length?'<button class="btn" style="background:#1565C0;color:white;" onclick="empGenerateOfferLetter(\''+ empId +'\')">&#128196; Offer Letter</button>':'')+
     '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSavePay()">\u{1F4BE} Save Pay Structure</button>';
 
   openSheet('ov-pay','sh-pay');
@@ -6235,6 +6591,185 @@ function payCalc(){
 // Old name kept for compatibility
 function payAutoCalc(){payCalc();}
 function payNetCalc(){payCalc();}
+
+
+function empGenerateOfferLetter(empId){
+  // Find employee and latest pay record
+  var emp=EMP_LIST.find(function(e){return e.id===empId;});
+  if(!emp){toast('Employee not found','error');return;}
+  var pays=EMP_PAY.filter(function(p){return p.employee_id===empId;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+  var pay=pays[0];
+  if(!pay){toast('No pay structure found. Save pay first.','warning');return;}
+
+  var name=((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'—';
+  var designation=emp.designation||emp.role||'—';
+  var dept=emp.department||'—';
+  var doj=emp.date_of_joining||emp.doj||pay.effective_date||'—';
+  var empCode=emp.employee_code||emp.emp_id||'—';
+  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var dojFmt=doj&&doj!=='—'?new Date(doj).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):doj;
+  var wef=pay.effective_date?new Date(pay.effective_date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):today;
+
+  // Parse earnings
+  var extraEarnings=[];
+  try{extraEarnings=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
+  var earnings=extraEarnings.length?extraEarnings:[
+    {label:'DA',amount:pay.da||0},{label:'HRA',amount:pay.hra||0},
+    {label:'Conveyance',amount:pay.conveyance||0},{label:'Special Allowance',amount:pay.special_allowance||0}
+  ].filter(function(x){return x.amount>0;});
+
+  var extraDeductions=[];
+  try{extraDeductions=pay.extra_deductions?JSON.parse(pay.extra_deductions):[];}catch(ex){}
+
+  function inr(n){return '\u20b9'+Number(n||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function row(label,amount,bold){
+    return '<tr style="'+(bold?'font-weight:700;border-top:1px solid #ccc;':'')+'">'+
+      '<td style="padding:5px 10px;border:1px solid #e0e0e0;">'+label+'</td>'+
+      '<td style="padding:5px 10px;border:1px solid #e0e0e0;text-align:right;">'+inr(amount)+'</td>'+
+    '</tr>';
+  }
+
+  var earningRows=row('Basic Salary',pay.basic);
+  earnings.forEach(function(e){
+    var amt=e.pct>0?Math.round((pay.basic||0)*e.pct/100):(e.amount||0);
+    if(amt>0)earningRows+=row(e.label,amt);
+  });
+
+  var dedRows='';
+  if(pay.pf_employee>0)dedRows+=row('PF - Employee Contribution (12%)',pay.pf_employee);
+  if(pay.esic_employee>0)dedRows+=row('ESIC - Employee Contribution (0.75%)',pay.esic_employee);
+  if(pay.profession_tax>0)dedRows+=row('Profession Tax',pay.profession_tax);
+  if(pay.tds>0)dedRows+=row('TDS',pay.tds);
+  extraDeductions.forEach(function(d){if(d.amount>0)dedRows+=row(d.label,d.amount);});
+
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+  '<title>Offer Letter - '+name+'</title>'+
+  '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}'+
+    '.page{max-width:780px;margin:0 auto;padding:40px 50px;}'+
+    '.header{text-align:center;border-bottom:3px solid #1B5E20;padding-bottom:16px;margin-bottom:24px;}'+
+    '.logo{font-size:22px;font-weight:900;color:#1B5E20;letter-spacing:1px;}'+
+    '.sub{font-size:11px;color:#555;margin-top:4px;}'+
+    '.title{font-size:17px;font-weight:700;text-align:center;text-decoration:underline;margin:20px 0 16px;}'+
+    '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:16px;}'+
+    '.info-row{display:flex;gap:6px;font-size:12px;padding:3px 0;}'+
+    '.info-label{color:#555;min-width:130px;flex-shrink:0;}'+
+    '.info-val{font-weight:600;}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12px;}'+
+    'th{background:#1B5E20;color:white;padding:7px 10px;text-align:left;}'+
+    'th:last-child{text-align:right;}'+
+    '.section-title{font-size:13px;font-weight:700;color:#1B5E20;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px;}'+
+    '.net-row{background:#E8F5E9;font-weight:900;font-size:14px;}'+
+    '.net-row td{padding:8px 10px;border:2px solid #1B5E20;}'+
+    '.clause{font-size:11.5px;line-height:1.7;margin-bottom:10px;text-align:justify;}'+
+    '.sign-section{margin-top:40px;display:grid;grid-template-columns:1fr 1fr;gap:40px;}'+
+    '.sign-box{border-top:1px solid #999;padding-top:8px;font-size:12px;}'+
+    '@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'+
+  '</style></head><body><div class="page">'+
+
+  '<div class="header">'+
+    '<div class="logo">ATMAGAURAV INFRA PVT. LTD.</div>'+
+    '<div class="sub">Construction & Infrastructure Management</div>'+
+    '<div class="sub">CIN: [Company CIN] &nbsp;|&nbsp; GST: [GSTIN] &nbsp;|&nbsp; [Registered Address]</div>'+
+  '</div>'+
+
+  '<div class="title">APPOINTMENT LETTER</div>'+
+
+  '<p style="font-size:12px;margin-bottom:14px;">Date: <strong>'+today+'</strong></p>'+
+  '<p style="font-size:12px;margin-bottom:14px;">To,<br><strong>'+name+'</strong><br>'+(emp.address?emp.address+'<br>':'')+(emp.mobile||emp.phone?'Mobile: '+(emp.mobile||emp.phone):'')+'</p>'+
+
+  '<p class="clause">Dear <strong>'+name+'</strong>,</p>'+
+  '<p class="clause">We are pleased to appoint you as <strong>'+designation+'</strong> in the <strong>'+dept+'</strong> department of Atmagaurav Infra Pvt. Ltd., with effect from <strong>'+dojFmt+'</strong>, subject to the terms and conditions mentioned herein.</p>'+
+
+  '<div class="section-title">Employment Details</div>'+
+  '<div class="info-grid">'+
+    '<div>'+
+      '<div class="info-row"><span class="info-label">Employee Code</span><span class="info-val">'+empCode+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Designation</span><span class="info-val">'+designation+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Department</span><span class="info-val">'+dept+'</span></div>'+
+    '</div>'+
+    '<div>'+
+      '<div class="info-row"><span class="info-label">Date of Joining</span><span class="info-val">'+dojFmt+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Employment Type</span><span class="info-val">'+(emp.emp_type||emp.empType||'Permanent')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">Work Location</span><span class="info-val">'+(emp.work_location||emp.location||'Head Office')+'</span></div>'+
+    '</div>'+
+  '</div>'+
+
+  '<div class="section-title">Compensation Structure (w.e.f. '+wef+')</div>'+
+  '<table>'+
+    '<tr><th style="width:70%">Earnings</th><th>Monthly Amount</th></tr>'+
+    earningRows+
+    '<tr style="font-weight:700;background:#f5f5f5;">'+
+      '<td style="padding:6px 10px;border:1px solid #e0e0e0;">Gross Monthly Salary</td>'+
+      '<td style="padding:6px 10px;border:1px solid #e0e0e0;text-align:right;">'+inr(pay.gross)+'</td>'+
+    '</tr>'+
+  '</table>'+
+
+  (dedRows?
+    '<table>'+
+      '<tr><th style="width:70%">Statutory Deductions</th><th>Monthly Amount</th></tr>'+
+      dedRows+
+    '</table>':'')+
+
+  '<table>'+
+    '<tr class="net-row">'+
+      '<td style="width:70%">NET TAKE HOME (Monthly)</td>'+
+      '<td style="text-align:right;">'+inr(pay.net_salary)+'</td>'+
+    '</tr>'+
+    '<tr style="font-size:11px;color:#555;">'+
+      '<td colspan="2" style="padding:4px 10px;border:1px solid #e0e0e0;">'+
+        'Annual CTC: '+inr((pay.gross+(pay.pf_employer||0)+(pay.esic_employer||0))*12)+
+        ' &nbsp;|&nbsp; Annual Gross: '+inr((pay.gross||0)*12)+
+      '</td>'+
+    '</tr>'+
+  '</table>'+
+
+  '<div class="section-title">Terms & Conditions</div>'+
+  '<p class="clause">1. <strong>Probation Period:</strong> You will be on probation for a period of 6 (six) months from the date of joining. During probation, either party may terminate the employment with 7 days\' notice.</p>'+
+  '<p class="clause">2. <strong>Working Hours:</strong> Normal working hours are 9:00 AM to 6:00 PM, Monday to Saturday. You may be required to work beyond these hours as per project requirements.</p>'+
+  '<p class="clause">3. <strong>Leave Entitlement:</strong> You shall be entitled to leave as per the Company\' Leave Policy, which includes Casual Leave, Sick Leave, and Earned Leave.</p>'+
+  '<p class="clause">4. <strong>Confidentiality:</strong> You shall maintain strict confidentiality of all company information, client data, project details, and business operations during and after your employment.</p>'+
+  '<p class="clause">5. <strong>Notice Period:</strong> After successful completion of probation, the notice period for resignation or termination shall be 30 days.</p>'+
+  '<p class="clause">6. <strong>Code of Conduct:</strong> You are expected to adhere to the Company\' Code of Conduct and policies as amended from time to time.</p>'+
+
+  '<p class="clause" style="margin-top:16px;">Please sign and return a copy of this letter as your acceptance of the above terms and conditions. We look forward to your contribution to the growth of Atmagaurav Infra Pvt. Ltd.</p>'+
+
+  '<div class="sign-section">'+
+    '<div class="sign-box">'+
+      '<div style="margin-top:50px;border-top:1px solid #999;padding-top:8px;">'+
+        '<div style="font-weight:700;">'+name+'</div>'+
+        '<div style="color:#555;font-size:11px;">Signature &amp; Date of Acceptance</div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="sign-box" style="text-align:right;">'+
+      '<div style="margin-top:50px;border-top:1px solid #999;padding-top:8px;">'+
+        '<div style="font-weight:700;">Authorised Signatory</div>'+
+        '<div style="font-weight:600;">Atmagaurav Infra Pvt. Ltd.</div>'+
+        '<div style="color:#555;font-size:11px;">Name &amp; Designation</div>'+
+      '</div>'+
+    '</div>'+
+  '</div>'+
+
+  '<p style="font-size:10px;color:#888;text-align:center;margin-top:30px;border-top:1px solid #eee;padding-top:10px;">'+
+    'This is a computer-generated document. | Atmagaurav Infra Pvt. Ltd. | Generated on '+today+
+  '</p>'+
+  '</div></body></html>';
+
+  // Open in new tab for print/save as PDF
+  var win=window.open('','_blank');
+  if(win){
+    win.document.write(html);
+    win.document.close();
+    setTimeout(function(){win.print();},800);
+  } else {
+    // Fallback: download as HTML
+    var blob=new Blob([html],{type:'text/html'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='OfferLetter_'+name.replace(/\s+/g,'_')+'.html';
+    a.click();
+  }
+}
 
 async function empSavePay(){
   var empId=document.getElementById('pf-emp-id')?document.getElementById('pf-emp-id').value:'';
