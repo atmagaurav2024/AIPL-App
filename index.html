@@ -2059,7 +2059,7 @@ input,select,textarea{font-size:16px !important;}
   <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
   <div class="tb-info">
     <div class="tb-title">Master Registry</div>
-    <div class="tb-sub">Vendors &bull; Materials &bull; Subcontractors &bull; Employees</div>
+    <div class="tb-sub">Vendors &bull; Materials &bull; Subcontractors</div>
   </div>
   <button class="tb-btn" id="export-btn" onclick="toast('Exporting registry...','info')">&#128229;</button>
   <button class="tb-btn" id="fab-top" onclick="openAdd()">&#43;</button>
@@ -2069,7 +2069,6 @@ input,select,textarea{font-size:16px !important;}
   <div class="ni on" id="nav-vendors" onclick="switchPage('vendors')"><div class="ni-ic">&#127968;</div><div class="ni-lb">Vendors</div></div>
   <div class="ni" id="nav-materials" onclick="switchPage('materials')"><div class="ni-ic">&#129521;</div><div class="ni-lb">Materials</div></div>
   <div class="ni" id="nav-subcontractors" onclick="switchPage('subcontractors')"><div class="ni-ic">&#128296;</div><div class="ni-lb">Subcontractors</div></div>
-  <div class="ni" id="nav-users" onclick="switchPage('users')"><div class="ni-ic">&#128101;</div><div class="ni-lb">Employees</div></div>
   <div class="ni" id="nav-settings" onclick="switchPage('settings')"><div class="ni-ic">&#9881;&#65039;</div><div class="ni-lb">Categories</div></div>
 </nav>
 <div class="scroll">
@@ -4465,7 +4464,7 @@ function switchPage(p){
   if(p==='vendors'){vendorCatFilter='all';rebuildPills('vendor','vendor-cat-pills','var(--teal)',filterVendors);renderVendors();}
   if(p==='materials'){matCatFilter='all';rebuildPills('material','mat-cat-pills','var(--green)',filterMaterials);renderMaterials();}
   if(p==='subcontractors'){scCatFilter='all';rebuildPills('sc','sc-cat-pills','var(--purple)',filterSC);renderSC();}
-  if(p==='users') renderUsers();
+  if(p==='users'){showApp('employees');return;}
 }
 // toast: shared above
 
@@ -5388,6 +5387,7 @@ function closeDrawer(){
     <button onclick="empTab('active',this)"   id="emp-t-active"   style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:rgba(255,255,255,.2);color:white;">&#9989; Active</button>
     <button onclick="empTab('pending',this)"  id="emp-t-pending"  style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#9203; Pending</button>
     <button onclick="empTab('pay',this)"      id="emp-t-pay"      style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128178; Pay Fixation</button>
+    <button onclick="empTab('directory',this)" id="emp-t-directory" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128101; Directory</button>
     <button onclick="empTab('resigned',this)" id="emp-t-resigned" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128683; Resigned</button>
   </div>
   <div id="emp-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px;background:#F0F4F8;">
@@ -5453,11 +5453,82 @@ function empRender(){
   var el=document.getElementById('emp-content');if(!el)return;
   if(EMP_TAB==='active')   el.innerHTML=empListHTML('active');
   else if(EMP_TAB==='pending') el.innerHTML=empListHTML('pending');
-  else if(EMP_TAB==='pay')     el.innerHTML=empPayHTML();
-  else if(EMP_TAB==='resigned')el.innerHTML=empListHTML('resigned');
+  else if(EMP_TAB==='pay')       el.innerHTML=empPayHTML();
+  else if(EMP_TAB==='directory') el.innerHTML=empDirectoryHTML();
+  else if(EMP_TAB==='resigned')  el.innerHTML=empListHTML('resigned');
 }
 
 // ── EMPLOYEE LIST ────────────────────────────────────
+function empDirectoryHTML(){
+  var search=(document.getElementById('emp-dir-search')||{}).value||'';
+  var roleFilter=(document.getElementById('emp-dir-role')||{}).value||'all';
+  var list=EMP_LIST.filter(function(e){return e.status==='active';});
+
+  // Search
+  if(search.trim()){
+    var q=search.toLowerCase();
+    list=list.filter(function(e){
+      var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).toLowerCase();
+      return name.includes(q)||(e.employee_code||e.emp_id||'').toLowerCase().includes(q)||(e.department||'').toLowerCase().includes(q)||(e.designation||e.role||'').toLowerCase().includes(q);
+    });
+  }
+  // Role filter
+  if(roleFilter!=='all'){
+    list=list.filter(function(e){return (e.role||e.designation||'').toLowerCase().includes(roleFilter.toLowerCase());});
+  }
+
+  var roles=['Admin','Project Manager','Site Engineer','Junior Engineer','QC Engineer','Safety Officer','Finance / Accounts','HR / Admin','Other'];
+  var roleOpts='<option value="all">All Roles</option>'+roles.map(function(r){return '<option value="'+r+'"'+(r===roleFilter?' selected':'')+'>'+r+'</option>';}).join('');
+
+  var statsRow='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #2E7D32;"><div style="font-size:10px;color:var(--text3);font-weight:700;">TOTAL</div><div style="font-size:20px;font-weight:900;color:#2E7D32;">'+EMP_LIST.filter(function(e){return e.status==='active';}).length+'</div></div>'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #F57F17;cursor:pointer;" onclick="empTab('pending',document.getElementById('emp-t-pending'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">PENDING</div><div style="font-size:20px;font-weight:900;color:#F57F17;">'+EMP_LIST.filter(function(e){return e.status==='pending'||!e.status;}).length+'</div></div>'+
+    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #C62828;cursor:pointer;" onclick="empTab('resigned',document.getElementById('emp-t-resigned'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">RESIGNED</div><div style="font-size:20px;font-weight:900;color:#C62828;">'+EMP_LIST.filter(function(e){return e.status==='resigned';}).length+'</div></div>'+
+  '</div>';
+
+  var searchBar='<div style="display:flex;gap:8px;margin-bottom:10px;">'+
+    '<div class="search-bar" style="flex:1;margin-bottom:0;"><span style="font-size:16px;color:var(--text3);">&#128269;</span>'+
+      '<input type="text" id="emp-dir-search" placeholder="Search name, code, dept..." value="'+search+'" oninput="empRender()" style="flex:1;">'+
+    '</div>'+
+    '<select id="emp-dir-role" class="fsel" style="width:140px;margin-bottom:0;" onchange="empRender()">'+roleOpts+'</select>'+
+  '</div>';
+
+  if(!list.length){
+    return statsRow+searchBar+'<div style="text-align:center;padding:40px;color:var(--text3);">&#128269; No employees found</div>';
+  }
+
+  var rows=list.map(function(e){
+    var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
+    var init=name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'?';
+    var hasPay=EMP_PAY.some(function(p){return p.employee_id===e.id;});
+    var latest=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);})[0];
+    var roleCol={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A','QC Engineer':'#E65100','Safety Officer':'#F57F17'}[e.designation||e.role]||'#37474F';
+
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;" onclick="empViewDetail(''+e.id+'')">'+
+      '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">'+
+        '<div style="width:46px;height:46px;border-radius:12px;background:'+roleCol+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
+          (e.photo_url||e.photoUrl?'<img src="'+(e.photo_url||e.photoUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">':init)+
+        '</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:14px;font-weight:800;">'+name+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);margin-top:1px;">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
+          '<div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">'+
+            (e.department?'<span style="background:#F0F4F8;color:var(--text2);border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">'+e.department+'</span>':'')+
+            (e.category?'<span style="background:#E8F5E9;color:#2E7D32;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">'+e.category+'</span>':'')+
+            (hasPay&&latest?'<span style="background:#E3F2FD;color:#1565C0;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">&#128178; &#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'/mo</span>':'<span style="background:#FFF3E0;color:#E65100;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">No Pay Fixed</span>')+
+          '</div>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--text3);flex-shrink:0;text-align:right;">'+
+          (e.mobile||e.phone?'<div>&#128222; '+(e.mobile||e.phone)+'</div>':'')+
+          '<div style="margin-top:4px;font-size:20px;">&#8250;</div>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+
+  return statsRow+searchBar+rows;
+}
+
 function empListHTML(status){
   var statusMap={active:'active',pending:'pending',resigned:'resigned',inactive:'inactive'};
   var list=EMP_LIST.filter(function(e){
