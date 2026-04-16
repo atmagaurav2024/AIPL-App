@@ -5387,7 +5387,6 @@ function closeDrawer(){
     <button onclick="empTab('active',this)"   id="emp-t-active"   style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:rgba(255,255,255,.2);color:white;">&#9989; Active</button>
     <button onclick="empTab('pending',this)"  id="emp-t-pending"  style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#9203; Pending</button>
     <button onclick="empTab('pay',this)"      id="emp-t-pay"      style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128178; Pay Fixation</button>
-    <button onclick="empTab('directory',this)" id="emp-t-directory" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128101; Directory</button>
     <button onclick="empTab('resigned',this)" id="emp-t-resigned" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128683; Resigned</button>
   </div>
   <div id="emp-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px;background:#F0F4F8;">
@@ -5454,79 +5453,14 @@ function empRender(){
   if(EMP_TAB==='active')   el.innerHTML=empListHTML('active');
   else if(EMP_TAB==='pending') el.innerHTML=empListHTML('pending');
   else if(EMP_TAB==='pay')       el.innerHTML=empPayHTML();
-  else if(EMP_TAB==='directory') el.innerHTML=empDirectoryHTML();
   else if(EMP_TAB==='resigned')  el.innerHTML=empListHTML('resigned');
 }
 
 // ── EMPLOYEE LIST ────────────────────────────────────
-function empDirectoryHTML(){
-  var search=(document.getElementById('emp-dir-search')||{}).value||'';
-  var roleFilter=(document.getElementById('emp-dir-role')||{}).value||'all';
-  var list=EMP_LIST.filter(function(e){return e.status==='active';});
-
-  // Search
-  if(search.trim()){
-    var q=search.toLowerCase();
-    list=list.filter(function(e){
-      var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).toLowerCase();
-      return name.includes(q)||(e.employee_code||e.emp_id||'').toLowerCase().includes(q)||(e.department||'').toLowerCase().includes(q)||(e.designation||e.role||'').toLowerCase().includes(q);
-    });
-  }
-  // Role filter
-  if(roleFilter!=='all'){
-    list=list.filter(function(e){return (e.role||e.designation||'').toLowerCase().includes(roleFilter.toLowerCase());});
-  }
-
-  var roles=['Admin','Project Manager','Site Engineer','Junior Engineer','QC Engineer','Safety Officer','Finance / Accounts','HR / Admin','Other'];
-  var roleOpts='<option value="all">All Roles</option>'+roles.map(function(r){return '<option value="'+r+'"'+(r===roleFilter?' selected':'')+'>'+r+'</option>';}).join('');
-
-  var statsRow='<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">'+
-    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #2E7D32;"><div style="font-size:10px;color:var(--text3);font-weight:700;">TOTAL</div><div style="font-size:20px;font-weight:900;color:#2E7D32;">'+EMP_LIST.filter(function(e){return e.status==='active';}).length+'</div></div>'+
-    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #F57F17;cursor:pointer;" onclick="empTab(\'pending\',document.getElementById(\'emp-t-pending\'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">PENDING</div><div style="font-size:20px;font-weight:900;color:#F57F17;">'+EMP_LIST.filter(function(e){return e.status==='pending'||!e.status;}).length+'</div></div>'+
-    '<div style="background:white;border-radius:12px;padding:12px;border-left:3px solid #C62828;cursor:pointer;" onclick="empTab(\'resigned\',document.getElementById(\'emp-t-resigned\'))"><div style="font-size:10px;color:var(--text3);font-weight:700;">RESIGNED</div><div style="font-size:20px;font-weight:900;color:#C62828;">'+EMP_LIST.filter(function(e){return e.status==='resigned';}).length+'</div></div>'+
-  '</div>';
-
-  var searchBar='<div style="display:flex;gap:8px;margin-bottom:10px;">'+
-    '<div class="search-bar" style="flex:1;margin-bottom:0;"><span style="font-size:16px;color:var(--text3);">&#128269;</span>'+
-      '<input type="text" id="emp-dir-search" placeholder="Search name, code, dept..." value="'+search+'" oninput="empRender()" style="flex:1;">'+
-    '</div>'+
-    '<select id="emp-dir-role" class="fsel" style="width:140px;margin-bottom:0;" onchange="empRender()">'+roleOpts+'</select>'+
-  '</div>';
-
-  if(!list.length){
-    return statsRow+searchBar+'<div style="text-align:center;padding:40px;color:var(--text3);">&#128269; No employees found</div>';
-  }
-
-  var rows=list.map(function(e){
-    var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
-    var init=name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'?';
-    var hasPay=EMP_PAY.some(function(p){return p.employee_id===e.id;});
-    var latest=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);})[0];
-    var roleCol={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A','QC Engineer':'#E65100','Safety Officer':'#F57F17'}[e.designation||e.role]||'#37474F';
-
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;" onclick="empViewDetail(\''+e.id+'\')">'+
-      '<div style="display:flex;align-items:center;gap:12px;padding:12px 14px;">'+
-        '<div style="width:46px;height:46px;border-radius:12px;background:'+roleCol+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
-          (e.photo_url||e.photoUrl?'<img src="'+(e.photo_url||e.photoUrl)+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">':init)+
-        '</div>'+
-        '<div style="flex:1;min-width:0;">'+
-          '<div style="font-size:14px;font-weight:800;">'+name+'</div>'+
-          '<div style="font-size:11px;color:var(--text3);margin-top:1px;">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
-          '<div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap;">'+
-            (e.department?'<span style="background:#F0F4F8;color:var(--text2);border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">'+e.department+'</span>':'')+
-            (e.category?'<span style="background:#E8F5E9;color:#2E7D32;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">'+e.category+'</span>':'')+
-            (hasPay&&latest?'<span style="background:#E3F2FD;color:#1565C0;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">&#128178; &#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'/mo</span>':'<span style="background:#FFF3E0;color:#E65100;border-radius:5px;padding:2px 6px;font-size:10px;font-weight:700;">No Pay Fixed</span>')+
-          '</div>'+
-        '</div>'+
-        '<div style="font-size:11px;color:var(--text3);flex-shrink:0;text-align:right;">'+
-          (e.mobile||e.phone?'<div>&#128222; '+(e.mobile||e.phone)+'</div>':'')+
-          '<div style="margin-top:4px;font-size:20px;">&#8250;</div>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-
-  return statsRow+searchBar+rows;
+function empOpenEditForm(id){
+  var e=EMP_LIST.find(function(x){return x.id===id;});
+  if(!e)return;
+  empOpenForm(e);
 }
 
 function empListHTML(status){
@@ -5563,7 +5497,7 @@ function empListHTML(status){
     var hasPay=EMP_PAY.some(function(p){return p.employee_id===e.id;});
     var roleColors={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A'};
     var rc=roleColors[e.role||e.designation]||'#37474F';
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" onclick="empViewDetail(\''+e.id+'\')">'+
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" onclick="'+(status==='active'?'empOpenEditForm(\''+e.id+'\')':'empViewDetail(\''+e.id+'\'')+')">'+
       '<div style="padding:12px 14px;display:flex;align-items:center;gap:12px;">'+
         '<div style="width:44px;height:44px;border-radius:12px;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
           (e.photo_url?'<img src="'+e.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">':init)+
@@ -6173,7 +6107,24 @@ async function empSavePay(){
 
   try{
     toast('Saving pay structure...','info');
-    var res=await sbInsert('employee_pay',data);
+    // Remove columns that may not exist in DB yet
+    var safeData={
+      employee_id:data.employee_id, effective_date:data.effective_date,
+      basic:data.basic, da:data.da, hra:data.hra, conveyance:data.conveyance,
+      special_allowance:data.special_allowance, medical_allowance:data.medical_allowance, other_allowance:data.other_allowance,
+      gross:data.gross, pf_employee:data.pf_employee, pf_employer:data.pf_employer,
+      esic_employee:data.esic_employee, esic_employer:data.esic_employer,
+      tds:data.tds, net_salary:data.net_salary, pay_type:data.pay_type,
+      remarks:data.remarks, created_by:data.created_by
+    };
+    // Try with extra columns first, fallback without
+    var res;
+    try{
+      res=await sbInsert('employee_pay',data);
+    }catch(e2){
+      console.warn('Retrying without extra columns:',e2.message);
+      res=await sbInsert('employee_pay',safeData);
+    }
     if(res&&res[0])EMP_PAY.unshift(res[0]);
     toast('Pay structure saved!','success');
     closeSheet('ov-pay','sh-pay');
