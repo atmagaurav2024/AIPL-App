@@ -5537,6 +5537,107 @@ function empPayHTML(){
     var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
     var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
     var latest=pays[0];
+
+    var detailHTML='';
+    if(latest){
+      // Parse dynamic earnings
+      var extraEarnings=[];
+      try{extraEarnings=latest.extra_earnings?JSON.parse(latest.extra_earnings):[];}catch(ex){}
+      // If no extra_earnings stored, fall back to legacy columns
+      var earnings=extraEarnings.length?extraEarnings:[
+        {label:'DA',amount:latest.da||0},
+        {label:'HRA',amount:latest.hra||0},
+        {label:'Conveyance',amount:latest.conveyance||0},
+        {label:'Special Allowance',amount:latest.special_allowance||0},
+        {label:'Medical Allowance',amount:latest.medical_allowance||0},
+        {label:'Other Allowance',amount:latest.other_allowance||0}
+      ].filter(function(x){return x.amount>0;});
+
+      // Parse dynamic deductions
+      var extraDeductions=[];
+      try{extraDeductions=latest.extra_deductions?JSON.parse(latest.extra_deductions):[];}catch(ex){}
+
+      // Earnings rows
+      var earnRows='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
+        payMini('Basic',latest.basic,'#1565C0')+'</div>';
+      if(earnings.length){
+        // Two per row
+        var earnGrid='';
+        for(var i=0;i<earnings.length;i+=2){
+          earnGrid+='<div style="display:grid;grid-template-columns:1fr'+(earnings[i+1]?' 1fr':'')+';gap:6px;margin-bottom:4px;">';
+          earnGrid+=payMini(earnings[i].label,earnings[i].amount,'#2E7D32');
+          if(earnings[i+1])earnGrid+=payMini(earnings[i+1].label,earnings[i+1].amount,'#2E7D32');
+          earnGrid+='</div>';
+        }
+        earnRows+=earnGrid;
+      }
+
+      // Gross
+      var grossRow='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#E8F5E9;border-radius:10px;margin:6px 0;">'+
+        '<div style="font-size:12px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#2E7D32;">&#8377;'+Number(latest.gross||0).toLocaleString('en-IN')+'</div>'+
+      '</div>';
+
+      // Fixed deductions
+      var fixedDedRows='';
+      if(latest.pf_employee>0||latest.pf_employer>0){
+        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
+          payMini('PF (Employee)',latest.pf_employee,'#C62828')+
+          payMini('PF (Employer)',latest.pf_employer,'#880E4F')+
+        '</div>';
+      }
+      if(latest.esic_employee>0||latest.esic_employer>0){
+        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
+          payMini('ESIC (Employee)',latest.esic_employee,'#C62828')+
+          payMini('ESIC (Employer)',latest.esic_employer,'#880E4F')+
+        '</div>';
+      }
+      if(latest.tds>0){
+        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
+          payMini('TDS',latest.tds,'#E65100')+
+          (latest.profession_tax>0?payMini('Profession Tax',latest.profession_tax,'#880E4F'):'<div></div>')+
+        '</div>';
+      } else if(latest.profession_tax>0){
+        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
+          payMini('Profession Tax',latest.profession_tax,'#880E4F')+
+          '<div></div>'+
+        '</div>';
+      }
+
+      // Dynamic other deductions
+      var dynDedRows='';
+      if(extraDeductions.length){
+        for(var j=0;j<extraDeductions.length;j+=2){
+          dynDedRows+='<div style="display:grid;grid-template-columns:1fr'+(extraDeductions[j+1]?' 1fr':'')+';gap:6px;margin-bottom:4px;">';
+          dynDedRows+=payMini(extraDeductions[j].label,extraDeductions[j].amount,'#C62828');
+          if(extraDeductions[j+1])dynDedRows+=payMini(extraDeductions[j+1].label,extraDeductions[j+1].amount,'#C62828');
+          dynDedRows+='</div>';
+        }
+      }
+
+      // Net
+      var netRow='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#1B5E2015;border-radius:10px;border:1.5px solid #1B5E2030;">'+
+        '<div style="font-size:12px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
+      '</div>';
+
+      detailHTML=
+        '<div style="padding:10px 14px;">'+
+          // Section: Earnings
+          '<div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">&#128197; Earnings</div>'+
+          earnRows+
+          grossRow+
+          // Section: Deductions
+          '<div style="font-size:10px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 6px;">&#128203; Deductions</div>'+
+          fixedDedRows+
+          dynDedRows+
+          netRow+
+          '<div style="font-size:10px;color:var(--text3);margin-top:6px;">w.e.f. '+latest.effective_date+'</div>'+
+        '</div>';
+    } else {
+      detailHTML='<div style="padding:12px 14px;font-size:12px;color:var(--text3);">No pay structure fixed yet</div>';
+    }
+
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
       '<div style="padding:12px 14px;background:#F8FAFC;display:flex;align-items:center;gap:10px;">'+
         '<div style="flex:1;">'+
@@ -5547,34 +5648,7 @@ function empPayHTML(){
           (latest?'&#9998; Revise':'+ Fix Pay')+
         '</button>'+
       '</div>'+
-      (latest?
-        '<div style="padding:10px 14px;">'+
-          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">'+
-            payMini('Basic',latest.basic,'#1565C0')+
-            payMini('DA',latest.da,'#2E7D32')+
-            payMini('HRA',latest.hra,'#6A1B9A')+
-          '</div>'+
-          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px;">'+
-            payMini('Conveyance',latest.conveyance,'#E65100')+
-            payMini('Special Allow.',latest.special_allowance,'#F57F17')+
-            payMini('Other Allow.',latest.other_allowance,'#37474F')+
-          '</div>'+
-          '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#E8F5E9;border-radius:10px;margin-bottom:6px;">'+
-            '<div style="font-size:12px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
-            '<div style="font-size:16px;font-weight:900;color:#2E7D32;">&#8377;'+Number(latest.gross||0).toLocaleString('en-IN')+'</div>'+
-          '</div>'+
-          '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">'+
-            payMini('PF (Emp)',latest.pf_employee,'#C62828')+
-            payMini('ESIC (Emp)',latest.esic_employee,'#C62828')+
-            payMini('TDS',latest.tds,'#C62828')+
-          '</div>'+
-          '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#1B5E2015;border-radius:10px;">'+
-            '<div style="font-size:12px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
-            '<div style="font-size:16px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
-          '</div>'+
-          '<div style="font-size:10px;color:var(--text3);margin-top:6px;">w.e.f. '+latest.effective_date+'</div>'+
-        '</div>'
-      :'<div style="padding:12px 14px;font-size:12px;color:var(--text3);">No pay structure fixed yet</div>')+
+      detailHTML+
     '</div>';
   }).join('');
 }
@@ -5915,6 +5989,17 @@ function empOpenPay(empId, empName){
       '</div>'+
     '</div>'+
 
+    // Profession Tax (compulsory, cannot delete)
+    '<div style="background:#FCE4EC;border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid #F48FB120;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div style="flex:1;">'+
+          '<div style="font-size:13px;font-weight:800;color:#880E4F;">Profession Tax</div>'+
+          '<div style="font-size:10px;color:var(--text3);">Compulsory deduction</div>'+
+        '</div>'+
+        '<input id="pf-pt" class="finp" type="number" step="1" value="'+(v.profession_tax||200)+'" oninput="payCalc()" style="width:120px;margin-bottom:0;text-align:right;font-weight:800;">'+
+      '</div>'+
+    '</div>'+
+
     // Net
     '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#1B5E2015;border-radius:10px;margin:8px 0;border:1.5px solid #1B5E2030;">'+
       '<div style="font-size:13px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
@@ -6050,7 +6135,8 @@ function payCalc(){
 
   var extraDedTotal=PAY_DEDUCTIONS.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
   var tds=gn('pf-tds');
-  var totalDed=pfEmp+esicEmp+extraDedTotal+tds;
+  var pt=gn('pf-pt');
+  var totalDed=pfEmp+esicEmp+extraDedTotal+tds+pt;
   var net=Math.max(0,gross-totalDed);
 
   var gDisp=document.getElementById('pf-gross-display');if(gDisp)gDisp.innerHTML='\u20b9'+gross.toLocaleString('en-IN');
@@ -6079,7 +6165,8 @@ async function empSavePay(){
   var esicEmr=esicOn?gn('pf-esicr'):0;
   var extraDedTotal=PAY_DEDUCTIONS.reduce(function(s,d){return s+(parseFloat(d.amount)||0);},0);
   var tds=gn('pf-tds');
-  var net=Math.max(0,gross-pfEmp-esicEmp-extraDedTotal-tds);
+  var pt=gn('pf-pt');
+  var net=Math.max(0,gross-pfEmp-esicEmp-extraDedTotal-tds-pt);
 
   // Build da/hra/etc from extra earnings for backward compat
   var da=0,hra=0,conv=0,spec=0,med=0,other=0;
@@ -6100,7 +6187,7 @@ async function empSavePay(){
     special_allowance:spec, medical_allowance:med, other_allowance:other,
     gross:gross, pf_employee:pfEmp, pf_employer:pfEmr,
     esic_employee:esicEmp, esic_employer:esicEmr,
-    tds:tds, net_salary:net, pay_type:'fixed',
+    tds:tds, profession_tax:pt, net_salary:net, pay_type:'fixed',
     pf_applicable:pfOn, esic_applicable:esicOn,
     extra_earnings:JSON.stringify(PAY_EARNINGS),
     extra_deductions:JSON.stringify(PAY_DEDUCTIONS),
@@ -6117,7 +6204,7 @@ async function empSavePay(){
       special_allowance:data.special_allowance, medical_allowance:data.medical_allowance, other_allowance:data.other_allowance,
       gross:data.gross, pf_employee:data.pf_employee, pf_employer:data.pf_employer,
       esic_employee:data.esic_employee, esic_employer:data.esic_employer,
-      tds:data.tds, net_salary:data.net_salary, pay_type:data.pay_type,
+      tds:data.tds, profession_tax:data.profession_tax||0, net_salary:data.net_salary, pay_type:data.pay_type,
       remarks:data.remarks, created_by:data.created_by
     };
     // Try with extra columns first, fallback without
