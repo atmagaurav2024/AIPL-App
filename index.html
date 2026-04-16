@@ -5813,7 +5813,16 @@ async function empSaveResignation(){
   var remarks = (document.getElementById('res-remarks')||{}).value||'';
   if(!empId||!resDate||!lwd){toast('Fill all required fields','warning');return;}
   try{
-    await sbUpdate('employees',empId,{status:'resigned', resignation_date:resDate, last_working_day:lwd, resignation_reason:reason+': '+remarks});
+    // Store resignation info in fields that exist; extra info in rejection_reason
+    var resInfo = 'Resigned: '+resDate+' | LWD: '+lwd+' | '+reason+(remarks?' | '+remarks:'');
+    var updateData = {status:'resigned', rejection_reason:resInfo};
+    // Try with extra columns (run SQL to add them if missing)
+    try{
+      updateData.resignation_date = resDate;
+      updateData.last_working_day = lwd;
+      updateData.resignation_reason = reason+(remarks?' | '+remarks:'');
+    }catch(ex){}
+    await sbUpdate('employees',empId,updateData);
     var idx=EMP_LIST.findIndex(function(e){return e.id===empId;});
     if(idx>-1) EMP_LIST[idx].status='resigned';
     toast('Resignation recorded','info');
@@ -5821,6 +5830,49 @@ async function empSaveResignation(){
   }catch(e){toast('Error: '+e.message,'error');}
 }
 
+
+// empViewDetail — opens a read-only detail sheet for pending/resigned employees
+function empViewDetail(id){
+  var e=EMP_LIST.find(function(x){return x.id===id;});
+  if(!e)return;
+  var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
+  var statusCol={active:'#2E7D32',pending:'#F57F17',resigned:'#C62828',rejected:'#C62828'}[e.status]||'#37474F';
+
+  function row(l,v){return v?'<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F0F4F8;font-size:12px;"><span style="color:var(--text3);">'+l+'</span><span style="font-weight:700;">'+v+'</span></div>':''}
+
+  document.getElementById('emp-sheet-title').textContent=name;
+  document.getElementById('emp-sheet-body').innerHTML=
+    '<div style="background:'+statusCol+';border-radius:14px;padding:14px;margin-bottom:14px;color:white;">'+
+      '<div style="font-size:18px;font-weight:900;">'+name+'</div>'+
+      '<div style="font-size:12px;opacity:.8;margin-top:4px;">'+(e.designation||e.role||'—')+' • '+(e.department||'—')+'</div>'+
+      '<div style="margin-top:8px;"><span style="background:rgba(255,255,255,.2);border-radius:5px;padding:2px 10px;font-size:11px;font-weight:800;">'+((e.status||'pending').toUpperCase())+'</span></div>'+
+    '</div>'+
+    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Personal</div>'+
+      row('Mobile',e.phone||e.mobile||null)+
+      row('Email',e.email||null)+
+      row('Date of Birth',e.date_of_birth||e.dob||null)+
+      row('Date of Joining',e.date_of_joining||e.doj||null)+
+      row('Employee Code',e.employee_code||e.emp_id||null)+
+      row('Department',e.department||null)+
+      row('Category',e.category||null)+
+    '</div>'+
+    (e.rejection_reason?'<div style="background:#FFF3E0;border-radius:12px;padding:12px 14px;margin-bottom:10px;">'+
+      '<div style="font-size:11px;font-weight:800;color:#E65100;margin-bottom:4px;">Notes</div>'+
+      '<div style="font-size:12px;color:var(--text);">'+e.rejection_reason+'</div>'+
+    '</div>':'')+
+    '<input type="hidden" id="vd-emp-id" value="'+e.id+'">';
+
+  var foot='<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>';
+  if(e.status==='pending'){
+    foot+='<button class="btn" style="background:#C62828;color:white;" onclick="empReject(\''+e.id+'\')">✕ Reject</button>';
+    foot+='<button class="btn" style="background:#2E7D32;color:white;" onclick="empApprove(\''+e.id+'\')">✓ Approve</button>';
+  } else if(e.status==='resigned'||e.status==='rejected'){
+    foot+='<button class="btn btn-navy" onclick="closeEmpSheet();setTimeout(function(){empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}))||empOpenForm({id:\''+e.id+'\'});},300);">&#9998; Edit</button>';
+  }
+  document.getElementById('emp-sheet-foot').innerHTML=foot;
+  openEmpSheet();
+}
 
 function empOpenEditForm(id){
   var e=EMP_LIST.find(function(x){return x.id===id;});
