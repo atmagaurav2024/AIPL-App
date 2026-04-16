@@ -3744,7 +3744,7 @@ function openDetail(type,id){
       :'<div style="font-size:12px;color:var(--text3);margin-bottom:14px;">No material rates added yet.</div>');
     document.getElementById('det-foot').innerHTML=
       '<button class="btn btn-outline" onclick="closeSheet(\'ov-det\',\'sh-det\')">Close</button>'+
-      '<button class="btn btn-red" onclick="confirmDelete(\'vendor\',\''+v.id+'\',\''+v.name.replace(/'/g,'&#39;')+'\')">&#128465; Delete</button>'+
+      '<button class="btn btn-red" onclick="confirmDelete(\'vendor\',\''+v.id+'\',\''+esc(v.name)+'\')">&#128465; Delete</button>'+
       '<button class="btn btn-navy" onclick="editRecord(\'vendor\',\''+v.id+'\')">&#9998; Edit</button>';
     openSheet('ov-det','sh-det');
   }
@@ -3794,7 +3794,7 @@ function openDetail(type,id){
       vendorRatesHtml;
     document.getElementById('det-foot').innerHTML=
       '<button class="btn btn-outline" onclick="closeSheet(\'ov-det\',\'sh-det\')">Close</button>'+
-      '<button class="btn btn-red" onclick="confirmDelete(\'material\',\''+m.id+'\',\''+m.name.replace(/'/g,'&#39;')+'\')">&#128465; Delete</button>'+
+      '<button class="btn btn-red" onclick="confirmDelete(\'material\',\''+m.id+'\',\''+esc(m.name)+'\')">&#128465; Delete</button>'+
       '<button class="btn btn-navy" onclick="editRecord(\'material\',\''+m.id+'\')">&#9998; Edit</button>';
     openSheet('ov-det','sh-det');
   }
@@ -3823,7 +3823,7 @@ function openDetail(type,id){
       '</div>';
     document.getElementById('det-foot').innerHTML=
       '<button class="btn btn-outline" onclick="closeSheet(\'ov-det\',\'sh-det\')">Close</button>'+
-      '<button class="btn btn-red" onclick="confirmDelete(\'sc\',\''+s.id+'\',\''+s.name.replace(/'/g,'&#39;')+'\')">&#128465; Delete</button>'+
+      '<button class="btn btn-red" onclick="confirmDelete(\'sc\',\''+s.id+'\',\''+esc(s.name)+'\')">&#128465; Delete</button>'+
       '<button class="btn btn-navy" onclick="editRecord(\'sc\',\''+s.id+'\')">&#9998; Edit</button>';
     openSheet('ov-det','sh-det');
   }
@@ -3881,7 +3881,7 @@ function openDetail(type,id){
       '</div>';
     document.getElementById('det-foot').innerHTML=
       '<button class="btn btn-outline" onclick="closeSheet(\'ov-det\',\'sh-det\')">Close</button>'+
-      '<button class="btn btn-red" onclick="confirmDelete(\'user\',\''+u.id+'\',\''+u.name.replace(/'/g,'&#39;')+'\')">&#128465; Delete</button>'+
+      '<button class="btn btn-red" onclick="confirmDelete(\'user\',\''+u.id+'\',\''+esc(u.name)+'\')">&#128465; Delete</button>'+
       '<button class="btn btn-navy" onclick="editRecord(\'user\',\''+u.id+'\')">&#9998; Edit</button>';
     openSheet('ov-det','sh-det');
   }
@@ -5497,7 +5497,8 @@ function empListHTML(status){
     var hasPay=EMP_PAY.some(function(p){return p.employee_id===e.id;});
     var roleColors={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A'};
     var rc=roleColors[e.role||e.designation]||'#37474F';
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" onclick="'+(status==='active'?'empOpenEditForm(\''+e.id+'\')':'empViewDetail(\''+e.id+'\'')+')">'+
+    var clickFn=status==='active'?'empOpenEditForm(\''+e.id+'\')'  :'empViewDetail(\''+e.id+'\')';
+return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" onclick="'+clickFn+'">'+
       '<div style="padding:12px 14px;display:flex;align-items:center;gap:12px;">'+
         '<div style="width:44px;height:44px;border-radius:12px;background:'+col+';display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
           (e.photo_url?'<img src="'+e.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:12px;">':init)+
@@ -5540,7 +5541,7 @@ function empPayHTML(){
           '<div style="font-size:14px;font-weight:800;">'+name+'</div>'+
           '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div>'+
         '</div>'+
-        '<button onclick="empOpenPay(\''+e.id+'\',\''+name.replace(/'/g,'&#39;')+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">'+
+        '<button onclick="empOpenPay(\''+e.id+'\',\''+(name||'').split("'").join('&#39;')+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">'+
           (latest?'&#9998; Revise':'+ Fix Pay')+
         '</button>'+
       '</div>'+
@@ -5813,11 +5814,11 @@ function empViewDetail(id){
         row('TDS','\u20b9'+Number(latest.tds||0).toLocaleString('en-IN'))+
         '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #1B5E20;color:#1B5E20;"><span>Net Take Home</span><span>\u20b9'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</span></div>'+
       '</div>'
-    :'<div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;"><div style="font-size:12px;font-weight:700;color:#E65100;">&#9888; Pay structure not fixed yet</div><button onclick="closeEmpSheet();empTab(\'pay\',document.getElementById(\'emp-t-pay\'));setTimeout(function(){empOpenPay(\''+e.id+'\',\''+name.replace(/'/g,'&#39;')+'\');},400);" style="margin-top:8px;padding:8px 16px;background:#E65100;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Fix Pay Now</button></div>');
+    :'<div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;"><div style="font-size:12px;font-weight:700;color:#E65100;">&#9888; Pay structure not fixed yet</div><button onclick="closeEmpSheet();empTab(\'pay\',document.getElementById(\'emp-t-pay\'));setTimeout(function(){empOpenPay(\''+e.id+'\',\''+(name||'').split("'").join('&#39;')+'\');},400);" style="margin-top:8px;padding:8px 16px;background:#E65100;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Fix Pay Now</button></div>');
 
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>'+
-    (e.status==='active'?'<button class="btn" style="background:#E65100;color:white;" onclick="closeEmpSheet();setTimeout(function(){empOpenPay(\''+e.id+'\',\''+name.replace(/'/g,'&#39;')+'\');},300);">&#128178; Pay</button>':'')+''+
+    (e.status==='active'?'<button class="btn" style="background:#E65100;color:white;" onclick="closeEmpSheet();setTimeout(function(){empOpenPay(\''+e.id+'\',\''+(name||'').split("'").join('&#39;')+'\');},300);">&#128178; Pay</button>':'')+''+
     '<button class="btn btn-navy" onclick="closeEmpSheet();setTimeout(function(){empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}));},300);">&#9998; Edit</button>';
   openEmpSheet();
 }
@@ -6696,7 +6697,7 @@ function accCoa(){
               '</div>'+
               '<div style="display:flex;flex-direction:column;gap:3px;align-items:center;">'+
                 '<button onclick="accEditAccount(\''+a.id+'\')" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--blue);">&#9998;</button>'+
-                '<button onclick="accDelAccount(\''+a.id+'\',\''+a.name.replace(/'/g,'&#39;')+'\')" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--red);">&#128465;</button>'+
+                '<button onclick="accDelAccount(\''+a.id+'\',\''+(a.name||'').split("'").join('&#39;')+'\')" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--red);">&#128465;</button>'+
               '</div>'+
             '</div>';
           });
