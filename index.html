@@ -5731,39 +5731,57 @@ function empOpenForm(emp){
 
   openEmpSheet();
 
-  // Load dynamic dropdowns after sheet opens
-  setTimeout(function(){
-    // Role dropdown — from CAT_DATA
+  // Load all 3 dropdowns fresh from Supabase every time
+  var roleVal=isEdit?(u.access||u.role||''):'';
+  var deptVal=isEdit?(u.dept||''):'';
+  var projVal=isEdit?(u.project||''):'';
+
+  Promise.all([
+    sbFetch('categories',{select:'name,icon',filter:'type=eq.role&active=eq.true',order:'name.asc'}),
+    sbFetch('categories',{select:'name,icon',filter:'type=eq.dept&active=eq.true',order:'name.asc'}),
+    sbFetch('projects',{select:'id,name',order:'name.asc'})
+  ]).then(function(results){
+    var roles=Array.isArray(results[0])?results[0]:[];
+    var depts=Array.isArray(results[1])?results[1]:[];
+    var projs=Array.isArray(results[2])?results[2]:[];
+
+    // Role dropdown
     var rs=document.getElementById('f-urole');
     if(rs){
-      var roleVal=isEdit?(u.access||u.role||''):''; 
-      rs.innerHTML='<option value="">-- Select --</option>'+catOptions('role');
-      if(roleVal)for(var i=0;i<rs.options.length;i++){if(rs.options[i].value===roleVal||rs.options[i].text.indexOf(roleVal)>=0){rs.selectedIndex=i;break;}}
+      rs.innerHTML='<option value="">-- Select Role --</option>'+
+        roles.map(function(r){
+          return '<option value="'+r.name+'"'+(r.name===roleVal?' selected':'')+'>'+
+            (r.icon?r.icon+' ':'')+r.name+'</option>';
+        }).join('');
     }
-    // Dept dropdown — from CAT_DATA
+
+    // Dept dropdown
     var ds=document.getElementById('f-udept');
     if(ds){
-      var deptVal=isEdit?(u.dept||''):'';
-      ds.innerHTML='<option value="">-- Select --</option>'+catOptions('dept');
-      if(deptVal)for(var j=0;j<ds.options.length;j++){if(ds.options[j].value===deptVal||ds.options[j].text.indexOf(deptVal)>=0){ds.selectedIndex=j;break;}}
+      ds.innerHTML='<option value="">-- Select Department --</option>'+
+        depts.map(function(d){
+          return '<option value="'+d.name+'"'+(d.name===deptVal?' selected':'')+'>'+
+            (d.icon?d.icon+' ':'')+d.name+'</option>';
+        }).join('');
     }
-    // Projects dropdown — from PROJ_DATA or Supabase
+
+    // Project dropdown
     var ps=document.getElementById('f-uproject');
     if(ps){
-      var projVal=isEdit?(u.project||''):'';
-      var projList=typeof PROJ_DATA!=='undefined'?PROJ_DATA:[];
-      if(projList.length){
-        ps.innerHTML='<option value="">All Projects</option>'+projList.map(function(p){return '<option value="'+p.id+'"'+(projVal===p.id?' selected':'')+'>'+p.name+'</option>';}).join('');
-      } else {
-        // Load from Supabase
-        sbFetch('projects',{select:'id,name',order:'name.asc'}).then(function(d){
-          if(Array.isArray(d)&&d.length){
-            ps.innerHTML='<option value="">All Projects</option>'+d.map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');
-          }
-        }).catch(function(){});
-      }
+      ps.innerHTML='<option value="">All Projects</option>'+
+        projs.map(function(p){
+          return '<option value="'+p.id+'"'+(p.id===projVal||p.name===projVal?' selected':'')+'>'+
+            p.name+'</option>';
+        }).join('');
     }
-  },100);
+  }).catch(function(e){
+    // Fallback to CAT_DATA if Supabase fails
+    var rs=document.getElementById('f-urole');
+    if(rs) rs.innerHTML='<option value="">-- Select Role --</option>'+catOptions('role');
+    var ds=document.getElementById('f-udept');
+    if(ds) ds.innerHTML='<option value="">-- Select Department --</option>'+catOptions('dept');
+    console.warn('Dropdown load error:',e);
+  });
 }
 
 // Save from Employee Management form (new or edit)
