@@ -5667,40 +5667,144 @@ function payMini(lbl,val,col){
 
 // ── EMPLOYEE FORM ─────────────────────────────────────
 function empOpenForm(emp){
-  if(!emp){
-    // New employee — use original registry form (openAdd with currentPage='users')
-    var savedPage=currentPage;
-    currentPage='users';
-    openAdd();
-    currentPage=savedPage;
-    return;
+  var isEdit=!!emp;
+  var u=isEdit?(USERS.find(function(x){return x.id===emp.id;})||{}):null;
+
+  document.getElementById('emp-sheet-title').textContent=isEdit?'Edit Employee':'Register New Employee';
+
+  // Exact same form HTML as original openAdd for 'users'
+  document.getElementById('emp-sheet-body').innerHTML=
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #1565C020;margin:0 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div><div style="font-size:12px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
+    '<div class="g2"><div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name" value="'+(isEdit?(u.name||'').split(' ')[0]||'':'')+'"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name" value="'+(isEdit?(u.name||'').split(' ').slice(1).join(' '):'')+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="f-udob" value="'+(isEdit?u.dob||'':'')+'"></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option'+(isEdit&&u.gender==='Male'?' selected':'')+'>Male</option><option'+(isEdit&&u.gender==='Female'?' selected':'')+'>Female</option><option'+(isEdit&&u.gender==='Other'?' selected':'')+'>Other</option></select></div></div>'+
+    '<div class="g2"><div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option>'+['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(function(b){return '<option'+(isEdit&&u.blood===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div><div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option>'+['Single','Married','Other'].map(function(m){return '<option'+(isEdit&&u.marital===m?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
+    '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj" value="'+(isEdit?u.doj||'':'')+'">'+
+    '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
+    '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option>All Projects</option><option>Head Office</option><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option></select>'+
+    '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(isEdit&&u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel">'+['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'].map(function(l){return '<option'+(isEdit&&u.location===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select></div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
+    '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+(isEdit?u.phone||'':'')+'"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional" value="'+(isEdit?u.phone2||'':'')+'"></div></div>'+
+    '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address...">'+(isEdit?u.address||'':'')+'</textarea>'+
+    '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)...">'+(isEdit?u.permanent||'':'')+'</textarea>'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #6A1B9A20;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#6A1B9A20;display:flex;align-items:center;justify-content:center;font-size:14px;">🪪</div><div style="font-size:12px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.7px;">KYC Details</div></div>'+
+    '<div class="g2"><div><label class="flbl">Aadhar Number</label><input id="f-uaadhar" class="finp" placeholder="XXXX XXXX XXXX" value="'+(isEdit?u.aadhar||'':'')+'"></div><div><label class="flbl">PAN Number</label><input id="f-upan" class="finp" placeholder="ABCDE1234F" value="'+(isEdit?u.pan||'':'')+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">PF Number</label><input id="f-upf" class="finp" placeholder="Optional" value="'+(isEdit?u.pf||'':'')+'"></div><div><label class="flbl">ESIC Number</label><input id="f-uesic" class="finp" placeholder="Optional" value="'+(isEdit?u.esic||'':'')+'"></div></div>'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #C6282820;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:14px;">🏦</div><div style="font-size:12px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Bank Details</div></div>'+
+    '<label class="flbl">Bank Name</label><input id="f-ubank" class="finp" placeholder="e.g. State Bank of India" value="'+(isEdit?u.bank||'':'')+'">'+
+    '<div class="g2"><div><label class="flbl">Account Number</label><input id="f-uaccno" class="finp" placeholder="Bank account number" value="'+(isEdit?u.accNo||'':'')+'"></div><div><label class="flbl">IFSC Code</label><input id="f-uifsc" class="finp" placeholder="e.g. SBIN0001234" value="'+(isEdit?u.ifsc||'':'')+'"></div></div>'+
+    '<label class="flbl">Account Holder Name</label><input id="f-uaccname" class="finp" placeholder="As per bank records" value="'+(isEdit?u.accName||'':'')+'">'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #C6282820;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#C6282820;display:flex;align-items:center;justify-content:center;font-size:14px;">🚨</div><div style="font-size:12px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.7px;">Emergency Contact</div></div>'+
+    '<div class="g2"><div><label class="flbl">Contact Name</label><input id="f-uecname" class="finp" placeholder="Full name" value="'+(isEdit?u.ecName||'':'')+'"></div><div><label class="flbl">Relationship</label><select id="f-uecrel" class="fsel"><option value="">-- Select --</option>'+['Spouse','Father','Mother','Sibling','Other'].map(function(r){return '<option'+(isEdit&&u.ecRel===r?' selected':'')+'>'+r+'</option>';}).join('')+'</select></div></div>'+
+    '<label class="flbl">Emergency Mobile</label><input id="f-uecphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+(isEdit?u.ecPhone||'':'')+'">'+
+    '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #1565C020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:12px;">📎</div><div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Documents & Photo</div></div>'+
+    '<label class="flbl">Passport Photo</label>'+
+    '<div class="upload-box" onclick="document.getElementById(\'f-uphoto\').click()">'+
+      '<div class="photo-preview" id="f-uphoto-prev">'+(isEdit&&u.photoUrl?'<img src="'+u.photoUrl+'" style="width:100%;height:100%;object-fit:cover;">':'📷')+'</div>'+
+      '<input type="file" id="f-uphoto" accept="image/*" onchange="handleFilePreview(\'f-uphoto\',\'f-uphoto-prev\')">'+
+      '<div class="upload-label">Tap to upload passport photo</div>'+
+      '<div class="upload-progress-wrap" id="f-uphoto-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-uphoto-prog-name"></span><span class="upload-progress-pct" id="f-uphoto-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-uphoto-prog-fill"></div></div></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Aadhar Card</label>'+
+      '<div class="upload-box" onclick="document.getElementById(\'f-uaadhar-doc\').click()">'+
+        '<div id="f-uaadhar-doc-prev" class="upload-preview"></div>'+
+        '<input type="file" id="f-uaadhar-doc" accept="image/*,application/pdf" onchange="handleFilePreview(\'f-uaadhar-doc\',\'f-uaadhar-doc-prev\')">'+
+        '<div class="upload-label">📄 Upload Aadhar</div>'+
+        '<div class="upload-progress-wrap" id="f-uaadhar-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-uaadhar-doc-prog-name"></span><span class="upload-progress-pct" id="f-uaadhar-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-uaadhar-doc-prog-fill"></div></div></div>'+
+      '</div></div>'+
+      '<div><label class="flbl">PAN Card</label>'+
+      '<div class="upload-box" onclick="document.getElementById(\'f-upan-doc\').click()">'+
+        '<div id="f-upan-doc-prev" class="upload-preview"></div>'+
+        '<input type="file" id="f-upan-doc" accept="image/*,application/pdf" onchange="handleFilePreview(\'f-upan-doc\',\'f-upan-doc-prev\')">'+
+        '<div class="upload-label">📄 Upload PAN</div>'+
+        '<div class="upload-progress-wrap" id="f-upan-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-upan-doc-prog-name"></span><span class="upload-progress-pct" id="f-upan-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-upan-doc-prog-fill"></div></div></div>'+
+      '</div></div>'+
+    '</div>'+
+    '<input type="hidden" id="f-uedit-id" value="'+(isEdit?emp.id:'')+'">';
+
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn btn-indigo" onclick="empFormSave()" style="flex:1;">'+
+      (isEdit?'&#10003; Save Changes':'&#10003; Register Employee')+
+    '</button>';
+
+  // Pre-select role and dept for edit
+  if(isEdit){
+    setTimeout(function(){
+      var rs=document.getElementById('f-urole');
+      if(rs&&u.access)for(var i=0;i<rs.options.length;i++){if(rs.options[i].text===u.access||rs.options[i].value===u.access){rs.selectedIndex=i;break;}}
+      var ds=document.getElementById('f-udept');
+      if(ds&&u.dept)for(var j=0;j<ds.options.length;j++){if(ds.options[j].text===u.dept||ds.options[j].value===u.dept){ds.selectedIndex=j;break;}}
+    },100);
   }
-  // Edit employee — find in USERS array first, then fall back to EMP_LIST raw data
-  var u=USERS.find(function(x){return x.id===emp.id;});
-  if(u){
-    editRecord('user',emp.id);
-  } else {
-    // Employee exists in EMP_LIST but not yet in USERS (pending/new) — load into USERS then edit
-    var mapped={
-      id:emp.id, empId:emp.employee_code||emp.emp_id||'',
-      name:((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim(),
-      role:emp.role||'viewer', access:emp.designation||emp.role||'',
-      dept:emp.department||'', phone:emp.mobile||emp.phone||'',
-      phone2:'', dob:emp.date_of_birth||'', gender:emp.gender||'',
-      blood:emp.blood_group||'', marital:emp.marital_status||'',
-      doj:emp.date_of_joining||'', empType:emp.category||'',
-      location:'', address:emp.address||'', permanent:'',
-      aadhar:emp.aadhar_no||'', pan:emp.pan_no||'',
-      pf:emp.uan_no||'', esic:emp.esic_no||'',
-      bank:emp.bank_name||'', accNo:emp.bank_account||'',
-      ifsc:emp.ifsc||'', accName:'',
-      ecName:emp.emergency_contact||'', ecRel:'', ecPhone:'',
-      status:emp.status||'active', col:'#37474F',
-      photoUrl:emp.photo_url||null
-    };
-    if(!USERS.find(function(x){return x.id===emp.id;})) USERS.push(mapped);
-    editRecord('user',emp.id);
-  }
+
+  openEmpSheet();
+}
+
+// Save from Employee Management form (new or edit)
+async function empFormSave(){
+  var editId=(document.getElementById('f-uedit-id')||{}).value||'';
+  var fname=gv('f-ufname'), lname=gv('f-ulname');
+  var name=(fname+' '+lname).trim();
+  if(!name){toast('Name is required','warning');return;}
+  var phone=gv('f-uphone');
+  if(!editId&&!phone){toast('Mobile number is required','warning');return;}
+  var roleRaw=gv('f-urole');
+  var roleMap={'Admin':'admin','Project Manager':'pm','Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer','Client Viewer':'viewer'};
+  var role=roleMap[roleRaw]||'viewer';
+
+  var data={
+    first_name:fname, last_name:lname||'',
+    phone:phone||null, phone2:gv('f-uphone2')||null,
+    date_of_birth:gv('f-udob')||null, gender:gv('f-ugender')||null,
+    blood_group:gv('f-ublood')||null, marital_status:gv('f-umarital')||null,
+    date_of_joining:gv('f-udoj')||null,
+    role:role, designation:roleRaw, department:gv('f-udept')||null,
+    emp_type:gv('f-uemptype')||null, work_location:gv('f-ulocation')||null,
+    address:gv('f-uaddress')||null, permanent_address:gv('f-upermanent')||null,
+    aadhar:gv('f-uaadhar')||null, pan:gv('f-upan')||null,
+    pf_no:gv('f-upf')||null, esic_no:gv('f-uesic')||null,
+    bank_name:gv('f-ubank')||null, account_no:gv('f-uaccno')||null,
+    ifsc:gv('f-uifsc')||null, account_holder:gv('f-uaccname')||null,
+    emergency_name:gv('f-uecname')||null, emergency_relation:gv('f-uecrel')||null,
+    emergency_phone:gv('f-uecphone')||null
+  };
+
+  try{
+    toast('Uploading documents...','info');
+    var photoFile=document.getElementById('f-uphoto')&&document.getElementById('f-uphoto').files[0];
+    var aadharFile=document.getElementById('f-uaadhar-doc')&&document.getElementById('f-uaadhar-doc').files[0];
+    var panFile=document.getElementById('f-upan-doc')&&document.getElementById('f-upan-doc').files[0];
+    if(photoFile)data.profile_photo=await uploadToCloudinary(photoFile,'photos','f-uphoto');
+    if(aadharFile)data.aadhar_doc_url=await uploadToCloudinary(aadharFile,'kyc','f-uaadhar-doc');
+    if(panFile)data.pan_doc_url=await uploadToCloudinary(panFile,'kyc','f-upan-doc');
+    toast('Saving...','info');
+
+    if(editId){
+      // Update
+      await sbUpdate('employees',editId,data);
+      // Sync USERS and EMP_LIST
+      var ui=USERS.findIndex(function(x){return x.id===editId;});
+      if(ui>-1)USERS[ui]=Object.assign(USERS[ui],{name:name,role:role,access:roleRaw,dept:data.department||'',phone:data.phone||''});
+      var ei=EMP_LIST.findIndex(function(x){return x.id===editId;});
+      if(ei>-1)EMP_LIST[ei]=Object.assign(EMP_LIST[ei],data,{first_name:fname,last_name:lname});
+      toast(name+' updated!','success');
+    } else {
+      // New — get next ID
+      var newEmpId=await getNextAIPLId();
+      data.emp_id=newEmpId; data.badge_no=newEmpId; data.status='active';
+      var result=await sbInsert('employees',data);
+      if(result&&result[0]){
+        var mapped=mapEmployee(result[0]);
+        USERS.unshift(mapped);
+        EMP_LIST.unshift(result[0]);
+        toast(name+' registered!','success');
+      }
+    }
+    closeEmpSheet();
+    empRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
 function empOpenPay(empId, empName){
