@@ -3423,9 +3423,9 @@ async function loadAllData(){
 
 // ── DATA MAPPERS (DB → App format) ──
 function mapVendor(v){
-  return {id:v.id,vendorId:v.vendor_id,name:v.name,cat:v.category||'',status:v.status,rating:v.rating||0,
-    gst:v.gst,contact:v.contact_person,phone:v.phone,email:v.email,address:v.address,
-    brands:v.brands,payTerms:v.pay_terms,leadTime:v.lead_time,orders:v.total_orders||0,
+  return {id:v.id,vendorId:v.vendor_id,name:v.name||'Unknown',cat:v.category||'',status:v.status||'active',rating:v.rating||0,
+    gst:v.gst||'',contact:v.contact_person||'',phone:v.phone||'',email:v.email||'',address:v.address||'',
+    brands:v.brands||'',payTerms:v.pay_terms||'',leadTime:v.lead_time||'',orders:v.total_orders||0,
     totalValue:v.total_value||0,materialRates:[],col:catColor(v.category)};
 }
 function mapMaterial(m){
@@ -3439,7 +3439,7 @@ function mapSC(s){
     pbgAvail:s.pbg_available,emdAvail:s.emd_available,status:s.status,col:'#1565C0'};
 }
 function mapEmployee(e){
-  return {id:e.id,empId:e.emp_id,name:(e.first_name+' '+(e.last_name||'')).trim(),
+  return {id:e.id,empId:e.emp_id,name:((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown',
     role:e.role||'viewer',access:e.designation||e.role,dept:e.department||'',
     phone:e.phone,phone2:e.phone2,dob:e.dob,gender:e.gender,blood:e.blood_group,
     marital:e.marital_status,doj:e.date_of_joining,
@@ -3475,10 +3475,10 @@ function renderVendors(list){
     return '<div class="reg-card" onclick="openDetail(\'vendor\',\''+v.id+'\')">'+
       '<div class="rc-accent" style="background:'+v.col+'"></div>'+
       '<div class="rc-body">'+
-        '<div class="avatar" style="background:'+v.col+'">'+v.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="background:'+v.col+'">'+(v.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div class="rc-info">'+
           '<div class="rc-name">'+v.name+'</div>'+
-          '<div class="rc-sub">'+v.brands.split(',')[0]+'</div>'+
+          '<div class="rc-sub">'+(v.brands||'').split(',')[0]+'</div>'+
           '<div class="rc-tags">'+
             '<span class="badge '+(stBadge[v.status]||'b-navy')+'">'+v.status+'</span>'+
             '<span class="badge b-navy">'+v.cat+'</span>'+
@@ -3721,7 +3721,7 @@ function openDetail(type,id){
     document.getElementById('det-title').textContent=v.name;
     document.getElementById('det-body').innerHTML=
       '<div style="background:'+v.col+'1A;border:1px solid '+v.col+'40;border-radius:14px;padding:14px;margin-bottom:14px;display:flex;align-items:center;gap:12px;">'+
-        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+v.col+'">'+v.name.split(' ').map(function(w){return w[0];}).join('').slice(0,2)+'</div>'+
+        '<div class="avatar" style="width:56px;height:56px;border-radius:16px;font-size:18px;background:'+v.col+'">'+(v.name||'?').split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2)+'</div>'+
         '<div><div style="font-size:17px;font-weight:800;">'+v.name+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px;">'+v.brands+'</div><div style="margin-top:6px;display:flex;gap:6px;"><span class="badge b-green">'+v.status+'</span><span class="badge b-teal">&#9733; '+v.rating+'</span></div></div>'+
       '</div>'+
       '<div style="background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:14px;">'+
@@ -5943,6 +5943,120 @@ async function empSavePay(){
 }
 </script>
 
+
+<!-- PROJECTS -->
+<div class="app-screen" id="app-projects">
+  <div style="background:#1B5E20;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127959; Projects</div>
+    <button class="tb-btn" onclick="openProjForm(null)" style="font-size:20px;">&#43;</button>
+  </div>
+  <div style="padding:10px 14px 6px;flex-shrink:0;"><div class="search-bar"><span style="font-size:16px;color:var(--text3);">&#128269;</span><input type="text" id="proj-search" placeholder="Search projects..." oninput="searchProj(this.value)"></div></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 90px;" id="proj-list"><div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div></div>
+</div>
+<div class="sh-overlay" id="ov-proj" onclick="closeProjSheet()"></div>
+<div class="sheet" id="sh-proj" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
+
+<!-- BOQ -->
+<div class="app-screen" id="app-boq">
+  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128203; BOQ Items</div>
+    <button class="tb-btn" onclick="boqOpenAddItem(null)" style="font-size:20px;">&#43;</button>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="boq-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
+<div class="sheet" id="sh-boq" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
+
+<!-- JM -->
+<div class="app-screen" id="app-jm">
+  <div style="background:#283593;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128208; Joint Measurements</div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="jm-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
+<div class="sheet" id="sh-jm" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
+
+<!-- PLANNING -->
+<div class="app-screen" id="app-planning">
+  <div style="background:#1565C0;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128230; Planning</div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="plan-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-plan" onclick="closeSheet('ov-plan','sh-plan')"></div>
+<div class="sheet" id="sh-plan" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
+
+<!-- WORK ALLOTMENT -->
+<div class="app-screen" id="app-execution">
+  <div style="background:#E65100;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128221; Work Allotment</div>
+  </div>
+  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="exec-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
+</div>
+<div class="sh-overlay" id="ov-exec" onclick="closeSheet('ov-exec','sh-exec')"></div>
+<div class="sheet" id="sh-exec" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
+
+<!-- PETTY CASH -->
+<div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;overflow:hidden;">
+  <div style="display:flex;align-items:center;padding:18px 18px 10px;background:#EFEBE4;flex-shrink:0;">
+    <span onclick="showApp('dashboard')" style="font-size:28px;color:#1E2547;cursor:pointer;margin-right:10px;line-height:1;">&#8249;</span>
+    <div style="flex:1;"><div style="font-size:20px;font-weight:900;color:#1E2547;">Site Cash Manager</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Atmagaurav Infra Pvt Ltd</div></div>
+  </div>
+  <div id="pc-site-tabs" style="display:flex;gap:10px;padding:2px 18px 14px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;-webkit-overflow-scrolling:touch;"></div>
+  <div id="pc-main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;"><div style="text-align:center;padding:40px;color:#9CA3AF;">Loading...</div></div>
+  <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
+</div>
+<div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
+<div class="sheet" id="sh-pc" style="max-height:92vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div><div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div><div class="sh-foot" id="pc-sheet-foot"></div></div>
+
+<!-- ACCOUNTS -->
+<div class="app-screen" id="app-accounts">
+  <div style="background:#1A237E;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128176; Accounts</div>
+    <button class="tb-btn" id="acc-add-btn" onclick="accQuickAdd()" style="font-size:20px;">&#43;</button>
+  </div>
+  <div id="acc-tab-bar" style="display:flex;overflow-x:auto;background:#1A237E;padding:0 14px 10px;flex-shrink:0;scrollbar-width:none;gap:4px;"></div>
+  <div id="acc-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;background:#F0F4F8;"><div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div></div>
+</div>
+<div class="sh-overlay" id="ov-acc" onclick="closeAccSheet()"></div>
+<div class="sheet" id="sh-acc" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
+
+<!-- ACCESS CONTROL -->
+<div class="app-screen" id="app-access">
+  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128274; Access Control</div>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
+      <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
+    </div>
+    <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select></div>
+    <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
+  </div>
+  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
+    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
+  </div>
+</div>
+
+<style>
+.vou-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;display:inline-block;}
+.vou-payment{background:#FFEBEE;color:#C62828;}.vou-receipt{background:#E8F5E9;color:#2E7D32;}
+.vou-purchase{background:#E3F2FD;color:#1565C0;}.vou-journal{background:#F3E5F5;color:#6A1B9A;}.vou-contra{background:#FFF3E0;color:#E65100;}
+</style>
+
 <script>
 
 // ════ HELPERS ════════════════════════════════════════════
@@ -6551,6 +6665,45 @@ function accEntry(){
   return '<div style="background:white;border-radius:12px;padding:4px 12px;">'+rows+'</div>';
 }
 
+// Party Type → Party Name dynamic loader
+var ACC_PARTY_CACHE={};
+async function avLoadPartyNames(){
+  var type=(document.getElementById('av-party-type')||{}).value||'';
+  var wrap=document.getElementById('av-party-wrap');
+  var partyEl=document.getElementById('av-party');
+  if(!wrap)return;
+  if(!type||type==='other'||type==='client'){
+    wrap.innerHTML='<input id="av-party" class="finp" placeholder="'+(type==='client'?'Enter client name':'Enter party name')+'">';
+    return;
+  }
+  wrap.innerHTML='<div style="text-align:center;padding:8px;color:var(--text3);font-size:12px;">&#9203; Loading...</div>';
+  try{
+    var list=[];
+    if(type==='vendor'){
+      var d=await sbFetch('vendors',{select:'id,name,gst_no',filter:'status=eq.active',order:'name.asc'});
+      list=(Array.isArray(d)?d:[]).map(function(v){return {id:v.id,name:v.name,sub:v.gst_no?'GST: '+v.gst_no:''};});
+    } else if(type==='sc'){
+      var d=await sbFetch('subcontractors',{select:'id,name,trade',order:'name.asc'});
+      list=(Array.isArray(d)?d:[]).map(function(s){return {id:s.id,name:s.name,sub:s.trade||''};});
+    } else if(type==='employee'){
+      var d=await sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'});
+      list=(Array.isArray(d)?d:[]).map(function(e){return {id:e.id,name:(e.first_name||'')+(e.last_name?' '+e.last_name:''),sub:(e.emp_id?e.emp_id+' • ':'')+(e.designation||'')};});
+    }
+    ACC_PARTY_CACHE[type]=list;
+    if(!list.length){
+      wrap.innerHTML='<input id="av-party" class="finp" placeholder="No '+type+'s found in registry — enter manually">';
+      return;
+    }
+    var opts='<option value="">— Select '+type.charAt(0).toUpperCase()+type.slice(1)+' —</option>'+
+      list.map(function(p){return '<option value="'+p.name+'">'+(p.name)+(p.sub?' ('+p.sub+')':'')+'</option>';}).join('');
+    wrap.innerHTML='<select id="av-party" class="fsel">'+opts+'</select>';
+  }catch(e){
+    wrap.innerHTML='<input id="av-party" class="finp" placeholder="Enter party name manually">';
+    console.error(e);
+  }
+}
+
+
 // ── VOUCHER FORM ───────────────────────────────────────
 async function accOpenVoucher(type){
   if(!ACC_ACCOUNTS.length){toast('Add account codes in Chart of Accounts first','warning');accSwitchTab('coa',document.getElementById('acc-t-coa'));return;}
@@ -6575,7 +6728,7 @@ async function accOpenVoucher(type){
     '<label class="flbl">Voucher Type *</label><select id="av-type" class="fsel">'+typeOpts+'</select>'+
     '<div class="g2"><div><label class="flbl">Date *</label><input id="av-date" class="finp" type="date" value="'+today+'"></div><div><label class="flbl">Voucher No</label><input id="av-no" class="finp" value="'+vno+'"></div></div>'+
     '<label class="flbl">Project</label><select id="av-proj" class="fsel">'+projOpts+'</select>'+
-    '<div class="g2"><div><label class="flbl">Party Name</label><input id="av-party" class="finp"></div><div><label class="flbl">Reference No</label><input id="av-ref" class="finp" placeholder="Invoice No"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Party Type</label><select id="av-party-type" class="fsel" onchange="avLoadPartyNames()"><option value="">— Select Type —</option><option value="vendor">Vendor</option><option value="sc">Subcontractor</option><option value="employee">Employee</option><option value="client">Client</option><option value="other">Other</option></select></div><div><label class="flbl">Reference No</label><input id="av-ref" class="finp" placeholder="Invoice No"></div></div>'+'<label class="flbl">Party Name</label><div id="av-party-wrap"><input id="av-party" class="finp" placeholder="Select party type first..."></div>'+
     '<label class="flbl">Narration *</label><input id="av-narr" class="finp" placeholder="Description">'+
     '<div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-top:10px;">'+
       '<div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;margin-bottom:8px;">&#128229; DEBIT</div>'+
@@ -6810,117 +6963,4 @@ async function acSavePermissions(){
 }
 
 </script>
-
-<!-- PROJECTS -->
-<div class="app-screen" id="app-projects">
-  <div style="background:#1B5E20;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127959; Projects</div>
-    <button class="tb-btn" onclick="openProjForm(null)" style="font-size:20px;">&#43;</button>
-  </div>
-  <div style="padding:10px 14px 6px;flex-shrink:0;"><div class="search-bar"><span style="font-size:16px;color:var(--text3);">&#128269;</span><input type="text" id="proj-search" placeholder="Search projects..." oninput="searchProj(this.value)"></div></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 90px;" id="proj-list"><div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div></div>
-</div>
-<div class="sh-overlay" id="ov-proj" onclick="closeProjSheet()"></div>
-<div class="sheet" id="sh-proj" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
-
-<!-- BOQ -->
-<div class="app-screen" id="app-boq">
-  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128203; BOQ Items</div>
-    <button class="tb-btn" onclick="boqOpenAddItem(null)" style="font-size:20px;">&#43;</button>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="boq-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
-<div class="sheet" id="sh-boq" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
-
-<!-- JM -->
-<div class="app-screen" id="app-jm">
-  <div style="background:#283593;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128208; Joint Measurements</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="jm-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
-<div class="sheet" id="sh-jm" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
-
-<!-- PLANNING -->
-<div class="app-screen" id="app-planning">
-  <div style="background:#1565C0;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128230; Planning</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="plan-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-plan" onclick="closeSheet('ov-plan','sh-plan')"></div>
-<div class="sheet" id="sh-plan" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
-
-<!-- WORK ALLOTMENT -->
-<div class="app-screen" id="app-execution">
-  <div style="background:#E65100;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128221; Work Allotment</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="exec-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-exec" onclick="closeSheet('ov-exec','sh-exec')"></div>
-<div class="sheet" id="sh-exec" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
-
-<!-- PETTY CASH -->
-<div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;overflow:hidden;">
-  <div style="display:flex;align-items:center;padding:18px 18px 10px;background:#EFEBE4;flex-shrink:0;">
-    <span onclick="showApp('dashboard')" style="font-size:28px;color:#1E2547;cursor:pointer;margin-right:10px;line-height:1;">&#8249;</span>
-    <div style="flex:1;"><div style="font-size:20px;font-weight:900;color:#1E2547;">Site Cash Manager</div><div style="font-size:12px;color:#6B7280;font-weight:600;">Atmagaurav Infra Pvt Ltd</div></div>
-  </div>
-  <div id="pc-site-tabs" style="display:flex;gap:10px;padding:2px 18px 14px;overflow-x:auto;scrollbar-width:none;flex-shrink:0;-webkit-overflow-scrolling:touch;"></div>
-  <div id="pc-main" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:88px;"><div style="text-align:center;padding:40px;color:#9CA3AF;">Loading...</div></div>
-  <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
-</div>
-<div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
-<div class="sheet" id="sh-pc" style="max-height:92vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div><div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div><div class="sh-foot" id="pc-sheet-foot"></div></div>
-
-<!-- ACCOUNTS -->
-<div class="app-screen" id="app-accounts">
-  <div style="background:#1A237E;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128176; Accounts</div>
-    <button class="tb-btn" id="acc-add-btn" onclick="accQuickAdd()" style="font-size:20px;">&#43;</button>
-  </div>
-  <div id="acc-tab-bar" style="display:flex;overflow-x:auto;background:#1A237E;padding:0 14px 10px;flex-shrink:0;scrollbar-width:none;gap:4px;"></div>
-  <div id="acc-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;background:#F0F4F8;"><div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div></div>
-</div>
-<div class="sh-overlay" id="ov-acc" onclick="closeAccSheet()"></div>
-<div class="sheet" id="sh-acc" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
-
-<!-- ACCESS CONTROL -->
-<div class="app-screen" id="app-access">
-  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128274; Access Control</div>
-  </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
-    <div style="display:flex;gap:8px;margin-bottom:14px;">
-      <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
-      <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
-    </div>
-    <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select></div>
-    <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
-  </div>
-  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
-    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
-  </div>
-</div>
-
-<style>
-.vou-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:800;display:inline-block;}
-.vou-payment{background:#FFEBEE;color:#C62828;}.vou-receipt{background:#E8F5E9;color:#2E7D32;}
-.vou-purchase{background:#E3F2FD;color:#1565C0;}.vou-journal{background:#F3E5F5;color:#6A1B9A;}.vou-contra{background:#FFF3E0;color:#E65100;}
-</style>
 </html>
