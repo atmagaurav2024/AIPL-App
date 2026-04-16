@@ -4439,7 +4439,12 @@ async function saveUser(){
     toast('Saving...','info');
     var result=await sbInsert('employees',data);
     if(result&&result[0]){
-      USERS.unshift(mapEmployee(result[0]));
+      var mapped=mapEmployee(result[0]);
+      USERS.unshift(mapped);
+      // Also add to EMP_LIST for Employee Management tab
+      if(!EMP_LIST.find(function(x){return x.id===result[0].id;})){
+        EMP_LIST.unshift(result[0]);
+      }
       renderUsers();
       closeSheet('ov-add','sh-add');
       toast(name+' registered as employee','success');
@@ -5662,244 +5667,42 @@ function payMini(lbl,val,col){
 
 // ── EMPLOYEE FORM ─────────────────────────────────────
 function empOpenForm(emp){
-  EMP_EDIT_ID=emp?emp.id:null;
-  var v=emp||{};
-  document.getElementById('emp-sheet-title').textContent=emp?'Edit Employee':'New Employee Registration';
-
-  var deptOpts=EMP_DEPTS.map(function(d){return '<option value="'+d+'"'+(v.department===d?' selected':'')+'>'+d+'</option>';}).join('');
-  var gradeOpts=EMP_GRADES.map(function(g){return '<option value="'+g+'"'+(v.grade===g?' selected':'')+'>'+g+'</option>';}).join('');
-  var catOpts=EMP_CATS.map(function(c){return '<option value="'+c+'"'+(v.category===c?' selected':'')+'>'+c+'</option>';}).join('');
-  var roleOpts=EMP_ROLES.map(function(r){return '<option value="'+r+'"'+((v.designation===r||v.role===r)?' selected':'')+'>'+r+'</option>';}).join('');
-
-  document.getElementById('emp-sheet-body').innerHTML=
-
-  // Personal Details
-  '<div style="font-size:11px;font-weight:800;color:#1B5E20;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;padding-bottom:4px;border-bottom:2px solid #1B5E2020;">&#128100; Personal Details</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">First Name *</label><input id="ef-fname" class="finp" value="'+(v.first_name||'')+'"></div>'+
-    '<div><label class="flbl">Last Name</label><input id="ef-lname" class="finp" value="'+(v.last_name||'')+'"></div>'+
-  '</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">Date of Birth</label><input id="ef-dob" class="finp" type="date" value="'+(v.date_of_birth?v.date_of_birth.slice(0,10):'')+'"></div>'+
-    '<div><label class="flbl">Gender</label><select id="ef-gender" class="fsel"><option value="">Select</option><option value="Male"'+(v.gender==='Male'?' selected':'')+'>Male</option><option value="Female"'+(v.gender==='Female'?' selected':'')+'>Female</option><option value="Other"'+(v.gender==='Other'?' selected':'')+'>Other</option></select></div>'+
-  '</div>'+
-  '<label class="flbl">Mobile Number *</label><input id="ef-mobile" class="finp" type="tel" value="'+(v.mobile||v.phone||'')+'">'+
-  '<label class="flbl">Email</label><input id="ef-email" class="finp" type="email" value="'+(v.email||'')+'">'+
-  '<label class="flbl">Address</label><textarea id="ef-addr" class="ftxt" style="min-height:50px;">'+(v.address||'')+'</textarea>'+
-  '<label class="flbl">Emergency Contact</label><input id="ef-emg" class="finp" placeholder="Name & Number" value="'+(v.emergency_contact||'')+'">'+
-
-  // Job Details
-  '<div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #1565C020;">&#127959; Job Details</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">Employee Code</label><input id="ef-code" class="finp" placeholder="e.g. AIPL-001" value="'+(v.employee_code||v.emp_id||'')+'"></div>'+
-    '<div><label class="flbl">Date of Joining</label><input id="ef-doj" class="finp" type="date" value="'+(v.date_of_joining?v.date_of_joining.slice(0,10):'')+'"></div>'+
-  '</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">Designation / Role *</label><select id="ef-role" class="fsel"><option value="">Select</option>'+roleOpts+'</select></div>'+
-    '<div><label class="flbl">Department</label><select id="ef-dept" class="fsel"><option value="">Select</option>'+deptOpts+'</select></div>'+
-  '</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">Grade</label><select id="ef-grade" class="fsel"><option value="">Select</option>'+gradeOpts+'</select></div>'+
-    '<div><label class="flbl">Category</label><select id="ef-cat" class="fsel"><option value="">Select</option>'+catOpts+'</select></div>'+
-  '</div>'+
-  '<label class="flbl">Reporting To</label><input id="ef-reporting" class="finp" placeholder="Manager / HOD name" value="'+(v.reporting_to||'')+'">'+
-
-  // Documents
-  '<div style="font-size:11px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #6A1B9A20;">&#128196; Documents & IDs</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">PAN Number</label><input id="ef-pan" class="finp" placeholder="ABCDE1234F" value="'+(v.pan_no||'')+'"></div>'+
-    '<div><label class="flbl">Aadhaar Number</label><input id="ef-aadhar" class="finp" placeholder="XXXX XXXX XXXX" value="'+(v.aadhar_no||'')+'"></div>'+
-  '</div>'+
-  '<div class="g2">'+
-    '<div><label class="flbl">UAN Number (PF)</label><input id="ef-uan" class="finp" placeholder="PF UAN No." value="'+(v.uan_no||'')+'"></div>'+
-    '<div><label class="flbl">ESIC Number</label><input id="ef-esic" class="finp" placeholder="ESIC No." value="'+(v.esic_no||'')+'"></div>'+
-  '</div>'+
-
-  // Bank Details
-  '<div style="font-size:11px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.5px;margin:14px 0 8px;padding-bottom:4px;border-bottom:2px solid #E6510020;">&#127981; Bank Details</div>'+
-  '<label class="flbl">Bank Name</label><input id="ef-bank" class="finp" placeholder="e.g. SBI, HDFC..." value="'+(v.bank_name||'')+'">'+
-  '<div class="g2">'+
-    '<div><label class="flbl">Account Number</label><input id="ef-acc" class="finp" value="'+(v.bank_account||'')+'"></div>'+
-    '<div><label class="flbl">IFSC Code</label><input id="ef-ifsc" class="finp" placeholder="e.g. SBIN0001234" value="'+(v.ifsc||'')+'"></div>'+
-  '</div>';
-
-  document.getElementById('emp-sheet-foot').innerHTML=
-    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
-    '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSaveForm()">&#10003; '+(emp?'Save Changes':'Submit for Approval')+'</button>';
-  openEmpSheet();
+  if(!emp){
+    // New employee — use original registry form (openAdd with currentPage='users')
+    var savedPage=currentPage;
+    currentPage='users';
+    openAdd();
+    currentPage=savedPage;
+    return;
+  }
+  // Edit employee — find in USERS array first, then fall back to EMP_LIST raw data
+  var u=USERS.find(function(x){return x.id===emp.id;});
+  if(u){
+    editRecord('user',emp.id);
+  } else {
+    // Employee exists in EMP_LIST but not yet in USERS (pending/new) — load into USERS then edit
+    var mapped={
+      id:emp.id, empId:emp.employee_code||emp.emp_id||'',
+      name:((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim(),
+      role:emp.role||'viewer', access:emp.designation||emp.role||'',
+      dept:emp.department||'', phone:emp.mobile||emp.phone||'',
+      phone2:'', dob:emp.date_of_birth||'', gender:emp.gender||'',
+      blood:emp.blood_group||'', marital:emp.marital_status||'',
+      doj:emp.date_of_joining||'', empType:emp.category||'',
+      location:'', address:emp.address||'', permanent:'',
+      aadhar:emp.aadhar_no||'', pan:emp.pan_no||'',
+      pf:emp.uan_no||'', esic:emp.esic_no||'',
+      bank:emp.bank_name||'', accNo:emp.bank_account||'',
+      ifsc:emp.ifsc||'', accName:'',
+      ecName:emp.emergency_contact||'', ecRel:'', ecPhone:'',
+      status:emp.status||'active', col:'#37474F',
+      photoUrl:emp.photo_url||null
+    };
+    if(!USERS.find(function(x){return x.id===emp.id;})) USERS.push(mapped);
+    editRecord('user',emp.id);
+  }
 }
 
-async function empSaveForm(){
-  var fname=document.getElementById('ef-fname')?document.getElementById('ef-fname').value.trim():'';
-  var mobile=document.getElementById('ef-mobile')?document.getElementById('ef-mobile').value.trim():'';
-  var role=document.getElementById('ef-role')?document.getElementById('ef-role').value:'';
-  if(!fname){toast('First name is required','warning');return;}
-  if(!mobile){toast('Mobile number is required','warning');return;}
-
-  var data={
-    first_name:fname,
-    last_name:document.getElementById('ef-lname').value.trim()||null,
-    date_of_birth:document.getElementById('ef-dob').value||null,
-    gender:document.getElementById('ef-gender').value||null,
-    mobile:mobile, phone:mobile,
-    email:document.getElementById('ef-email').value.trim()||null,
-    address:document.getElementById('ef-addr').value.trim()||null,
-    emergency_contact:document.getElementById('ef-emg').value.trim()||null,
-    employee_code:document.getElementById('ef-code').value.trim()||null,
-    emp_id:document.getElementById('ef-code').value.trim()||null,
-    date_of_joining:document.getElementById('ef-doj').value||null,
-    designation:role||null, role:empMapRole(role),
-    department:document.getElementById('ef-dept').value||null,
-    grade:document.getElementById('ef-grade').value||null,
-    category:document.getElementById('ef-cat').value||null,
-    reporting_to:document.getElementById('ef-reporting').value.trim()||null,
-    pan_no:document.getElementById('ef-pan').value.trim()||null,
-    aadhar_no:document.getElementById('ef-aadhar').value.trim()||null,
-    uan_no:document.getElementById('ef-uan').value.trim()||null,
-    esic_no:document.getElementById('ef-esic').value.trim()||null,
-    bank_name:document.getElementById('ef-bank').value.trim()||null,
-    bank_account:document.getElementById('ef-acc').value.trim()||null,
-    ifsc:document.getElementById('ef-ifsc').value.trim()||null,
-    status:EMP_EDIT_ID?undefined:'pending'
-  };
-  if(EMP_EDIT_ID) delete data.status;
-
-  try{
-    toast('Saving...','info');
-    if(EMP_EDIT_ID){
-      await sbUpdate('employees',EMP_EDIT_ID,data);
-      var idx=EMP_LIST.findIndex(function(e){return e.id===EMP_EDIT_ID;});
-      if(idx>-1)EMP_LIST[idx]=Object.assign(EMP_LIST[idx],data);
-      toast(fname+' updated!','success');
-    } else {
-      var res=await sbInsert('employees',data);
-      if(res&&res[0])EMP_LIST.unshift(res[0]);
-      toast(fname+' submitted for approval!','success');
-    }
-    closeEmpSheet();
-    empRender();
-  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
-}
-
-function empMapRole(designation){
-  var map={'Admin':'admin','Project Manager':'pm','Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer'};
-  return map[designation]||'viewer';
-}
-
-// ── APPROVE / REJECT ──────────────────────────────────
-async function empApprove(id){
-  var e=EMP_LIST.find(function(x){return x.id===id;});if(!e)return;
-  var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
-  if(!confirm('Approve "'+name+'" as active employee?'))return;
-  try{
-    await sbUpdate('employees',id,{status:'active'});
-    var idx=EMP_LIST.findIndex(function(x){return x.id===id;});
-    if(idx>-1)EMP_LIST[idx].status='active';
-    toast(name+' approved!','success');
-    empRender();
-    // Ask if want to fix pay now
-    setTimeout(function(){
-      if(confirm('Fix salary for '+name+' now?')){
-        empTab('pay',document.getElementById('emp-t-pay'));
-        setTimeout(function(){empOpenPay(id,name);},400);
-      }
-    },500);
-  }catch(e){toast('Error: '+e.message,'error');}
-}
-
-async function empReject(id){
-  var e=EMP_LIST.find(function(x){return x.id===id;});if(!e)return;
-  var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
-  var reason=prompt('Rejection reason (optional):');
-  if(reason===null)return; // cancelled
-  try{
-    await sbUpdate('employees',id,{status:'rejected',rejection_reason:reason||null});
-    var idx=EMP_LIST.findIndex(function(x){return x.id===id;});
-    if(idx>-1)EMP_LIST[idx].status='rejected';
-    toast(name+' rejected','info');
-    empRender();
-  }catch(e){toast('Error: '+e.message,'error');}
-}
-
-// ── EMPLOYEE DETAIL VIEW ──────────────────────────────
-function empViewDetail(id){
-  var e=EMP_LIST.find(function(x){return x.id===id;});if(!e)return;
-  var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
-  var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
-  var latest=pays[0];
-  var statusCol={active:'#2E7D32',pending:'#F57F17',rejected:'#C62828',resigned:'#37474F'}[e.status]||'#37474F';
-
-  function row(l,v){return v?'<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F0F4F8;font-size:12px;"><span style="color:var(--text3);flex-shrink:0;margin-right:10px;">'+l+'</span><span style="font-weight:700;text-align:right;">'+v+'</span></div>':'';}
-
-  document.getElementById('emp-sheet-title').textContent=name;
-  document.getElementById('emp-sheet-body').innerHTML=
-    // Header
-    '<div style="background:'+statusCol+';border-radius:14px;padding:16px;margin-bottom:14px;color:white;display:flex;align-items:center;gap:14px;">'+
-      '<div style="width:56px;height:56px;border-radius:14px;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;flex-shrink:0;overflow:hidden;">'+
-        (e.photo_url?'<img src="'+e.photo_url+'" style="width:100%;height:100%;object-fit:cover;border-radius:14px;">':name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase())+
-      '</div>'+
-      '<div>'+
-        '<div style="font-size:18px;font-weight:900;">'+name+'</div>'+
-        '<div style="font-size:12px;opacity:.8;margin-top:2px;">'+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div>'+
-        '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">'+
-          '<span style="background:rgba(255,255,255,.2);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800;">'+(e.status||'pending').toUpperCase()+'</span>'+
-          (e.employee_code||e.emp_id?'<span style="background:rgba(255,255,255,.2);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:800;">'+(e.employee_code||e.emp_id)+'</span>':'')+
-        '</div>'+
-      '</div>'+
-    '</div>'+
-
-    // Personal
-    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
-      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Personal</div>'+
-      row('Date of Birth',e.date_of_birth||null)+row('Gender',e.gender||null)+row('Mobile',e.mobile||e.phone||null)+row('Email',e.email||null)+row('Address',e.address||null)+row('Emergency Contact',e.emergency_contact||null)+
-    '</div>'+
-
-    // Job
-    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
-      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Job Details</div>'+
-      row('Date of Joining',e.date_of_joining||null)+row('Grade',e.grade||null)+row('Category',e.category||null)+row('Reporting To',e.reporting_to||null)+
-    '</div>'+
-
-    // Documents
-    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
-      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Documents</div>'+
-      row('PAN',e.pan_no||null)+row('Aadhaar',e.aadhar_no||null)+row('UAN (PF)',e.uan_no||null)+row('ESIC No',e.esic_no||null)+
-    '</div>'+
-
-    // Bank
-    '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
-      '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Bank Details</div>'+
-      row('Bank',e.bank_name||null)+row('Account No',e.bank_account||null)+row('IFSC',e.ifsc||null)+
-    '</div>'+
-
-    // Current Pay
-    (latest?
-      '<div style="background:white;border-radius:12px;padding:4px 14px;margin-bottom:10px;">'+
-        '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:10px 0 4px;">Current Pay Structure (w.e.f. '+latest.effective_date+')</div>'+
-        row('Basic','\u20b9'+Number(latest.basic||0).toLocaleString('en-IN'))+
-        row('DA','\u20b9'+Number(latest.da||0).toLocaleString('en-IN'))+
-        row('HRA','\u20b9'+Number(latest.hra||0).toLocaleString('en-IN'))+
-        row('Conveyance','\u20b9'+Number(latest.conveyance||0).toLocaleString('en-IN'))+
-        row('Special Allowance','\u20b9'+Number(latest.special_allowance||0).toLocaleString('en-IN'))+
-        row('Other Allowance','\u20b9'+Number(latest.other_allowance||0).toLocaleString('en-IN'))+
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #2E7D32;color:#2E7D32;"><span>Gross</span><span>\u20b9'+Number(latest.gross||0).toLocaleString('en-IN')+'</span></div>'+
-        row('PF Employee','\u20b9'+Number(latest.pf_employee||0).toLocaleString('en-IN'))+
-        row('PF Employer','\u20b9'+Number(latest.pf_employer||0).toLocaleString('en-IN'))+
-        row('ESIC Employee','\u20b9'+Number(latest.esic_employee||0).toLocaleString('en-IN'))+
-        row('ESIC Employer','\u20b9'+Number(latest.esic_employer||0).toLocaleString('en-IN'))+
-        row('TDS','\u20b9'+Number(latest.tds||0).toLocaleString('en-IN'))+
-        '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #1B5E20;color:#1B5E20;"><span>Net Take Home</span><span>\u20b9'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</span></div>'+
-      '</div>'
-    :'<div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;"><div style="font-size:12px;font-weight:700;color:#E65100;">&#9888; Pay structure not fixed yet</div><button onclick="closeEmpSheet();empTab(\'pay\',document.getElementById(\'emp-t-pay\'));setTimeout(function(){empOpenPay(\''+e.id+'\',\''+safeN(name)+'\');},400);" style="margin-top:8px;padding:8px 16px;background:#E65100;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Fix Pay Now</button></div>');
-
-  document.getElementById('emp-sheet-foot').innerHTML=
-    '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>'+
-    (e.status==='active'?'<button class="btn" style="background:#E65100;color:white;" onclick="closeEmpSheet();setTimeout(function(){empOpenPay(\''+e.id+'\',\''+safeN(name)+'\');},300);">&#128178; Pay</button>':'')+''+
-    '<button class="btn btn-navy" onclick="closeEmpSheet();setTimeout(function(){empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}));},300);">&#9998; Edit</button>';
-  openEmpSheet();
-}
-
-// ── PAY FIXATION FORM ─────────────────────────────────
 function empOpenPay(empId, empName){
   var existing=EMP_PAY.filter(function(p){return p.employee_id===empId;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
   var v=existing[0]||{};
