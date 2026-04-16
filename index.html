@@ -5241,6 +5241,8 @@ function closeDrawer(){
 }
 
 
+
+function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[i]===String.fromCharCode(39)?'&#39;':s[i];}return r;}
 </script>
 
 <!-- PENDING APPROVALS SHEET -->
@@ -5541,7 +5543,7 @@ function empPayHTML(){
           '<div style="font-size:14px;font-weight:800;">'+name+'</div>'+
           '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div>'+
         '</div>'+
-        '<button onclick="empOpenPay(\''+e.id+'\',\''+(name||'').split("'").join('&#39;')+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">'+
+        '<button onclick="empOpenPay(\''+e.id+'\',\''+safeN(name)+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">'+
           (latest?'&#9998; Revise':'+ Fix Pay')+
         '</button>'+
       '</div>'+
@@ -5814,11 +5816,11 @@ function empViewDetail(id){
         row('TDS','\u20b9'+Number(latest.tds||0).toLocaleString('en-IN'))+
         '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:13px;font-weight:900;border-top:2px solid #1B5E20;color:#1B5E20;"><span>Net Take Home</span><span>\u20b9'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</span></div>'+
       '</div>'
-    :'<div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;"><div style="font-size:12px;font-weight:700;color:#E65100;">&#9888; Pay structure not fixed yet</div><button onclick="closeEmpSheet();empTab(\'pay\',document.getElementById(\'emp-t-pay\'));setTimeout(function(){empOpenPay(\''+e.id+'\',\''+(name||'').split("'").join('&#39;')+'\');},400);" style="margin-top:8px;padding:8px 16px;background:#E65100;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Fix Pay Now</button></div>');
+    :'<div style="background:#FFF3E0;border-radius:12px;padding:14px;margin-bottom:10px;text-align:center;"><div style="font-size:12px;font-weight:700;color:#E65100;">&#9888; Pay structure not fixed yet</div><button onclick="closeEmpSheet();empTab(\'pay\',document.getElementById(\'emp-t-pay\'));setTimeout(function(){empOpenPay(\''+e.id+'\',\''+safeN(name)+'\');},400);" style="margin-top:8px;padding:8px 16px;background:#E65100;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Fix Pay Now</button></div>');
 
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>'+
-    (e.status==='active'?'<button class="btn" style="background:#E65100;color:white;" onclick="closeEmpSheet();setTimeout(function(){empOpenPay(\''+e.id+'\',\''+(name||'').split("'").join('&#39;')+'\');},300);">&#128178; Pay</button>':'')+''+
+    (e.status==='active'?'<button class="btn" style="background:#E65100;color:white;" onclick="closeEmpSheet();setTimeout(function(){empOpenPay(\''+e.id+'\',\''+safeN(name)+'\');},300);">&#128178; Pay</button>':'')+''+
     '<button class="btn btn-navy" onclick="closeEmpSheet();setTimeout(function(){empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}));},300);">&#9998; Edit</button>';
   openEmpSheet();
 }
@@ -6697,7 +6699,7 @@ function accCoa(){
               '</div>'+
               '<div style="display:flex;flex-direction:column;gap:3px;align-items:center;">'+
                 '<button onclick="accEditAccount(\''+a.id+'\')" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--blue);">&#9998;</button>'+
-                '<button onclick="accDelAccount(\''+a.id+'\',\''+(a.name||'').split("'").join('&#39;')+'\')" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--red);">&#128465;</button>'+
+                '<button onclick="accDelAccount(\''+a.id+'\',\''+safeN(a.name)+'\')" style="background:none;border:none;font-size:14px;cursor:pointer;color:var(--red);">&#128465;</button>'+
               '</div>'+
             '</div>';
           });
