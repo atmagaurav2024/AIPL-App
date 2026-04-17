@@ -2550,6 +2550,45 @@ function initRegister(){
   renderRegStep();
 }
 
+async function regLoadDropdowns(){
+  try{
+    var results = await Promise.all([
+      sbFetch('categories',{select:'name',filter:'type=eq.dept&active=eq.true',order:'name.asc'}),
+      sbFetch('categories',{select:'name',filter:'type=eq.role&active=eq.true',order:'name.asc'}),
+      sbFetch('projects',{select:'id,name',order:'name.asc'})
+    ]);
+    var depts  = Array.isArray(results[0])?results[0]:[];
+    var roles  = Array.isArray(results[1])?results[1]:[];
+    var projs  = Array.isArray(results[2])?results[2]:[];
+
+    // Department (employee only)
+    var ds = document.getElementById('r-dept');
+    if(ds && depts.length){
+      ds.innerHTML = '<option value="">-- Select Department --</option>'+
+        depts.map(function(d){return '<option value="'+d.name+'">'+d.name+'</option>';}).join('');
+    }
+
+    // Role (employee only)
+    var rs = document.getElementById('r-role');
+    if(rs && roles.length){
+      rs.innerHTML = '<option value="">-- Select Role --</option>'+
+        roles.map(function(r){return '<option value="'+r.name+'">'+r.name+'</option>';}).join('');
+    }
+
+    // Project (all categories)
+    var ps = document.getElementById('r-project');
+    if(ps){
+      ps.innerHTML = '<option value="All Projects">All Projects</option>'+
+        projs.map(function(p){return '<option value="'+p.name+'">'+p.name+'</option>';}).join('');
+    }
+  } catch(e){
+    // Fallback: keep loading state, user can type manually
+    console.warn('regLoadDropdowns error:',e);
+    var ps = document.getElementById('r-project');
+    if(ps) ps.innerHTML = '<option value="All Projects">All Projects</option>';
+  }
+}
+
 function renderRegStep(){
   var body=document.getElementById('reg-body');
   var foot=document.getElementById('reg-foot');
@@ -2595,11 +2634,11 @@ function renderRegStep(){
       '<div class="card">'+
         '<div class="card-title">Work Details</div>'+
         (regData.category==='employee'?
-          '<label class="flbl">Department</label><select id="r-dept" class="fsel" style="margin-bottom:10px;"><option>Engineering</option><option>QHSE</option><option>Finance</option><option>HR / Admin</option><option>Management</option></select>'+
-          '<label class="flbl">Designation / Role</label><select id="r-role" class="fsel" style="margin-bottom:10px;"><option>Site Engineer</option><option>Junior Engineer</option><option>QC Engineer</option><option>Safety Officer</option><option>Finance / Accounts</option><option>HR / Admin</option><option>Viewer (Read Only)</option></select>':
+          '<label class="flbl">Department</label><select id="r-dept" class="fsel" style="margin-bottom:10px;"><option value="">Loading...</option></select>'+
+          '<label class="flbl">Designation / Role</label><select id="r-role" class="fsel" style="margin-bottom:10px;"><option value="">Loading...</option></select>':
           '<label class="flbl">Trade / Speciality</label><input id="r-trade" class="finp" placeholder="e.g. Civil Works, MEP, Finishing" style="margin-bottom:10px;">'
         )+
-        '<label class="flbl">Project Applying For</label><select id="r-project" class="fsel"><option>NH-48 Bypass</option><option>Municipal Office</option><option>Riverfront Drain</option><option>Bridge Rehab</option><option>All Projects</option></select>'+
+        '<label class="flbl">Project Applying For</label><select id="r-project" class="fsel"><option value="">Loading...</option></select>'+
       '</div>'+
       (regData.category==='employee' ?
         '<div class="card"><div class="card-title">📎 Documents & Photo</div>'+
@@ -2629,6 +2668,9 @@ function renderRegStep(){
     foot.innerHTML=
       '<button class="btn-outline" style="margin:0;flex:0 0 auto;width:auto;padding:14px 20px;" onclick="prevStep()">&#8592; Back</button>'+
       '<button class="btn-primary" style="margin:0;flex:1;" onclick="nextStep()">Next &#8594;</button>';
+
+    // Load dynamic dropdowns from Supabase
+    regLoadDropdowns();
 
   } else if(regStep===3){
     body.innerHTML=
