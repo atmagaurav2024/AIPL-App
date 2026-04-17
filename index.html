@@ -5738,12 +5738,11 @@ function empSalaryHTML(){
   var header =
     '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
       '<div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px;">&#128200; Monthly Salary</div>'+
-      '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Set working days, OT and advance — then <b>View Sheet</b> to preview payslips, or <b>Finalise</b> to save as final record.</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;align-items:end;">'+
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Set working days, OT and advance for each employee, then click <b>Finalise</b> to save as permanent record.</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">'+
         '<div><label class="flbl">Month</label><select id="sal-month" class="fsel">'+monthOpts+'</select></div>'+
         '<div><label class="flbl">Year</label><select id="sal-year" class="fsel">'+yearOpts+'</select></div>'+
-        '<button onclick="empFinaliseSalary()" style="padding:10px;background:#1565C0;color:white;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#128195; View Sheet</button>'+
-        '<button onclick="salFinalise()" style="padding:10px;background:#1B5E20;color:white;border:none;border-radius:10px;font-size:11px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#10003; Finalise</button>'+
+        '<button onclick="salFinalise()" style="padding:10px 16px;background:#1B5E20;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#10003; Finalise</button>'+
       '</div>'+
     '</div>';
 
@@ -6074,6 +6073,8 @@ function empShowPayslip(empId, monthLabel){
   if(!r){toast('Generate salary sheet first','warning');return;}
   var e = EMP_LIST.find(function(x){return x.id===empId;})||{};
   var pay = r.pay||{};
+  var days = r.days||26;
+  var ratio = days/26; // pro-ration factor
   var extraEarnings=[];
   try{extraEarnings=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
 
@@ -6084,16 +6085,25 @@ function empShowPayslip(empId, monthLabel){
     '</div>';
   }
 
-  var earnRows = drow('Basic',pay.basic,'#1565C0');
+  // Pro-rate each component by days/26
+  var pBasic = Math.round((pay.basic||0)*ratio);
+  var earnRows = drow('Basic ('+days+'/26 days)',pBasic,'#1565C0');
   if(extraEarnings.length){
-    extraEarnings.forEach(function(ex){if(ex.amount>0) earnRows+=drow(ex.label,ex.amount,'#2E7D32');});
+    extraEarnings.forEach(function(ex){
+      if(ex.amount>0){
+        var amt = ex.pct>0 ? Math.round(pBasic*ex.pct/100) : Math.round(ex.amount*ratio);
+        earnRows+=drow(ex.label,amt,'#2E7D32');
+      }
+    });
   } else {
-    if(pay.da) earnRows+=drow('DA',pay.da,'#2E7D32');
-    if(pay.hra) earnRows+=drow('HRA',pay.hra,'#2E7D32');
-    if(pay.conveyance) earnRows+=drow('Conveyance',pay.conveyance,'#2E7D32');
-    if(pay.special_allowance) earnRows+=drow('Special Allowance',pay.special_allowance,'#2E7D32');
+    if(pay.da)                earnRows+=drow('DA',               Math.round((pay.da||0)*ratio),'#2E7D32');
+    if(pay.hra)               earnRows+=drow('HRA',              Math.round((pay.hra||0)*ratio),'#2E7D32');
+    if(pay.conveyance)        earnRows+=drow('Conveyance',        Math.round((pay.conveyance||0)*ratio),'#2E7D32');
+    if(pay.special_allowance) earnRows+=drow('Special Allowance', Math.round((pay.special_allowance||0)*ratio),'#2E7D32');
+    if(pay.medical_allowance) earnRows+=drow('Medical Allowance', Math.round((pay.medical_allowance||0)*ratio),'#2E7D32');
+    if(pay.other_allowance)   earnRows+=drow('Other Allowance',   Math.round((pay.other_allowance||0)*ratio),'#2E7D32');
   }
-  if(r.otPay>0) earnRows+=drow('OT ('+r.ot+' hrs)',r.otPay,'#F57F17');
+  if(r.otPay>0) earnRows+=drow('OT Allowance ('+r.ot+' hrs)',r.otPay,'#F57F17');
 
   document.getElementById('emp-sheet-title').textContent='Payslip — '+r.name;
   document.getElementById('emp-sheet-body').innerHTML=
@@ -9468,6 +9478,8 @@ function downloadPayslipPDF(empId, monthLabel){
   if(!r){toast('Generate salary sheet first','warning');return;}
   var e = EMP_LIST.find(function(x){return x.id===empId;})||{};
   var pay = r.pay;
+  var days = r.days||26;
+  var ratio = days/26;
   var extraEarnings=[];
   try{extraEarnings=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
 
@@ -9478,14 +9490,22 @@ function downloadPayslipPDF(empId, monthLabel){
 
   function erow(l,v){ return v>0?'<tr><td>'+l+'</td><td style="text-align:right;">\u20b9'+Number(v).toLocaleString('en-IN')+'</td></tr>':''; }
 
-  var earnRows = erow('Basic Salary',pay.basic||0);
+  var pBasic = Math.round((pay.basic||0)*ratio);
+  var earnRows = erow('Basic Salary ('+days+'/26 days)',pBasic);
   if(extraEarnings.length){
-    extraEarnings.forEach(function(ex){if(ex.amount>0)earnRows+=erow(ex.label,ex.amount);});
+    extraEarnings.forEach(function(ex){
+      if(ex.amount>0){
+        var amt = ex.pct>0 ? Math.round(pBasic*ex.pct/100) : Math.round(ex.amount*ratio);
+        earnRows+=erow(ex.label,amt);
+      }
+    });
   } else {
-    if(pay.da) earnRows+=erow('DA',pay.da);
-    if(pay.hra) earnRows+=erow('HRA',pay.hra);
-    if(pay.conveyance) earnRows+=erow('Conveyance',pay.conveyance);
-    if(pay.special_allowance) earnRows+=erow('Special Allowance',pay.special_allowance);
+    if(pay.da)                earnRows+=erow('Dearness Allowance',        Math.round((pay.da||0)*ratio));
+    if(pay.hra)               earnRows+=erow('House Rent Allowance',       Math.round((pay.hra||0)*ratio));
+    if(pay.conveyance)        earnRows+=erow('Conveyance Allowance',       Math.round((pay.conveyance||0)*ratio));
+    if(pay.special_allowance) earnRows+=erow('Special Allowance',          Math.round((pay.special_allowance||0)*ratio));
+    if(pay.medical_allowance) earnRows+=erow('Medical Allowance',          Math.round((pay.medical_allowance||0)*ratio));
+    if(pay.other_allowance)   earnRows+=erow('Other Allowance',            Math.round((pay.other_allowance||0)*ratio));
   }
   if(r.otPay>0) earnRows+=erow('OT Allowance ('+r.ot+' hrs)',r.otPay);
 
