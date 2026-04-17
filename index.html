@@ -2312,6 +2312,7 @@ function showApp(name){
     if(el) el.classList.toggle('on', n===name||(n==='home'&&name==='dashboard'));
   });
   if(name==='attendance'&&!window._attInit){window._attInit=true;initAttendance();}
+  if(name==='dashboard'&&!window._coLoaded){window._coLoaded=true;preloadCompanyData();}
   if(name==='registry'){initRegistry();startSync();}
   else if(name==='employees'){initEmpMgmt();}
   else if(name==='projects'){initProjects();}
@@ -5710,7 +5711,7 @@ function empShowPayslip(empId, monthLabel){
   document.getElementById('emp-sheet-body').innerHTML=
     '<div style="border:2px solid #1B5E20;border-radius:14px;overflow:hidden;">'+
       '<div style="background:#1B5E20;padding:14px 16px;color:white;">'+
-        '<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Atmagaurav Infra Pvt. Ltd.</div>'+
+        '<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">'+coName()+'</div>'+
         '<div style="font-size:16px;font-weight:900;">Salary Payslip</div>'+
         '<div style="font-size:12px;opacity:.8;margin-top:2px;">'+monthLabel+'</div>'+
       '</div>'+
@@ -5751,7 +5752,8 @@ function empShowPayslip(empId, monthLabel){
       '</div>'+
     '</div>';
   document.getElementById('emp-sheet-foot').innerHTML=
-    '<button class="btn btn-outline" onclick="empGenerateSalary()">&#8592; Back to Sheet</button>';
+    '<button class="btn btn-outline" onclick="empGenerateSalary()">&#8592; Back</button>'+
+    '<button class="btn" style="background:#C62828;color:white;" onclick="downloadPayslipPDF(empId,monthLabel)">&#128196; PDF</button>';
 }
 
 function empFinaliseSalary(){
@@ -5826,7 +5828,9 @@ function empFinaliseSalary(){
     '</table></div>';
 
   document.getElementById('emp-sheet-foot').innerHTML=
-    '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>';
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>'+
+    '<button class="btn" style="background:#2E7D32;color:white;" onclick="downloadSalaryExcel()">&#128202; Excel</button>'+
+    '<button class="btn" style="background:#C62828;color:white;" onclick="downloadSalaryPDF()">&#128196; PDF</button>';
   openEmpSheet();
   toast('Salary sheet ready — tap Payslip to view individual slips','success');
 }
@@ -7090,9 +7094,10 @@ function empGenerateOfferLetter(empId){
   '</style></head><body><div class="page">'+
 
   '<div class="header">'+
-    '<div class="logo">ATMAGAURAV INFRA PVT. LTD.</div>'+
-    '<div class="sub">Construction & Infrastructure Management</div>'+
-    '<div class="sub">CIN: [Company CIN] &nbsp;|&nbsp; GST: [GSTIN] &nbsp;|&nbsp; [Registered Address]</div>'+
+    '<div class="logo">'+coName().toUpperCase()+'</div>'+
+    (coAddr()?'<div class="sub">'+coAddr()+'</div>':'')+
+    '<div class="sub">'+(coCIN()?'CIN: '+coCIN()+' &nbsp;|&nbsp; ':'')+
+      (coGST()?'GSTIN: '+coGST():'')+'</div>'+
   '</div>'+
 
   '<div class="title">APPOINTMENT LETTER</div>'+
@@ -7101,7 +7106,7 @@ function empGenerateOfferLetter(empId){
   '<p style="font-size:12px;margin-bottom:14px;">To,<br><strong>'+name+'</strong><br>'+(emp.address?emp.address+'<br>':'')+(emp.mobile||emp.phone?'Mobile: '+(emp.mobile||emp.phone):'')+'</p>'+
 
   '<p class="clause">Dear <strong>'+name+'</strong>,</p>'+
-  '<p class="clause">We are pleased to appoint you as <strong>'+designation+'</strong> in the <strong>'+dept+'</strong> department of Atmagaurav Infra Pvt. Ltd., with effect from <strong>'+dojFmt+'</strong>, subject to the terms and conditions mentioned herein.</p>'+
+  '<p class="clause">We are pleased to appoint you as <strong>'+designation+'</strong> in the <strong>'+dept+'</strong> department of '+coName()+', with effect from <strong>'+dojFmt+'</strong>, subject to the terms and conditions mentioned herein.</p>'+
 
   '<div class="section-title">Employment Details</div>'+
   '<div class="info-grid">'+
@@ -7154,7 +7159,7 @@ function empGenerateOfferLetter(empId){
   '<p class="clause">5. <strong>Notice Period:</strong> After successful completion of probation, the notice period for resignation or termination shall be 30 days.</p>'+
   '<p class="clause">6. <strong>Code of Conduct:</strong> You are expected to adhere to the Company\' Code of Conduct and policies as amended from time to time.</p>'+
 
-  '<p class="clause" style="margin-top:16px;">Please sign and return a copy of this letter as your acceptance of the above terms and conditions. We look forward to your contribution to the growth of Atmagaurav Infra Pvt. Ltd.</p>'+
+  '<p class="clause" style="margin-top:16px;">Please sign and return a copy of this letter as your acceptance of the above terms and conditions. We look forward to your contribution to the growth of '+coName()+'.</p>'+
 
   '<div class="sign-section">'+
     '<div class="sign-box">'+
@@ -7166,14 +7171,14 @@ function empGenerateOfferLetter(empId){
     '<div class="sign-box" style="text-align:right;">'+
       '<div style="margin-top:50px;border-top:1px solid #999;padding-top:8px;">'+
         '<div style="font-weight:700;">Authorised Signatory</div>'+
-        '<div style="font-weight:600;">Atmagaurav Infra Pvt. Ltd.</div>'+
+        '<div style="font-weight:600;">'+coName()+'</div>'+
         '<div style="color:#555;font-size:11px;">Name &amp; Designation</div>'+
       '</div>'+
     '</div>'+
   '</div>'+
 
   '<p style="font-size:10px;color:#888;text-align:center;margin-top:30px;border-top:1px solid #eee;padding-top:10px;">'+
-    'This is a computer-generated document. | Atmagaurav Infra Pvt. Ltd. | Generated on '+today+
+    'This is a computer-generated document. | '+coName()+' | Generated on '+today+
   '</p>'+
   '</div></body></html>';
 
@@ -8499,6 +8504,266 @@ async function companySave(){
   } finally {
     if(btn){ btn.textContent = '\u{1F4BE} Save'; btn.disabled=false; }
   }
+}
+
+
+// ════ COMPANY HELPER ════════════════════════════════════════════════════
+// Returns company details from COMPANY_DATA with safe fallbacks
+function coGet(field, fallback){
+  return (COMPANY_DATA&&COMPANY_DATA[field])||fallback||'';
+}
+function coName(){  return coGet('name','Atmagaurav Infra Pvt. Ltd.'); }
+function coAddr(){  return coGet('address',''); }
+function coCIN(){   return coGet('cin',''); }
+function coGST(){   return coGet('gstin',''); }
+function coPAN(){   return coGet('pan',''); }
+function coPhone(){ return coGet('phone',''); }
+function coEmail(){ return coGet('email',''); }
+
+// Pre-load company data on app start (called once)
+async function preloadCompanyData(){
+  try{
+    var rows = await sbFetch('company_details',{select:'*',order:'id.asc'});
+    COMPANY_DATA = (Array.isArray(rows)&&rows.length) ? rows[0] : {};
+  }catch(e){ COMPANY_DATA = {}; }
+}
+
+// ════ PDF / EXCEL DOWNLOAD UTILITIES ════════════════════════════════════
+
+// Download salary sheet as CSV/Excel
+function downloadSalaryExcel(){
+  var rows = window._salRows||[];
+  var month = window._salMonth||'Salary';
+  if(!rows.length){toast('Generate salary sheet first','warning');return;}
+
+  var lines = [
+    [coName()],
+    ['Salary Sheet - '+month],
+    [''],
+    ['Emp Code','Employee Name','Designation','Department','Days Worked','OT Hrs',
+     'Basic','Gross Earnings','PF (Emp)','ESIC (Emp)','TDS','Prof Tax','Advance',
+     'Total Deductions','Net Payable']
+  ];
+
+  rows.forEach(function(r){
+    var e = EMP_LIST.find(function(x){return x.id===r.id;})||{};
+    lines.push([
+      r.code,
+      r.name,
+      e.designation||e.role||'',
+      e.department||'',
+      r.days,
+      r.ot||0,
+      r.pay.basic||0,
+      r.earned+(r.otPay||0),
+      r.pfEmp||0,
+      r.esic||0,
+      r.tds||0,
+      r.pt||0,
+      r.adv||0,
+      (r.pfEmp||0)+(r.esic||0)+(r.tds||0)+(r.pt||0)+(r.adv||0),
+      r.payable
+    ]);
+  });
+
+  var total = rows.reduce(function(s,r){return s+r.payable;},0);
+  lines.push(['','','','','','','','','','','','','','TOTAL',total]);
+
+  var csv = lines.map(function(row){
+    return row.map(function(cell){
+      var s = String(cell==null?'':cell);
+      if(s.indexOf(',')>-1||s.indexOf('"')>-1||s.indexOf('\n')>-1)
+        s = '"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(',');
+  }).join('\n');
+
+  var blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'SalarySheet_'+month.replace(/\s+/g,'_')+'.csv';
+  a.click();
+  toast('Salary sheet downloaded as CSV/Excel','success');
+}
+
+// Download salary sheet as PDF (print-friendly HTML)
+function downloadSalaryPDF(){
+  var rows = window._salRows||[];
+  var month = window._salMonth||'Salary';
+  if(!rows.length){toast('Generate salary sheet first','warning');return;}
+
+  var total = rows.reduce(function(s,r){return s+r.payable;},0);
+  var compName = coName();
+  var compAddr = coAddr();
+  var compGST  = coGST();
+
+  var tableRows = rows.map(function(r,i){
+    var e = EMP_LIST.find(function(x){return x.id===r.id;})||{};
+    return '<tr>'+
+      '<td>'+(i+1)+'</td>'+
+      '<td>'+r.code+'</td>'+
+      '<td style="text-align:left;">'+r.name+'<br><small style="color:#666;">'+(e.designation||'')+'</small></td>'+
+      '<td style="text-align:center;">'+r.days+(r.ot?'+'+r.ot+'h':'')+'</td>'+
+      '<td>'+Number(r.pay.basic||0).toLocaleString('en-IN')+'</td>'+
+      '<td>'+Number(r.earned+(r.otPay||0)).toLocaleString('en-IN')+'</td>'+
+      '<td style="color:#C62828;">'+Number((r.pfEmp||0)+(r.esic||0)+(r.tds||0)+(r.pt||0)+(r.adv||0)).toLocaleString('en-IN')+'</td>'+
+      '<td style="font-weight:700;color:#1B5E20;">\u20b9'+Number(r.payable).toLocaleString('en-IN')+'</td>'+
+    '</tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>Salary Sheet - '+month+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#222;margin:0;padding:20px;}'+
+    '.header{text-align:center;border-bottom:3px double #1B5E20;padding-bottom:12px;margin-bottom:16px;}'+
+    '.co-name{font-size:18px;font-weight:900;color:#1B5E20;letter-spacing:1px;}'+
+    '.co-sub{font-size:10px;color:#555;margin-top:3px;}'+
+    '.sheet-title{font-size:14px;font-weight:700;text-align:center;margin:10px 0;text-decoration:underline;}'+
+    'table{width:100%;border-collapse:collapse;font-size:11px;}'+
+    'th{background:#1B5E20;color:white;padding:6px 8px;text-align:right;}'+
+    'th:nth-child(1),th:nth-child(2),th:nth-child(3){text-align:left;}'+
+    'td{padding:5px 8px;border-bottom:1px solid #eee;text-align:right;}'+
+    'td:nth-child(1),td:nth-child(2),td:nth-child(3){text-align:left;}'+
+    'tr:nth-child(even){background:#F9FFF9;}'+
+    '.total-row{background:#E8F5E9;font-weight:900;border-top:2px solid #1B5E20;}'+
+    '.footer{margin-top:20px;font-size:10px;color:#888;text-align:center;}'+
+    '@media print{@page{size:A4 landscape;margin:10mm;}body{padding:0;}}'+
+    '</style></head><body>'+
+    '<div class="header">'+
+      '<div class="co-name">'+compName+'</div>'+
+      (compAddr?'<div class="co-sub">'+compAddr+'</div>':'')+
+      (compGST?'<div class="co-sub">GSTIN: '+compGST+'</div>':'')+
+    '</div>'+
+    '<div class="sheet-title">SALARY SHEET &mdash; '+month+'</div>'+
+    '<table>'+
+      '<thead><tr>'+
+        '<th>#</th><th>Code</th><th>Employee</th><th style="text-align:center;">Days</th>'+
+        '<th>Basic</th><th>Gross</th><th>Deductions</th><th>Net Pay</th>'+
+      '</tr></thead>'+
+      '<tbody>'+tableRows+'</tbody>'+
+      '<tfoot><tr class="total-row">'+
+        '<td colspan="7" style="text-align:right;">TOTAL PAYROLL</td>'+
+        '<td>\u20b9'+Number(total).toLocaleString('en-IN')+'</td>'+
+      '</tr></tfoot>'+
+    '</table>'+
+    '<div class="footer">Generated on '+new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'})+
+      ' &nbsp;|&nbsp; '+compName+' &nbsp;|&nbsp; Computer generated document</div>'+
+    '<script>window.onload=function(){window.print();}<\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { toast('Allow popups to download PDF','warning'); }
+}
+
+// Download individual payslip as PDF
+function downloadPayslipPDF(empId, monthLabel){
+  var rows = window._salRows||[];
+  var r = rows.find(function(x){return x.id===empId;});
+  if(!r){toast('Generate salary sheet first','warning');return;}
+  var e = EMP_LIST.find(function(x){return x.id===empId;})||{};
+  var pay = r.pay;
+  var extraEarnings=[];
+  try{extraEarnings=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
+
+  var compName = coName();
+  var compAddr = coAddr();
+  var compGST  = coGST();
+  var compCIN  = coCIN();
+
+  function erow(l,v){ return v>0?'<tr><td>'+l+'</td><td style="text-align:right;">\u20b9'+Number(v).toLocaleString('en-IN')+'</td></tr>':''; }
+
+  var earnRows = erow('Basic Salary',pay.basic||0);
+  if(extraEarnings.length){
+    extraEarnings.forEach(function(ex){if(ex.amount>0)earnRows+=erow(ex.label,ex.amount);});
+  } else {
+    if(pay.da) earnRows+=erow('DA',pay.da);
+    if(pay.hra) earnRows+=erow('HRA',pay.hra);
+    if(pay.conveyance) earnRows+=erow('Conveyance',pay.conveyance);
+    if(pay.special_allowance) earnRows+=erow('Special Allowance',pay.special_allowance);
+  }
+  if(r.otPay>0) earnRows+=erow('OT Allowance ('+r.ot+' hrs)',r.otPay);
+
+  var dedRows='';
+  if(r.pfEmp>0) dedRows+=erow('PF (Employee 12%)',r.pfEmp);
+  if(r.esic>0)  dedRows+=erow('ESIC (Employee 0.75%)',r.esic);
+  if(r.tds>0)   dedRows+=erow('TDS',r.tds);
+  if(r.pt>0)    dedRows+=erow('Profession Tax',r.pt);
+  if(r.adv>0)   dedRows+=erow('Advance Recovery',r.adv);
+
+  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>Payslip - '+r.name+' - '+monthLabel+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:12px;color:#222;margin:0;padding:20px;}'+
+    '.page{max-width:700px;margin:0 auto;border:2px solid #1B5E20;border-radius:8px;overflow:hidden;}'+
+    '.header{background:#1B5E20;color:white;padding:16px 20px;text-align:center;}'+
+    '.co-name{font-size:16px;font-weight:900;letter-spacing:1px;}'+
+    '.co-sub{font-size:10px;opacity:.8;margin-top:3px;}'+
+    '.slip-title{font-size:13px;font-weight:700;text-decoration:underline;margin-top:6px;}'+
+    '.emp-info{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:12px 20px;background:#F8FFF8;border-bottom:1px solid #E0E0E0;font-size:11px;}'+
+    '.emp-info span{color:#555;}'+
+    '.emp-info b{color:#222;}'+
+    '.tables{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #ddd;}'+
+    '.t-section{padding:12px 16px;}'+
+    '.t-section:first-child{border-right:1px solid #ddd;}'+
+    '.t-head{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid;}'+
+    '.earn .t-head{color:#2E7D32;border-color:#2E7D32;}'+
+    '.ded .t-head{color:#C62828;border-color:#C62828;}'+
+    'table{width:100%;border-collapse:collapse;font-size:11px;}'+
+    'td{padding:4px 0;border-bottom:1px solid #F5F5F5;}'+
+    'td:last-child{text-align:right;}'+
+    '.sub-total td{font-weight:700;border-top:2px solid;padding-top:5px;}'+
+    '.earn .sub-total td{color:#2E7D32;border-color:#2E7D32;}'+
+    '.ded .sub-total td{color:#C62828;border-color:#C62828;}'+
+    '.net-box{background:#1B5E2015;border-top:2px solid #1B5E20;padding:12px 20px;display:flex;justify-content:space-between;align-items:center;}'+
+    '.net-label{font-size:13px;font-weight:800;color:#1B5E20;}'+
+    '.net-amt{font-size:20px;font-weight:900;color:#1B5E20;}'+
+    '.footer{padding:8px 20px;text-align:center;font-size:10px;color:#888;border-top:1px solid #eee;}'+
+    '@media print{@page{size:A4;margin:10mm;}.page{border:1pt solid #1B5E20;}}'+
+    '</style></head><body>'+
+    '<div class="page">'+
+      '<div class="header">'+
+        '<div class="co-name">'+compName.toUpperCase()+'</div>'+
+        (compAddr?'<div class="co-sub">'+compAddr+'</div>':'')+
+        (compGST?'<div class="co-sub">GSTIN: '+compGST+(compCIN?' &nbsp;|&nbsp; CIN: '+compCIN:'')+'</div>':'')+
+        '<div class="slip-title">SALARY PAYSLIP</div>'+
+        '<div style="font-size:11px;opacity:.8;margin-top:2px;">'+monthLabel+'</div>'+
+      '</div>'+
+      '<div class="emp-info">'+
+        '<div><span>Employee Name: </span><b>'+r.name+'</b></div>'+
+        '<div><span>Employee Code: </span><b>'+r.code+'</b></div>'+
+        '<div><span>Designation: </span><b>'+(e.designation||e.role||'\u2014')+'</b></div>'+
+        '<div><span>Department: </span><b>'+(e.department||'\u2014')+'</b></div>'+
+        '<div><span>Days Worked: </span><b>'+r.days+' / 26</b></div>'+
+        '<div><span>OT Hours: </span><b>'+(r.ot||0)+'</b></div>'+
+        (pay.pf_applicable?'<div><span>UAN: </span><b>'+(e.pf_no||e.pf||e.uan_no||'\u2014')+'</b></div>':'')+
+        (pay.esic_applicable?'<div><span>ESIC No: </span><b>'+(e.esic_no||e.esic||'\u2014')+'</b></div>':'')+
+      '</div>'+
+      '<div class="tables">'+
+        '<div class="t-section earn">'+
+          '<div class="t-head">Earnings</div>'+
+          '<table><tbody>'+earnRows+
+            '<tr class="sub-total"><td>Total Earned</td><td>\u20b9'+Number(r.earned+(r.otPay||0)).toLocaleString('en-IN')+'</td></tr>'+
+          '</tbody></table>'+
+        '</div>'+
+        '<div class="t-section ded">'+
+          '<div class="t-head">Deductions</div>'+
+          '<table><tbody>'+dedRows+
+            '<tr class="sub-total"><td>Total Deducted</td><td>\u20b9'+Number((r.pfEmp||0)+(r.esic||0)+(r.tds||0)+(r.pt||0)+(r.adv||0)).toLocaleString('en-IN')+'</td></tr>'+
+          '</tbody></table>'+
+        '</div>'+
+      '</div>'+
+      '<div class="net-box"><span class="net-label">NET TAKE HOME</span><span class="net-amt">\u20b9'+Number(r.payable).toLocaleString('en-IN')+'</span></div>'+
+      '<div class="footer">This is a computer-generated payslip and does not require a signature. &nbsp;|&nbsp; Generated on '+today+'</div>'+
+    '</div>'+
+    '<script>window.onload=function(){window.print();}<\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){ w.document.write(html); w.document.close(); }
+  else { toast('Allow popups to download PDF','warning'); }
 }
 
 </script>
