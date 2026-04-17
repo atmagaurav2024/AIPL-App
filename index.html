@@ -9389,8 +9389,8 @@ function empDownloadHTML(){
         '</div>'+
         '<div style="font-size:18px;color:var(--text3);" id="doc-arr-'+e.id+'">&#8250;</div>'+
       '</div>'+
-      '<div id="doc-'+e.id+'" style="display:none;border-top:1px solid #F0F4F8;padding:10px 14px 12px;">'+
-        empDocList(e)+
+      '<div id="doc-'+e.id+'" data-emp-idx="'+e.id+'" style="display:none;border-top:1px solid #F0F4F8;padding:10px 14px 12px;">'+
+        '<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">&#9203; Loading...</div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -9404,8 +9404,19 @@ function empToggleDocList(divId){
   el.style.display = open?'none':'block';
   if(arr) arr.style.transform = open?'':'rotate(90deg)';
   if(!open){
-    // Wire buttons after showing
-    setTimeout(function(){ hrWireDownloadButtons(divId); }, 100);
+    // Build doc list now (orders should be loaded by now, or load them)
+    var empId = el.getAttribute('data-emp-idx')||divId.replace('doc-','');
+    var e = EMP_LIST.find(function(x){return x.id===empId;});
+    if(!e) return;
+    function renderDocs(){
+      el.innerHTML = empDocList(e);
+      setTimeout(function(){ hrWireDownloadButtons(divId); }, 100);
+    }
+    if(EMP_ORDERS.length){
+      renderDocs();
+    } else {
+      hrLoadOrders().then(renderDocs).catch(renderDocs);
+    }
   }
 }
 
