@@ -5663,7 +5663,8 @@ async function salFinalise(){
     var daysEl = document.getElementById('sal-days-'+e.id);
     var otEl   = document.getElementById('sal-ot-'+e.id);
     var advEl  = document.getElementById('sal-adv-'+e.id);
-    var days   = parseFloat(daysEl?daysEl.value:26)||26;
+    var lwp    = parseFloat(daysEl?daysEl.value:0)||0;
+    var days   = Math.max(0, 26 - lwp); // days worked = 26 - LWP
     var ot     = parseFloat(otEl?otEl.value:0)||0;
     var adv    = parseFloat(advEl?advEl.value:0)||0;
 
@@ -5777,8 +5778,8 @@ function empSalaryHTML(){
             '</div>'+
           '</div>'+
           '<div style="padding:0 14px 10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'+
-            '<div><label class="flbl" style="margin-bottom:2px;">Working Days</label>'+
-              '<input id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="31" value="26" style="margin-bottom:0;" oninput="empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')"></div>'+
+            '<div><label class="flbl" style="margin-bottom:2px;">LWP Days</label>'+
+              '<input id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="26" value="0" placeholder="0" style="margin-bottom:0;" oninput="empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')"></div>'+
             '<div><label class="flbl" style="margin-bottom:2px;">OT Hours</label>'+
               '<input id="sal-ot-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput="empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')"></div>'+
             '<div><label class="flbl" style="margin-bottom:2px;">Advance Deduct</label>'+
@@ -5838,7 +5839,7 @@ function empSalaryHTML(){
                   g.records.map(function(r){
                     return '<tr style="border-bottom:1px solid #F5F5F5;">'+
                       '<td style="padding:7px 8px;font-weight:700;">'+r.employee_name+'<div style="font-size:10px;color:var(--text3);">'+r.employee_code+'</div></td>'+
-                      '<td style="padding:7px 8px;text-align:center;">'+r.days_worked+(r.ot_hours?'+'+r.ot_hours+'h':'')+'</td>'+
+                      '<td style="padding:7px 8px;text-align:center;">'+r.days_worked+'d'+(26-r.days_worked>0?' ('+( 26-r.days_worked)+'L)':'')+(r.ot_hours?'+'+r.ot_hours+'h':'')+'</td>'+
                       '<td style="padding:7px 8px;text-align:right;">&#8377;'+Number(r.earned+(r.ot_pay||0)).toLocaleString('en-IN')+'</td>'+
                       '<td style="padding:7px 8px;text-align:right;color:#C62828;">&#8377;'+Number((r.pf_employee||0)+(r.esic_employee||0)+(r.tds||0)+(r.profession_tax||0)+(r.advance_deduct||0)).toLocaleString('en-IN')+'</td>'+
                       '<td style="padding:7px 8px;text-align:right;font-weight:900;color:#1B5E20;">&#8377;'+Number(r.net_payable||0).toLocaleString('en-IN')+'</td>'+
@@ -6054,7 +6055,8 @@ function salDownloadPDF(month, year, label){
 }
 
 function empCalcSalary(empId, gross, netBase, pfEmp, esicEmp, tds){
-  var days = parseFloat((document.getElementById('sal-days-'+empId)||{value:26}).value)||26;
+  var lwp  = parseFloat((document.getElementById('sal-days-'+empId)||{value:0}).value)||0;
+  var days = Math.max(0, 26 - lwp); // days worked = 26 - LWP
   var ot   = parseFloat((document.getElementById('sal-ot-'+empId)||{value:0}).value)||0;
   var adv  = parseFloat((document.getElementById('sal-adv-'+empId)||{value:0}).value)||0;
   var dailyRate = gross/26;
@@ -6118,7 +6120,8 @@ function empShowPayslip(empId, monthLabel){
         '<div style="font-size:11px;"><span style="color:var(--text3);">Code: </span><b>'+r.code+'</b></div>'+
         '<div style="font-size:11px;"><span style="color:var(--text3);">Designation: </span><b>'+(e.designation||e.role||'—')+'</b></div>'+
         '<div style="font-size:11px;"><span style="color:var(--text3);">Department: </span><b>'+(e.department||'—')+'</b></div>'+
-        '<div style="font-size:11px;"><span style="color:var(--text3);">Days Worked: </span><b>'+r.days+' / 26</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Days Worked: </span><b>'+r.days+' days</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">LWP: </span><b>'+(26-r.days)+' days</b></div>'+
         '<div style="font-size:11px;"><span style="color:var(--text3);">OT Hours: </span><b>'+(r.ot||0)+'</b></div>'+
       '</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:2px solid #1B5E20;">'+
@@ -6251,7 +6254,8 @@ function empFinaliseSalary(){
       var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
       var pay=pays[0];
       if(!pay) return null;
-      var days=parseFloat((document.getElementById('sal-days-'+e.id)||{value:26}).value)||26;
+      var lwp=parseFloat((document.getElementById('sal-days-'+e.id)||{value:0}).value)||0;
+      var days=Math.max(0,26-lwp); // days worked = 26 - LWP
       var ot  =parseFloat((document.getElementById('sal-ot-'+e.id)||{value:0}).value)||0;
       var adv =parseFloat((document.getElementById('sal-adv-'+e.id)||{value:0}).value)||0;
       var gross=parseFloat(pay.gross)||0;
@@ -6275,7 +6279,7 @@ function empFinaliseSalary(){
   var tableRows=rows.map(function(r){
     return '<tr style="border-bottom:1px solid #F0F4F8;">'+
       '<td style="padding:8px 6px;font-size:12px;font-weight:700;">'+r.name+'<div style="font-size:10px;color:var(--text3);">'+r.code+'</div></td>'+
-      '<td style="padding:8px 6px;font-size:11px;text-align:center;">'+r.days+(r.ot?'+'+r.ot+'h':'')+' </td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:center;">'+r.days+'d'+(26-r.days>0?' ('+( 26-r.days)+'L)':'')+(r.ot?'+'+r.ot+'h':'')+'</td>'+
       '<td style="padding:8px 6px;font-size:11px;text-align:right;">&#8377;'+Number(r.earned+r.otPay).toLocaleString('en-IN')+'</td>'+
       '<td style="padding:8px 6px;font-size:11px;text-align:right;color:#C62828;">&#8377;'+Number(r.pfEmp+r.esic+r.tds+r.pt+r.adv).toLocaleString('en-IN')+'</td>'+
       '<td style="padding:8px 6px;font-size:13px;font-weight:900;text-align:right;color:#1B5E20;">&#8377;'+Number(r.payable).toLocaleString('en-IN')+'</td>'+
@@ -6295,7 +6299,7 @@ function empFinaliseSalary(){
     '<table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;">'+
       '<thead><tr style="background:#F8FFF8;border-bottom:2px solid #1B5E20;">'+
         '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:left;text-transform:uppercase;white-space:nowrap;">Employee</th>'+
-        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:center;white-space:nowrap;">Days</th>'+
+        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:center;white-space:nowrap;">Days / LWP</th>'+
         '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#2E7D32;text-align:right;white-space:nowrap;">Earnings</th>'+
         '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#C62828;text-align:right;white-space:nowrap;">Deductions</th>'+
         '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#1B5E20;text-align:right;white-space:nowrap;">Net Pay</th>'+
@@ -7525,100 +7529,111 @@ function empOpenPay(empId, empName){
   document.getElementById('pay-sheet-title').textContent='\u{1F4B8} Pay Fixation \u2014 '+empName;
 
   document.getElementById('pay-sheet-body').innerHTML=
-    '<label class="flbl">Effective Date *</label>'+
-    '<input id="pf-date" class="finp" type="date" value="'+(new Date().toISOString().slice(0,10))+'">'+
-
-    // ─ EARNINGS ─
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin:14px 0 8px;">'+
-      '<div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;">&#128197; Earnings</div>'+
-      '<button onclick="payAddEarning()" style="background:#2E7D32;color:white;border:none;border-radius:7px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ Add</button>'+
-    '</div>'+
-
-    // Fixed earnings - Basic (cannot delete)
-    '<div style="background:#F8FFF8;border-radius:10px;border:1px solid #2E7D3220;padding:10px 12px;margin-bottom:6px;">'+
-      '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<div style="flex:1;font-size:13px;font-weight:800;color:#2E7D32;">Basic <span style="font-size:10px;font-weight:600;color:var(--text3);">(Required)</span></div>'+
-        '<input id="pf-basic" class="finp" type="number" step="1" placeholder="0" value="'+(v.basic||'')+'" oninput="payCalc()" style="width:120px;margin-bottom:0;text-align:right;font-weight:900;">'+
+    // ── Header: Date + Employee info ──────────────────────────────────────
+    '<div style="background:#1B5E20;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:white;display:flex;align-items:center;gap:10px;">'+
+      '<div style="flex:1;">'+
+        '<div style="font-size:15px;font-weight:900;">'+empName+'</div>'+
+        '<div style="font-size:11px;opacity:.75;margin-top:2px;">Pay Fixation / Revision</div>'+
+      '</div>'+
+      '<div>'+
+        '<label style="font-size:10px;opacity:.7;display:block;margin-bottom:4px;">Effective Date *</label>'+
+        '<input id="pf-date" type="date" value="'+(new Date().toISOString().slice(0,10))+'" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:6px 10px;color:white;font-size:12px;font-weight:700;font-family:Nunito,sans-serif;outline:none;">'+
       '</div>'+
     '</div>'+
 
-    // Dynamic extra earnings container
-    '<div id="pay-earnings-list"></div>'+
+    // ── Two-column: Earnings | Deductions ─────────────────────────────────
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">'+
 
-    // Gross display
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:#E8F5E9;border-radius:10px;margin:10px 0;">'+
-      '<div style="font-size:13px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
-      '<div id="pf-gross-display" style="font-size:18px;font-weight:900;color:#2E7D32;">\u20b90</div>'+
-    '</div>'+
-
-    // ─ PF ─
-    '<div style="background:#E3F2FD;border-radius:10px;padding:10px 14px;margin-bottom:8px;">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
-        '<div style="font-size:12px;font-weight:800;color:#1565C0;">&#128204; PF (Provident Fund)</div>'+
-        '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">'+
-          '<input type="checkbox" id="pf-applicable" onchange="payCalc()" style="width:16px;height:16px;"'+(pfApplicable?' checked':'')+'>'+
-          '<span style="font-size:12px;font-weight:700;">Applicable</span>'+
-        '</label>'+
+      // LEFT: Earnings
+      '<div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;">'+
+        '<div style="background:#2E7D32;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">'+
+          '<div style="font-size:11px;font-weight:800;color:white;text-transform:uppercase;letter-spacing:.5px;">Earnings</div>'+
+          '<button onclick="payAddEarning()" style="background:rgba(255,255,255,.25);color:white;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;">+ Add</button>'+
+        '</div>'+
+        '<div style="padding:8px 10px;">'+
+          // Basic
+          '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+            '<div style="flex:1;font-size:12px;font-weight:800;color:#2E7D32;">Basic <span style="font-size:9px;color:var(--text3);">(Required)</span></div>'+
+            '<input id="pf-basic" type="number" step="1" placeholder="0" value="'+(v.basic||'')+'" oninput="payCalc()" style="width:80px;text-align:right;border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:12px;font-weight:900;font-family:Nunito,sans-serif;outline:none;">'+
+          '</div>'+
+          // Dynamic earnings
+          '<div id="pay-earnings-list"></div>'+
+          // Gross
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 8px;background:#E8F5E9;border-radius:7px;margin-top:6px;">'+
+            '<span style="font-size:11px;font-weight:800;color:#2E7D32;">Gross</span>'+
+            '<span id="pf-gross-display" style="font-size:14px;font-weight:900;color:#2E7D32;">₹0</span>'+
+          '</div>'+
+        '</div>'+
       '</div>'+
-      '<div id="pf-fields">'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
-          '<div><label class="flbl">Employee (12% of Basic)</label><input id="pf-pfe" class="finp" type="number" step="1" value="'+(v.pf_employee||0)+'" oninput="payCalc()" style="margin-bottom:0;"></div>'+
-          '<div><label class="flbl">Employer (12% of Basic)</label><input id="pf-pfr" class="finp" type="number" step="1" value="'+(v.pf_employer||0)+'" readonly style="margin-bottom:0;opacity:.7;"></div>'+
+
+      // RIGHT: Deductions
+      '<div style="background:white;border-radius:12px;border:1px solid var(--border);overflow:hidden;">'+
+        '<div style="background:#C62828;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;">'+
+          '<div style="font-size:11px;font-weight:800;color:white;text-transform:uppercase;letter-spacing:.5px;">Deductions</div>'+
+          '<button onclick="payAddDeduction()" style="background:rgba(255,255,255,.25);color:white;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;">+ Add</button>'+
+        '</div>'+
+        '<div style="padding:8px 10px;">'+
+
+          // PF row
+          '<div style="padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+            '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">'+
+              '<div style="flex:1;font-size:11px;font-weight:800;color:#1565C0;">PF</div>'+
+              '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:700;">'+
+                '<input type="checkbox" id="pf-applicable" onchange="payCalc()" style="width:13px;height:13px;"'+(pfApplicable?' checked':'')+'>Apply'+
+              '</label>'+
+            '</div>'+
+            '<div id="pf-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'+
+              '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Emp (12%)</div><input id="pf-pfe" type="number" step="1" value="'+(v.pf_employee||0)+'" oninput="payCalc()" style="width:100%;text-align:right;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;box-sizing:border-box;"></div>'+
+              '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Empr (12%)</div><input id="pf-pfr" type="number" step="1" value="'+(v.pf_employer||0)+'" readonly style="width:100%;text-align:right;border:1px solid #eee;border-radius:6px;padding:4px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;opacity:.6;box-sizing:border-box;background:#F8F8F8;"></div>'+
+            '</div>'+
+          '</div>'+
+
+          // ESIC row
+          '<div style="padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+            '<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;">'+
+              '<div style="flex:1;font-size:11px;font-weight:800;color:#6A1B9A;">ESIC</div>'+
+              '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:10px;font-weight:700;">'+
+                '<input type="checkbox" id="esic-applicable" onchange="payCalc()" style="width:13px;height:13px;"'+(esicApplicable?' checked':'')+'>Apply'+
+              '</label>'+
+            '</div>'+
+            '<div id="esic-fields" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'+
+              '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Emp (0.75%)</div><input id="pf-esice" type="number" step="1" value="'+(v.esic_employee||0)+'" oninput="payCalc()" style="width:100%;text-align:right;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;box-sizing:border-box;"></div>'+
+              '<div><div style="font-size:9px;color:var(--text3);margin-bottom:2px;">Empr (3.25%)</div><input id="pf-esicr" type="number" step="1" value="'+(v.esic_employer||0)+'" readonly style="width:100%;text-align:right;border:1px solid #eee;border-radius:6px;padding:4px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;opacity:.6;box-sizing:border-box;background:#F8F8F8;"></div>'+
+            '</div>'+
+          '</div>'+
+
+          // TDS
+          '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+            '<div style="flex:1;font-size:11px;font-weight:800;color:#E65100;">TDS</div>'+
+            '<input id="pf-tds" type="number" step="1" value="'+(v.tds||0)+'" oninput="payCalc()" style="width:70px;text-align:right;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;">'+
+          '</div>'+
+
+          // Profession Tax
+          '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+            '<div style="flex:1;"><div style="font-size:11px;font-weight:800;color:#880E4F;">Prof. Tax</div><div style="font-size:9px;color:var(--text3);">Compulsory</div></div>'+
+            '<input id="pf-pt" type="number" step="1" value="'+(v.profession_tax||200)+'" oninput="payCalc()" style="width:70px;text-align:right;border:1px solid var(--border);border-radius:6px;padding:4px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;">'+
+          '</div>'+
+
+          // Dynamic deductions
+          '<div id="pay-deductions-list"></div>'+
+
+          // Total deductions
+          '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 8px;background:#FFEBEE;border-radius:7px;margin-top:6px;">'+
+            '<span style="font-size:11px;font-weight:800;color:#C62828;">Total Ded.</span>'+
+            '<span id="pf-ded-display" style="font-size:14px;font-weight:900;color:#C62828;">₹0</span>'+
+          '</div>'+
         '</div>'+
       '</div>'+
     '</div>'+
 
-    // ─ ESIC ─
-    '<div style="background:#F3E5F5;border-radius:10px;padding:10px 14px;margin-bottom:8px;">'+
-      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'+
-        '<div style="font-size:12px;font-weight:800;color:#6A1B9A;">&#128204; ESIC</div>'+
-        '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;">'+
-          '<input type="checkbox" id="esic-applicable" onchange="payCalc()" style="width:16px;height:16px;"'+(esicApplicable?' checked':'')+'>'+
-          '<span style="font-size:12px;font-weight:700;">Applicable</span>'+
-        '</label>'+
-      '</div>'+
-      '<div id="esic-fields">'+
-        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">'+
-          '<div><label class="flbl">Employee (0.75%)</label><input id="pf-esice" class="finp" type="number" step="1" value="'+(v.esic_employee||0)+'" oninput="payCalc()" style="margin-bottom:0;"></div>'+
-          '<div><label class="flbl">Employer (3.25%)</label><input id="pf-esicr" class="finp" type="number" step="1" value="'+(v.esic_employer||0)+'" readonly style="margin-bottom:0;opacity:.7;"></div>'+
-        '</div>'+
-      '</div>'+
+    // ── Net Take Home ──────────────────────────────────────────────────────
+    '<div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;background:#1B5E20;border-radius:12px;margin-bottom:10px;">'+
+      '<div style="color:white;font-size:13px;font-weight:800;">Net Take Home</div>'+
+      '<div id="pf-net-display" style="font-size:22px;font-weight:900;color:white;">₹0</div>'+
     '</div>'+
 
-    // ─ OTHER DEDUCTIONS ─
-    '<div style="display:flex;align-items:center;justify-content:space-between;margin:8px 0 6px;">'+
-      '<div style="font-size:11px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;">Other Deductions</div>'+
-      '<button onclick="payAddDeduction()" style="background:#C62828;color:white;border:none;border-radius:7px;padding:4px 12px;font-size:11px;font-weight:800;cursor:pointer;">+ Add</button>'+
-    '</div>'+
-    '<div id="pay-deductions-list"></div>'+
-
-    // TDS
-    '<div style="background:#FFF3E0;border-radius:10px;padding:10px 12px;margin-bottom:8px;">'+
-      '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<div style="flex:1;font-size:13px;font-weight:800;color:#E65100;">TDS (Monthly)</div>'+
-        '<input id="pf-tds" class="finp" type="number" step="1" value="'+(v.tds||0)+'" oninput="payCalc()" style="width:120px;margin-bottom:0;text-align:right;">'+
-      '</div>'+
-    '</div>'+
-
-    // Profession Tax (compulsory, cannot delete)
-    '<div style="background:#FCE4EC;border-radius:10px;padding:10px 12px;margin-bottom:8px;border:1px solid #F48FB120;">'+
-      '<div style="display:flex;align-items:center;gap:8px;">'+
-        '<div style="flex:1;">'+
-          '<div style="font-size:13px;font-weight:800;color:#880E4F;">Profession Tax</div>'+
-          '<div style="font-size:10px;color:var(--text3);">Compulsory deduction</div>'+
-        '</div>'+
-        '<input id="pf-pt" class="finp" type="number" step="1" value="'+(v.profession_tax||200)+'" oninput="payCalc()" style="width:120px;margin-bottom:0;text-align:right;font-weight:800;">'+
-      '</div>'+
-    '</div>'+
-
-    // Net
-    '<div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#1B5E2015;border-radius:10px;margin:8px 0;border:1.5px solid #1B5E2030;">'+
-      '<div style="font-size:13px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
-      '<div id="pf-net-display" style="font-size:20px;font-weight:900;color:#1B5E20;">\u20b90</div>'+
-    '</div>'+
-
-    '<label class="flbl">Remarks</label>'+
-    '<input id="pf-remarks" class="finp" placeholder="e.g. Revised w.e.f. April 2025" value="'+(v.remarks||'')+'">'+
+    '<label class="flbl">Remarks / Order Reference</label>'+
+    '<input id="pf-remarks" class="finp" placeholder="e.g. Pay fixation as on date of joining" value="'+(v.remarks||'')+'">'+
     '<input type="hidden" id="pf-emp-id" value="'+empId+'">';
 
   document.getElementById('pay-sheet-foot').innerHTML=
@@ -7675,26 +7690,23 @@ function payRenderEarnings(){
   var el=document.getElementById('pay-earnings-list');if(!el)return;
   var basic=gn('pf-basic');
   el.innerHTML=PAY_EARNINGS.map(function(e){
-    // If pct set, compute amount from basic
     var dispAmt=e.pct>0?Math.round(basic*e.pct/100):e.amount;
-    return '<div style="background:#F8FFF8;border-radius:10px;border:1px solid #2E7D3220;padding:8px 12px;margin-bottom:6px;">'+
-      // Row 1: Label + delete
-      '<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">'+
-        '<input value="'+e.label+'" oninput="payUpdateEarning(\''+e.id+'\',\'label\',this.value)" placeholder="e.g. HRA, DA..." class="finp" style="flex:1;margin-bottom:0;font-size:12px;font-weight:700;">'+
-        '<button onclick="payRemoveEarning(\''+e.id+'\')" style="background:#FFEBEE;border:none;border-radius:7px;color:#C62828;font-size:15px;width:28px;height:28px;cursor:pointer;flex-shrink:0;">\u00d7</button>'+
+    return '<div style="padding:4px 0;border-bottom:1px solid #F0F4F8;">'+
+      '<div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">'+
+        '<input value="'+e.label+'" oninput="payUpdateEarning(\''+e.id+'\',\'label\',this.value)" placeholder="Label..." style="flex:1;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:11px;font-weight:700;font-family:Nunito,sans-serif;outline:none;">'+
+        '<button onclick="payRemoveEarning(\''+e.id+'\')" style="background:#FFEBEE;border:none;border-radius:5px;color:#C62828;width:22px;height:22px;cursor:pointer;font-size:13px;flex-shrink:0;">\u00d7</button>'+
       '</div>'+
-      // Row 2: % input | ₹ amount input (linked)
-      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:3px;">'+
         '<div style="position:relative;">'+
-          '<input id="earn-pct-'+e.id+'" value="'+(e.pct||'')+'" oninput="payUpdateEarnPct(\''+e.id+'\',this.value)" placeholder="% of Basic" type="number" step="0.01" min="0" max="100" class="finp" style="margin-bottom:0;padding-right:24px;text-align:right;font-size:12px;">'+
-          '<span style="position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);pointer-events:none;">%</span>'+
+          '<input id="earn-pct-'+e.id+'" value="'+(e.pct||'')+'" oninput="payUpdateEarnPct(\''+e.id+'\',this.value)" placeholder="% Basic" type="number" step="0.01" min="0" max="100" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:3px 20px 3px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;box-sizing:border-box;text-align:right;">'+
+          '<span style="position:absolute;right:5px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3);">%</span>'+
         '</div>'+
         '<div style="position:relative;">'+
-          '<input id="earn-amt-'+e.id+'" value="'+dispAmt+'" oninput="payUpdateEarnAmt(\''+e.id+'\',this.value)" placeholder="\u20b9 Amount" type="number" step="1" class="finp" style="margin-bottom:0;padding-left:18px;font-weight:800;text-align:right;font-size:12px;">'+
-          '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);pointer-events:none;">\u20b9</span>'+
+          '<input id="earn-amt-'+e.id+'" value="'+dispAmt+'" oninput="payUpdateEarnAmt(\''+e.id+'\',this.value)" placeholder="\u20b9 Amt" type="number" step="1" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:3px 6px 3px 16px;font-size:11px;font-weight:800;font-family:Nunito,sans-serif;outline:none;box-sizing:border-box;text-align:right;">'+
+          '<span style="position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3);">\u20b9</span>'+
         '</div>'+
       '</div>'+
-      '<div id="earn-note-'+e.id+'" style="font-size:10px;color:#2E7D32;margin-top:3px;">'+(e.pct>0?e.pct+'% of Basic = \u20b9'+dispAmt.toLocaleString('en-IN'):'')+'</div>'+
+      '<div id="earn-note-'+e.id+'" style="font-size:9px;color:#2E7D32;margin-top:1px;">'+(e.pct>0?e.pct+'% = \u20b9'+dispAmt.toLocaleString('en-IN'):'')+'</div>'+
     '</div>';
   }).join('');
 }
@@ -7702,14 +7714,14 @@ function payRenderEarnings(){
 function payRenderDeductions(){
   var el=document.getElementById('pay-deductions-list');if(!el)return;
   el.innerHTML=PAY_DEDUCTIONS.map(function(d){
-    return '<div style="background:#FFF8F8;border-radius:10px;border:1px solid #C6282820;padding:8px 12px;margin-bottom:6px;">'+
-      '<div style="display:flex;align-items:center;gap:6px;">'+
-        '<input value="'+d.label+'" oninput="payUpdateDeduction(\''+d.id+'\',\'label\',this.value)" placeholder="e.g. Loan, Advance..." class="finp" style="flex:1;margin-bottom:0;font-size:12px;">'+
-        '<div style="position:relative;width:110px;">'+
-          '<input id="ded-amt-'+d.id+'" value="'+(d.amount||0)+'" oninput="payUpdateDeduction(\''+d.id+'\',\'amount\',this.value);payCalc()" type="number" step="1" class="finp" style="margin-bottom:0;padding-left:18px;font-weight:800;text-align:right;">'+
-          '<span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);pointer-events:none;">\u20b9</span>'+
+    return '<div style="padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+      '<div style="display:flex;align-items:center;gap:4px;">'+
+        '<input value="'+d.label+'" oninput="payUpdateDeduction(\''+d.id+'\',\'label\',this.value)" placeholder="Label..." style="flex:1;border:1px solid var(--border);border-radius:5px;padding:3px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;">'+
+        '<div style="position:relative;width:80px;">'+
+          '<input id="ded-amt-'+d.id+'" value="'+(d.amount||0)+'" oninput="payUpdateDeduction(\''+d.id+'\',\'amount\',this.value);payCalc()" type="number" step="1" style="width:100%;border:1px solid var(--border);border-radius:5px;padding:3px 6px 3px 16px;font-size:11px;font-weight:800;font-family:Nunito,sans-serif;outline:none;box-sizing:border-box;text-align:right;">'+
+          '<span style="position:absolute;left:5px;top:50%;transform:translateY(-50%);font-size:10px;color:var(--text3);">\u20b9</span>'+
         '</div>'+
-        '<button onclick="payRemoveDeduction(\''+d.id+'\')" style="background:#FFEBEE;border:none;border-radius:7px;color:#C62828;font-size:15px;width:28px;height:28px;cursor:pointer;flex-shrink:0;">\u00d7</button>'+
+        '<button onclick="payRemoveDeduction(\''+d.id+'\')" style="background:#FFEBEE;border:none;border-radius:5px;color:#C62828;width:22px;height:22px;cursor:pointer;font-size:13px;flex-shrink:0;">\u00d7</button>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -7826,6 +7838,7 @@ function payCalc(){
   var net=Math.max(0,gross-totalDed);
 
   var gDisp=document.getElementById('pf-gross-display');if(gDisp)gDisp.innerHTML='\u20b9'+gross.toLocaleString('en-IN');
+  var dDisp=document.getElementById('pf-ded-display');if(dDisp)dDisp.innerHTML='\u20b9'+totalDed.toLocaleString('en-IN');
   var nDisp=document.getElementById('pf-net-display');if(nDisp)nDisp.innerHTML='\u20b9'+net.toLocaleString('en-IN');
 }
 
