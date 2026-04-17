@@ -5704,6 +5704,8 @@ async function salFinalise(){
     }
     SALARY_RECORDS = inserted.concat(SALARY_RECORDS);
     toast('Salary finalised for '+monthLabel+' — '+inserted.length+' employees','success');
+    window._salRows = [];
+    window._salMonth = '';
     // Re-render salary tab to show the log
     empRender();
   }catch(e){
@@ -5715,6 +5717,10 @@ async function salFinalise(){
 // ── Salary tab HTML — two views: Current Month input + Monthly Log ────────
 function empSalaryHTML(){
   var active = EMP_LIST.filter(function(e){return e.status==='active';});
+
+  // Clear stale cache so View Sheet always rebuilds from current DOM inputs
+  window._salRows = [];
+  window._salMonth = '';
 
   // Load records if not yet loaded
   if(!SALARY_RECORDS.length) salLoadRecords();
