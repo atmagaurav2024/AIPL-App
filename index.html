@@ -6244,7 +6244,29 @@ function empTransferHTML(){
 // Wire download buttons in transfer tab after render
 function hrWireOrderButtons(){
   setTimeout(function(){
-    // Download/letter buttons
+    // ── Transfer / Promote / Resign action buttons ──────────────────────
+    document.querySelectorAll('[data-trf-emp]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var eid  = btn.getAttribute('data-trf-emp');
+        var name = btn.getAttribute('data-trf-name')||'';
+        empOpenTransfer(eid, name);
+      });
+    });
+    document.querySelectorAll('[data-pro-emp]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var eid  = btn.getAttribute('data-pro-emp');
+        var name = btn.getAttribute('data-pro-name')||'';
+        empOpenPromotion(eid, name);
+      });
+    });
+    document.querySelectorAll('[data-res-emp]').forEach(function(btn){
+      btn.addEventListener('click',function(){
+        var eid  = btn.getAttribute('data-res-emp');
+        var name = btn.getAttribute('data-res-name')||'';
+        empOpenResignation(eid, name);
+      });
+    });
+    // ── Download/letter buttons ──────────────────────────────────────────
     document.querySelectorAll('[id^="hr-ord-"]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var type = btn.getAttribute('data-type');
@@ -6254,7 +6276,7 @@ function hrWireOrderButtons(){
         downloadTransferOrder(eid, type, Object.assign({date:dt},det));
       });
     });
-    // Delete buttons for transfer/promotion orders
+    // ── Delete buttons for transfer/promotion orders ─────────────────────
     document.querySelectorAll('[data-del-ord-id]').forEach(function(btn){
       btn.addEventListener('click',function(){
         var orderId = btn.getAttribute('data-del-ord-id');
