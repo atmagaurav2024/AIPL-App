@@ -6048,6 +6048,174 @@ function salDownloadPDF(month, year, label){
   else{toast('Allow popups to download PDF','warning');}
 }
 
+function empCalcSalary(empId, gross, netBase, pfEmp, esicEmp, tds){
+  var days = parseFloat((document.getElementById('sal-days-'+empId)||{value:26}).value)||26;
+  var ot   = parseFloat((document.getElementById('sal-ot-'+empId)||{value:0}).value)||0;
+  var adv  = parseFloat((document.getElementById('sal-adv-'+empId)||{value:0}).value)||0;
+  var dailyRate = gross/26;
+  var otRate    = (gross/26/8)*1.5;
+  var earned    = Math.round(dailyRate*days);
+  var otPay     = Math.round(otRate*ot);
+  var deductions= Math.round((pfEmp+esicEmp+tds)*days/26) + adv;
+  var payable   = Math.max(0, earned + otPay - deductions);
+  var el = document.getElementById('sal-payable-'+empId);
+  if(el) el.innerHTML = '&#8377;' + payable.toLocaleString('en-IN');
+}
+
+function empShowPayslip(empId, monthLabel){
+  var rows = window._salRows||[];
+  var r = rows.find(function(x){return x.id===empId;});
+  if(!r){toast('Generate salary sheet first','warning');return;}
+  var e = EMP_LIST.find(function(x){return x.id===empId;})||{};
+  var pay = r.pay||{};
+  var extraEarnings=[];
+  try{extraEarnings=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
+
+  function drow(l,v,col){
+    return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F5F5F5;font-size:12px;">'+
+      '<span style="color:var(--text3);">'+l+'</span>'+
+      '<span style="font-weight:700;color:'+(col||'var(--text)')+';">&#8377;'+Number(v||0).toLocaleString('en-IN')+'</span>'+
+    '</div>';
+  }
+
+  var earnRows = drow('Basic',pay.basic,'#1565C0');
+  if(extraEarnings.length){
+    extraEarnings.forEach(function(ex){if(ex.amount>0) earnRows+=drow(ex.label,ex.amount,'#2E7D32');});
+  } else {
+    if(pay.da) earnRows+=drow('DA',pay.da,'#2E7D32');
+    if(pay.hra) earnRows+=drow('HRA',pay.hra,'#2E7D32');
+    if(pay.conveyance) earnRows+=drow('Conveyance',pay.conveyance,'#2E7D32');
+    if(pay.special_allowance) earnRows+=drow('Special Allowance',pay.special_allowance,'#2E7D32');
+  }
+  if(r.otPay>0) earnRows+=drow('OT ('+r.ot+' hrs)',r.otPay,'#F57F17');
+
+  document.getElementById('emp-sheet-title').textContent='Payslip — '+r.name;
+  document.getElementById('emp-sheet-body').innerHTML=
+    '<div style="border:2px solid #1B5E20;border-radius:14px;overflow:hidden;">'+
+      '<div style="background:#1B5E20;padding:14px 16px;color:white;">'+
+        '<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">'+coName()+'</div>'+
+        '<div style="font-size:16px;font-weight:900;">Salary Payslip</div>'+
+        '<div style="font-size:12px;opacity:.8;margin-top:2px;">'+monthLabel+'</div>'+
+      '</div>'+
+      '<div style="padding:10px 14px;background:#F8FFF8;border-bottom:1px solid #E0E0E0;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Name: </span><b>'+r.name+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Code: </span><b>'+r.code+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Designation: </span><b>'+(e.designation||e.role||'—')+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Department: </span><b>'+(e.department||'—')+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Days Worked: </span><b>'+r.days+' / 26</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">OT Hours: </span><b>'+(r.ot||0)+'</b></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:2px solid #1B5E20;">'+
+        '<div style="padding:10px 14px;border-right:1px solid #E0E0E0;">'+
+          '<div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;margin-bottom:6px;">Earnings</div>'+
+          earnRows+
+          '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:900;border-top:2px solid #2E7D32;margin-top:4px;color:#2E7D32;">'+
+            '<span>Total Earned</span><span>&#8377;'+Number(r.earned+r.otPay).toLocaleString('en-IN')+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div style="padding:10px 14px;">'+
+          '<div style="font-size:10px;font-weight:800;color:#C62828;text-transform:uppercase;margin-bottom:6px;">Deductions</div>'+
+          (r.pfEmp>0?drow('PF (Employee)',r.pfEmp,'#C62828'):'')+
+          (r.esic>0?drow('ESIC (Employee)',r.esic,'#C62828'):'')+
+          (r.tds>0?drow('TDS',r.tds,'#E65100'):'')+
+          (r.pt>0?drow('Profession Tax',r.pt,'#880E4F'):'')+
+          (r.adv>0?drow('Advance Recovery',r.adv,'#C62828'):'')+
+          '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:900;border-top:2px solid #C62828;margin-top:4px;color:#C62828;">'+
+            '<span>Total Deducted</span><span>&#8377;'+Number(r.pfEmp+r.esic+r.tds+r.pt+r.adv).toLocaleString('en-IN')+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:12px 16px;background:#1B5E2015;display:flex;justify-content:space-between;align-items:center;">'+
+        '<div style="font-size:14px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
+        '<div style="font-size:22px;font-weight:900;color:#1B5E20;">&#8377;'+Number(r.payable).toLocaleString('en-IN')+'</div>'+
+      '</div>'+
+      '<div style="padding:8px 14px;font-size:10px;color:var(--text3);text-align:center;background:white;">'+
+        'This is a computer-generated payslip. It does not require a signature.'+
+      '</div>'+
+    '</div>';
+
+  window._curPayslipEmpId = empId;
+  window._curPayslipMonth = monthLabel;
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="empShowSalarySheet()">&#8592; Back</button>'+
+    '<button class="btn" id="payslip-pdf-btn" style="background:#C62828;color:white;">&#128196; PDF</button>';
+  var pdfBtn = document.getElementById('payslip-pdf-btn');
+  if(pdfBtn) pdfBtn.addEventListener('click', function(){
+    downloadPayslipPDF(window._curPayslipEmpId, window._curPayslipMonth);
+  });
+  openEmpSheet();
+}
+
+function empShowSalarySheet(){
+  var rows = window._salRows||[];
+  if(!rows.length||!window._salMonth){ closeEmpSheet(); return; }
+  empFinaliseSalary();
+}
+
+function downloadSalaryExcel(){
+  var rows = window._salRows||[];
+  var month = window._salMonth||'Salary';
+  if(!rows.length){toast('Generate salary sheet first','warning');return;}
+  var lines = [
+    [coName()],['Salary Sheet - '+month],[''],
+    ['Emp Code','Employee Name','Designation','Department','Days Worked','OT Hrs',
+     'Basic','Gross Earnings','PF (Emp)','ESIC (Emp)','TDS','Prof Tax','Advance',
+     'Total Deductions','Net Payable']
+  ];
+  rows.forEach(function(r){
+    var e=EMP_LIST.find(function(x){return x.id===r.id;})||{};
+    lines.push([r.code,r.name,e.designation||e.role||'',e.department||'',
+      r.days,r.ot||0,r.pay.basic||0,r.earned+(r.otPay||0),
+      r.pfEmp||0,r.esic||0,r.tds||0,r.pt||0,r.adv||0,
+      (r.pfEmp||0)+(r.esic||0)+(r.tds||0)+(r.pt||0)+(r.adv||0),r.payable]);
+  });
+  var total=rows.reduce(function(s,r){return s+r.payable;},0);
+  lines.push(['','','','','','','','','','','','','','TOTAL',total]);
+  var csv=lines.map(function(row){
+    return row.map(function(cell){
+      var s=String(cell==null?'':cell);
+      if(s.indexOf(',')>-1||s.indexOf('"')>-1) s='"'+s.replace(/"/g,'""')+'"';
+      return s;
+    }).join(',');
+  }).join('\n');
+  var blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='SalarySheet_'+month.replace(/\s+/g,'_')+'.csv';a.click();
+  toast('Downloaded','success');
+}
+
+function downloadSalaryPDF(){
+  var rows=window._salRows||[];
+  var month=window._salMonth||'Salary';
+  if(!rows.length){toast('Generate salary sheet first','warning');return;}
+  var total=rows.reduce(function(s,r){return s+r.payable;},0);
+  var compName=typeof coName==='function'?coName():'';
+  var compAddr=typeof coAddr==='function'?coAddr():'';
+  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var trs=rows.map(function(r,i){
+    var e=EMP_LIST.find(function(x){return x.id===r.id;})||{};
+    return '<tr style="background:'+(i%2?'#F9FFF9':'white')+'">' +
+      '<td>'+r.name+'<br><small style="color:#666;">'+r.code+'</small></td>'+
+      '<td style="text-align:center;">'+r.days+(r.ot?'+'+r.ot+'h':'')+'</td>'+
+      '<td style="text-align:right;">&#8377;'+Number(r.earned+(r.otPay||0)).toLocaleString('en-IN')+'</td>'+
+      '<td style="text-align:right;color:#C62828;">&#8377;'+Number((r.pfEmp||0)+(r.esic||0)+(r.tds||0)+(r.pt||0)+(r.adv||0)).toLocaleString('en-IN')+'</td>'+
+      '<td style="text-align:right;font-weight:700;color:#1B5E20;">&#8377;'+Number(r.payable).toLocaleString('en-IN')+'</td>'+
+    '</tr>';
+  }).join('');
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Salary Sheet - '+month+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;font-size:11px;}.hdr{text-align:center;border-bottom:3px double #1B5E20;padding-bottom:10px;margin-bottom:14px;}.logo{font-size:18px;font-weight:900;color:#1B5E20;}table{width:100%;border-collapse:collapse;}th{background:#1B5E20;color:white;padding:6px 8px;}td{padding:5px 8px;border-bottom:1px solid #eee;}.tot{background:#E8F5E9;font-weight:900;}@media print{@page{size:A4 landscape;margin:8mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}</style></head><body>'+
+    '<div class="hdr"><div class="logo">'+compName+'</div>'+(compAddr?'<div style="font-size:9px;color:#555;">'+compAddr+'</div>':'')+'</div>'+
+    '<div style="display:flex;justify-content:space-between;margin-bottom:10px;"><b>Salary Sheet &mdash; '+month+'</b><span>'+today+'</span></div>'+
+    '<table><thead><tr><th style="text-align:left;">Employee</th><th>Days</th><th>Earnings</th><th>Deductions</th><th>Net Pay</th></tr></thead>'+
+    '<tbody>'+trs+'</tbody>'+
+    '<tfoot><tr class="tot"><td colspan="4" style="text-align:right;padding:7px;">TOTAL</td><td style="padding:7px;text-align:right;">&#8377;'+Number(total).toLocaleString('en-IN')+'</td></tr></tfoot></table>'+
+    '<script>window.onload=function(){window.print();}<\/script></body></html>';
+  var w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('Allow popups','warning');}
+}
+
+
 function empFinaliseSalary(){
   // Use cached rows if available (e.g. called from payslip Back button)
   var rows = window._salRows||[];
