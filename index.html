@@ -5442,10 +5442,10 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
     <button onclick="empTab('active',this)"   id="emp-t-active"   style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:rgba(255,255,255,.2);color:white;">&#9989; Active</button>
     <button onclick="empTab('pending',this)"  id="emp-t-pending"  style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#9203; Pending</button>
     <button onclick="empTab('pay',this)"      id="emp-t-pay"      style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128178; Pay Fixation</button>
-    <button onclick="empTab('resigned',this)" id="emp-t-resigned" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128683; Resigned</button>
     <button onclick="empTab('salary',this)" id="emp-t-salary" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128200; Monthly Salary</button>
     <button onclick="empTab('increment',this)" id="emp-t-increment" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128640; Increment</button>
     <button onclick="empTab('transfer',this)" id="emp-t-transfer" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128260; Transfer</button>
+    <button onclick="empTab('resigned',this)" id="emp-t-resigned" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128683; Resigned</button>
   </div>
   <div id="emp-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 90px;background:#F0F4F8;">
     <div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>
@@ -5751,9 +5751,12 @@ function empShowPayslip(empId, monthLabel){
         'This is a computer-generated payslip. It does not require a signature.'+
       '</div>'+
     '</div>';
+  // Store for PDF button
+  window._curPayslipEmpId = empId;
+  window._curPayslipMonth = monthLabel;
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="empGenerateSalary()">&#8592; Back</button>'+
-    '<button class="btn" style="background:#C62828;color:white;" onclick="downloadPayslipPDF(empId,monthLabel)">&#128196; PDF</button>';
+    '<button class="btn" style="background:#C62828;color:white;" onclick="downloadPayslipPDF(window._curPayslipEmpId,window._curPayslipMonth)">&#128196; PDF</button>';
 }
 
 function empFinaliseSalary(){
@@ -5945,9 +5948,20 @@ async function empSaveIncrement(){
     toast('Saving increment...','info');
     var res = await sbInsert('employee_pay',data);
     if(res&&res[0]) EMP_PAY.unshift(res[0]);
-    toast('Increment applied! New basic: &#8377;'+newBasic.toLocaleString('en-IN'),'success');
-    closeEmpSheet();
-    empRender();
+    window._lastIncrement = {empId:empId, newBasic:newBasic, oldBasic:cur.basic||0, date:date, remarks:remarks};
+        toast('Increment applied! ₹'+newBasic.toLocaleString('en-IN'),'success');
+    // Show download option in sheet
+    document.getElementById('emp-sheet-title').textContent = 'Increment Applied';
+    document.getElementById('emp-sheet-body').innerHTML =
+      '<div style="background:#E8F5E9;border-radius:14px;padding:20px;text-align:center;">'+
+        '<div style="font-size:36px;margin-bottom:10px;">&#128640;</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#1B5E20;margin-bottom:6px;">Increment Applied!</div>'+
+        '<div style="font-size:13px;color:var(--text3);">New Basic: <b style="color:#1B5E20;">&#8377;'+newBasic.toLocaleString('en-IN')+'</b></div>'+
+        '<div style="font-size:12px;color:var(--text3);margin-top:4px;">w.e.f. '+date+'</div>'+
+      '</div>';
+    document.getElementById('emp-sheet-foot').innerHTML =
+      '<button class="btn btn-outline" onclick="closeEmpSheet();empRender();">Close</button>'+
+      '<button class="btn" style="background:#1565C0;color:white;" onclick="downloadIncrementLetter(\''+empId+'\','+newBasic+','+( cur.basic||0)+',\''+date+'\',\''+remarks+'\');">&#128196; Download Letter</button>';
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
@@ -6019,8 +6033,17 @@ async function empSaveTransfer(){
     await sbUpdate('employees',empId,upd);
     var idx = EMP_LIST.findIndex(function(e){return e.id===empId;});
     if(idx>-1) EMP_LIST[idx]=Object.assign(EMP_LIST[idx],upd,{department:dept});
-    toast('Transfer recorded!','success');
-    closeEmpSheet(); empRender();
+    var _tDet = {date:date, newDept:dept, newProject:proj, remarks:reason};
+    document.getElementById('emp-sheet-title').textContent = 'Transfer Recorded';
+    document.getElementById('emp-sheet-body').innerHTML =
+      '<div style="background:#F3E5F5;border-radius:14px;padding:20px;text-align:center;">'+
+        '<div style="font-size:36px;margin-bottom:10px;">&#128260;</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#6A1B9A;">Transfer Recorded</div>'+
+        (dept?'<div style="font-size:13px;color:var(--text3);margin-top:6px;">New Dept: <b>'+dept+'</b></div>':'')+
+      '</div>';
+    document.getElementById('emp-sheet-foot').innerHTML =
+      '<button class="btn btn-outline" onclick="closeEmpSheet();empRender();">Close</button>'+
+      '<button class="btn" style="background:#6A1B9A;color:white;" onclick="downloadTransferOrder(\''+empId+'\',\'transfer\',{date:\''+date+'\',newDept:\''+dept+'\',newProject:\''+proj+'\',remarks:\''+reason+'\'});">&#128196; Transfer Order</button>';
   }catch(e){toast('Error: '+e.message,'error');}
 }
 
@@ -6053,8 +6076,17 @@ async function empSavePromotion(){
     await sbUpdate('employees',empId,upd);
     var idx=EMP_LIST.findIndex(function(e){return e.id===empId;});
     if(idx>-1) EMP_LIST[idx]=Object.assign(EMP_LIST[idx],upd);
-    toast('Promotion saved!','success');
-    closeEmpSheet(); empRender();
+    document.getElementById('emp-sheet-title').textContent = 'Promotion Recorded';
+    document.getElementById('emp-sheet-body').innerHTML =
+      '<div style="background:#E3F2FD;border-radius:14px;padding:20px;text-align:center;">'+
+        '<div style="font-size:36px;margin-bottom:10px;">&#11014;</div>'+
+        '<div style="font-size:16px;font-weight:900;color:#1565C0;">Promotion Recorded</div>'+
+        (role?'<div style="font-size:13px;color:var(--text3);margin-top:6px;">New Role: <b>'+role+'</b></div>':'')+
+      '</div>';
+    var _pDate = (document.getElementById('pro-date')||{}).value||new Date().toISOString().slice(0,10);
+    document.getElementById('emp-sheet-foot').innerHTML =
+      '<button class="btn btn-outline" onclick="closeEmpSheet();empRender();">Close</button>'+
+      '<button class="btn" style="background:#1565C0;color:white;" onclick="downloadTransferOrder(\''+empId+'\',\'promotion\',{date:\''+_pDate+'\',newRole:\''+role+'\',grade:\''+grade+'\',remarks:\''+remarks+'\');">&#128196; Promotion Order</button>';
   }catch(e){toast('Error: '+e.message,'error');}
 }
 
@@ -8764,6 +8796,253 @@ function downloadPayslipPDF(empId, monthLabel){
   var w = window.open('','_blank');
   if(w){ w.document.write(html); w.document.close(); }
   else { toast('Allow popups to download PDF','warning'); }
+}
+
+
+// ════ PATCH: empOpenPay — default effective date to DOJ, remarks shows pay history log ════
+
+var _origEmpOpenPay = empOpenPay;
+empOpenPay = function(empId, empName){
+  // Call original
+  _origEmpOpenPay(empId, empName);
+
+  // After original renders: fix effective date default and remarks
+  setTimeout(function(){
+    var emp = EMP_LIST.find(function(e){return e.id===empId;});
+    var existing = EMP_PAY.filter(function(p){return p.employee_id===empId;})
+                          .sort(function(a,b){return a.effective_date.localeCompare(b.effective_date);});
+
+    // Set effective date: if no pay record → use DOJ, else today
+    var dateEl = document.getElementById('pf-date');
+    if(dateEl && !existing.length && emp){
+      var doj = emp.date_of_joining||emp.doj||'';
+      if(doj) dateEl.value = doj;
+    }
+
+    // Replace static remarks with pay history log + editable field
+    var remarksEl = document.getElementById('pf-remarks');
+    if(remarksEl && remarksEl.parentNode){
+      var label = remarksEl.previousElementSibling;
+      if(label) label.remove();
+      var container = remarksEl.parentNode;
+
+      // Build history log HTML
+      var logHtml = '';
+      if(existing.length){
+        logHtml = '<div style="background:#F8FAFC;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border);">'+
+          '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Pay History</div>'+
+          existing.map(function(p,i){
+            var typeLabel = {initial:'Initial Fixation',increment:'Increment',revision:'Revision'}[p.pay_type]||p.pay_type||'Pay Record';
+            var typeColor = {initial:'#1565C0',increment:'#2E7D32',revision:'#E65100'}[p.pay_type]||'#37474F';
+            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;'+(i>0?'border-top:1px solid #F0F4F8;':'')+'">'+
+              '<div>'+
+                '<div style="font-size:11px;font-weight:800;color:'+typeColor+';">'+typeLabel+'</div>'+
+                '<div style="font-size:10px;color:var(--text3);">w.e.f. '+p.effective_date+(p.remarks?' • '+p.remarks:'')+'</div>'+
+              '</div>'+
+              '<div style="text-align:right;">'+
+                '<div style="font-size:12px;font-weight:900;">₹'+Number(p.basic||0).toLocaleString('en-IN')+'</div>'+
+                '<div style="font-size:10px;color:var(--text3);">Net ₹'+Number(p.net_salary||0).toLocaleString('en-IN')+'</div>'+
+              '</div>'+
+            '</div>';
+          }).join('')+
+        '</div>';
+      }
+
+      // Insert log + remarks label before the hidden input
+      var hiddenInput = document.getElementById('pf-emp-id');
+      var newBlock = document.createElement('div');
+      newBlock.innerHTML = logHtml +
+        '<label class="flbl">Remarks / Pay Order Reference</label>'+
+        '<input id="pf-remarks" class="finp" placeholder="e.g. Pay fixation as on date of joining" value="'+(remarksEl.value||'')+'">';
+      container.insertBefore(newBlock, hiddenInput);
+      remarksEl.remove();
+    }
+  }, 100);
+};
+
+// ════ INCREMENT APPROVAL LETTER ═════════════════════════════════════════
+
+function downloadIncrementLetter(empId, newBasic, oldBasic, effectiveDate, remarks){
+  var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
+  var name = ((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'—';
+  var desig = emp.designation||emp.role||'—';
+  var dept  = emp.department||'—';
+  var code  = emp.employee_code||emp.emp_id||'—';
+  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var wefFmt = effectiveDate ? new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}) : today;
+  var increment = Number(newBasic) - Number(oldBasic);
+  var pct = oldBasic>0 ? ((increment/Number(oldBasic))*100).toFixed(1) : '0';
+  var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
+  var compAddr = typeof coAddr==='function'?coAddr():'';
+  var compGST  = typeof coGST==='function'?coGST():'';
+  var compCIN  = typeof coCIN==='function'?coCIN():'';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>Increment Letter - '+name+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}'+
+    '.page{max-width:720px;margin:0 auto;padding:40px 50px;}'+
+    '.header{text-align:center;border-bottom:3px double #1B5E20;padding-bottom:14px;margin-bottom:20px;}'+
+    '.logo{font-size:20px;font-weight:900;color:#1B5E20;letter-spacing:1px;}'+
+    '.sub{font-size:10px;color:#555;margin-top:3px;}'+
+    '.ref{display:flex;justify-content:space-between;margin-bottom:18px;font-size:12px;}'+
+    '.title{font-size:15px;font-weight:700;text-align:center;text-decoration:underline;margin:0 0 18px;}'+
+    '.info-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}'+
+    '.info-table td{padding:5px 10px;border:1px solid #ddd;}'+
+    '.info-table td:first-child{background:#F8F9FA;font-weight:600;width:40%;}'+
+    '.highlight{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:12px 16px;margin:16px 0;font-size:13px;}'+
+    '.clause{font-size:12px;line-height:1.8;margin-bottom:10px;text-align:justify;}'+
+    '.sign{margin-top:50px;display:flex;justify-content:space-between;}'+
+    '.sign-box{text-align:center;min-width:180px;}'+
+    '.sign-line{border-top:1px solid #999;padding-top:6px;font-size:11px;color:#555;}'+
+    '@media print{@page{size:A4;margin:12mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'+
+    '</style></head><body><div class="page">'+
+
+    '<div class="header">'+
+      '<div class="logo">'+compName.toUpperCase()+'</div>'+
+      (compAddr?'<div class="sub">'+compAddr+'</div>':'')+
+      '<div class="sub">'+(compCIN?'CIN: '+compCIN+' | ':'')+( compGST?'GSTIN: '+compGST:'')+'</div>'+
+    '</div>'+
+
+    '<div class="ref">'+
+      '<div><b>Ref No.:</b> AIPL/INC/'+code+'/'+new Date().getFullYear()+'</div>'+
+      '<div><b>Date:</b> '+today+'</div>'+
+    '</div>'+
+
+    '<p style="font-size:12px;">To,<br><b>'+name+'</b><br>'+desig+', '+dept+'<br>Employee Code: '+code+'</p>'+
+
+    '<div class="title">LETTER OF INCREMENT / SALARY REVISION</div>'+
+
+    '<p class="clause">Dear <b>'+name+'</b>,</p>'+
+    '<p class="clause">We are pleased to inform you that based on your performance and contribution to the organisation, the Management of <b>'+compName+'</b> has decided to revise your salary with effect from <b>'+wefFmt+'</b>.</p>'+
+
+    '<table class="info-table">'+
+      '<tr><td>Employee Name</td><td>'+name+'</td></tr>'+
+      '<tr><td>Employee Code</td><td>'+code+'</td></tr>'+
+      '<tr><td>Designation</td><td>'+desig+'</td></tr>'+
+      '<tr><td>Department</td><td>'+dept+'</td></tr>'+
+      '<tr><td>Effective Date</td><td>'+wefFmt+'</td></tr>'+
+    '</table>'+
+
+    '<div class="highlight">'+
+      '<table style="width:100%;font-size:13px;border-collapse:collapse;">'+
+        '<tr><td style="width:50%;padding:4px 0;"><b>Previous Basic Salary:</b></td><td>₹'+Number(oldBasic).toLocaleString('en-IN',{minimumFractionDigits:2})+'</td></tr>'+
+        '<tr><td style="padding:4px 0;"><b>Revised Basic Salary:</b></td><td><b style="color:#1B5E20;font-size:15px;">₹'+Number(newBasic).toLocaleString('en-IN',{minimumFractionDigits:2})+'</b></td></tr>'+
+        '<tr><td style="padding:4px 0;">Increment Amount:</td><td>₹'+Number(increment).toLocaleString('en-IN',{minimumFractionDigits:2})+' ('+pct+'%)</td></tr>'+
+      '</table>'+
+    '</div>'+
+
+    (remarks?'<p class="clause"><b>Remarks:</b> '+remarks+'</p>':'')+
+
+    '<p class="clause">All other terms and conditions of your appointment remain unchanged. Please sign and return a copy of this letter as acknowledgment.</p>'+
+    '<p class="clause">We appreciate your continued dedication and look forward to your valuable contributions to the growth of '+compName+'.</p>'+
+
+    '<div class="sign">'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Employee Signature<br>'+name+'</div></div>'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Authorised Signatory<br>'+compName+'</div></div>'+
+    '</div>'+
+
+    '<p style="font-size:10px;color:#888;text-align:center;margin-top:30px;border-top:1px solid #eee;padding-top:8px;">'+
+      'This is a computer-generated letter. | '+compName+' | Generated on '+today+
+    '</p>'+
+    '</div>'+
+    '<script>window.onload=function(){window.print();}<\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('Allow popups to download PDF','warning');}
+}
+
+// ════ TRANSFER ORDER DOWNLOAD ════════════════════════════════════════════
+
+function downloadTransferOrder(empId, type, details){
+  // type: 'transfer' | 'promotion'
+  var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
+  var name = ((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'—';
+  var code  = emp.employee_code||emp.emp_id||'—';
+  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
+  var compAddr = typeof coAddr==='function'?coAddr():'';
+  var compCIN  = typeof coCIN==='function'?coCIN():'';
+  var compGST  = typeof coGST==='function'?coGST():'';
+  var isPromo  = type==='promotion';
+  var titleStr = isPromo ? 'PROMOTION ORDER' : 'TRANSFER ORDER';
+  var effectiveDate = details.date || today;
+  var wefFmt = effectiveDate&&effectiveDate!==today ?
+    new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}) : effectiveDate;
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>'+titleStr+' - '+name+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}'+
+    '.page{max-width:720px;margin:0 auto;padding:40px 50px;}'+
+    '.header{text-align:center;border-bottom:3px double '+(isPromo?'#1565C0':'#6A1B9A')+';padding-bottom:14px;margin-bottom:20px;}'+
+    '.logo{font-size:20px;font-weight:900;color:'+(isPromo?'#1565C0':'#6A1B9A')+';letter-spacing:1px;}'+
+    '.sub{font-size:10px;color:#555;margin-top:3px;}'+
+    '.ref{display:flex;justify-content:space-between;margin-bottom:18px;font-size:12px;}'+
+    '.title{font-size:15px;font-weight:700;text-align:center;text-decoration:underline;margin:0 0 18px;color:'+(isPromo?'#1565C0':'#6A1B9A')+'}'+
+    '.info-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}'+
+    '.info-table td{padding:6px 10px;border:1px solid #ddd;}'+
+    '.info-table td:first-child{background:#F8F9FA;font-weight:600;width:40%;}'+
+    '.clause{font-size:12px;line-height:1.8;margin-bottom:10px;text-align:justify;}'+
+    '.sign{margin-top:50px;display:flex;justify-content:space-between;}'+
+    '.sign-box{text-align:center;min-width:180px;}'+
+    '.sign-line{border-top:1px solid #999;padding-top:6px;font-size:11px;color:#555;}'+
+    '@media print{@page{size:A4;margin:12mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'+
+    '</style></head><body><div class="page">'+
+
+    '<div class="header">'+
+      '<div class="logo">'+compName.toUpperCase()+'</div>'+
+      (compAddr?'<div class="sub">'+compAddr+'</div>':'')+
+      '<div class="sub">'+(compCIN?'CIN: '+compCIN+' | ':'')+( compGST?'GSTIN: '+compGST:'')+'</div>'+
+    '</div>'+
+
+    '<div class="ref">'+
+      '<div><b>Order No.:</b> AIPL/'+(isPromo?'PRO':'TRF')+'/'+code+'/'+new Date().getFullYear()+'</div>'+
+      '<div><b>Date:</b> '+today+'</div>'+
+    '</div>'+
+
+    '<div class="title">'+titleStr+'</div>'+
+
+    '<table class="info-table">'+
+      '<tr><td>Employee Name</td><td><b>'+name+'</b></td></tr>'+
+      '<tr><td>Employee Code</td><td>'+code+'</td></tr>'+
+      '<tr><td>Current Designation</td><td>'+(emp.designation||emp.role||'—')+'</td></tr>'+
+      '<tr><td>Department</td><td>'+(emp.department||'—')+'</td></tr>'+
+      '<tr><td>Effective Date</td><td>'+wefFmt+'</td></tr>'+
+      (isPromo
+        ? '<tr><td>Promoted To</td><td><b>'+( details.newRole||'—')+'</b></td></tr>'+
+          (details.grade?'<tr><td>New Grade</td><td>'+details.grade+'</td></tr>':'')
+        : '<tr><td>Transferred To (Dept)</td><td><b>'+(details.newDept||'—')+'</b></td></tr>'+
+          '<tr><td>New Project</td><td>'+(details.newProject||'—')+'</td></tr>'
+      )+
+      (details.remarks?'<tr><td>Remarks / Order Ref.</td><td>'+details.remarks+'</td></tr>':'')+
+    '</table>'+
+
+    '<p class="clause">Dear <b>'+name+'</b>,</p>'+
+    (isPromo
+      ? '<p class="clause">We are pleased to inform you that the Management of <b>'+compName+'</b> has decided to promote you to the position of <b>'+(details.newRole||'—')+'</b> with effect from <b>'+wefFmt+'</b>, in recognition of your dedicated service and performance.</p>'
+      : '<p class="clause">This is to inform you that the Management of <b>'+compName+'</b> has decided to transfer you to the <b>'+(details.newDept||'—')+'</b> department'+(details.newProject?' at <b>'+details.newProject+'</b>':'')+' with effect from <b>'+wefFmt+'</b>.</p>'
+    )+
+    '<p class="clause">You are requested to report to your new assignment on the effective date. All other terms and conditions of your appointment shall remain unchanged.</p>'+
+    '<p class="clause">Please sign and return a copy of this order as acknowledgment.</p>'+
+
+    '<div class="sign">'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Employee Signature<br>'+name+'</div></div>'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Authorised Signatory<br>'+compName+'</div></div>'+
+    '</div>'+
+
+    '<p style="font-size:10px;color:#888;text-align:center;margin-top:30px;border-top:1px solid #eee;padding-top:8px;">'+
+      'This is a computer-generated order. | '+compName+' | Generated on '+today+
+    '</p>'+
+    '</div>'+
+    '<script>window.onload=function(){window.print();}<\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('Allow popups to download PDF','warning');}
 }
 
 </script>
