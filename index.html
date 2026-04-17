@@ -2322,6 +2322,7 @@ function showApp(name){
   else if(name==='petty-cash'){initPettyCash();}
   else if(name==='accounts'){initAccounts();}
   else if(name==='access'){initAccess();}
+  else if(name==='company'){initCompany();}
   else{stopSync();}
 }
 
@@ -5381,6 +5382,10 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
       <div class="drawer-item-ic" style="background:#EDE7F6;">&#128274;</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Access Control</div><div class="drawer-item-sub">Module permissions</div></div>
     </div>
+    <div class="drawer-item" onclick="showApp('company');closeDrawer();">
+      <div class="drawer-item-ic" style="background:#E3F2FD;">&#127970;</div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Company Details</div><div class="drawer-item-sub">Registration, GST, documents</div></div>
+    </div>
     <div class="drawer-item" onclick="toast('DPR module coming soon','info');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E8F5E9;">📝</div>
       <div class="drawer-item-info"><div class="drawer-item-title">Daily Progress Report</div><div class="drawer-item-sub">DPR, site progress</div></div>
@@ -5534,7 +5539,7 @@ function empSalaryHTML(){
     '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">'+
       '<div><label class="flbl">Month</label><select id="sal-month" class="fsel">'+monthOpts+'</select></div>'+
       '<div><label class="flbl">Year</label><select id="sal-year" class="fsel">'+yearOpts+'</select></div>'+
-      '<button onclick="empGenerateSalary()" style="padding:10px 16px;background:#1B5E20;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Generate</button>'+
+      '<button onclick="empFinaliseSalary()" style="padding:10px 16px;background:#1B5E20;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">Generate</button>'+
     '</div>'+
   '</div>';
 
@@ -5592,14 +5597,238 @@ function empCalcSalary(empId, gross, netBase, pfEmp, esicEmp, tds){
 }
 
 function empGenerateSalary(){
-  toast('Salary sheet generated for all active employees','success');
+  var month = parseInt((document.getElementById('sal-month')||{}).value)||0;
+  var year  = (document.getElementById('sal-year')||{}).value||'';
+  if(!month||!year){toast('Select month and year first','warning');return;}
+  var months=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+  var monthLabel=months[month]+' '+year;
+
+  var active=EMP_LIST.filter(function(e){return e.status==='active';});
+  if(!active.length){toast('No active employees','warning');return;}
+
+  var rows=active.map(function(e){
+    var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+    var pay=pays[0];
+    if(!pay) return null;
+    var daysEl=document.getElementById('sal-days-'+e.id);
+    var otEl  =document.getElementById('sal-ot-'+e.id);
+    var advEl =document.getElementById('sal-adv-'+e.id);
+    var days=parseFloat(daysEl?daysEl.value:26)||26;
+    var ot  =parseFloat(otEl?otEl.value:0)||0;
+    var adv =parseFloat(advEl?advEl.value:0)||0;
+    var gross=parseFloat(pay.gross)||0;
+    var dailyRate=gross/26;
+    var otRate=(gross/26/8)*1.5;
+    var earned=Math.round(dailyRate*days);
+    var otPay =Math.round(otRate*ot);
+    var pfEmp =Math.round((pay.pf_employee||0)*days/26);
+    var esic  =Math.round((pay.esic_employee||0)*days/26);
+    var tds   =pay.tds||0;
+    var pt    =pay.profession_tax||200;
+    var payable=Math.max(0,earned+otPay-pfEmp-esic-tds-pt-adv);
+    return {id:e.id,name:name,code:e.employee_code||e.emp_id||'\u2014',desig:e.designation||e.role||'\u2014',
+      days:days,ot:ot,gross:gross,earned:earned,otPay:otPay,
+      pfEmp:pfEmp,esic:esic,tds:tds,pt:pt,adv:adv,payable:payable,pay:pay};
+  }).filter(Boolean);
+
+  if(!rows.length){toast('No employees with pay structure set up','warning');return;}
+
+  var totalPayable=rows.reduce(function(s,r){return s+r.payable;},0);
+
+  var tableRows=rows.map(function(r){
+    return '<tr style="border-bottom:1px solid #F0F4F8;">'+
+      '<td style="padding:8px 6px;font-size:12px;font-weight:700;">'+r.name+'<div style="font-size:10px;color:var(--text3);">'+r.code+'</div></td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:center;">'+r.days+'</td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:right;">&#8377;'+Number(r.earned+r.otPay).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:right;color:#C62828;">&#8377;'+Number(r.pfEmp+r.esic+r.tds+r.pt+r.adv).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 6px;font-size:12px;font-weight:900;text-align:right;color:#1B5E20;">&#8377;'+Number(r.payable).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 6px;text-align:center;"><button onclick="empShowPayslip(\''+r.id+'\',\''+monthLabel+'\')" style="background:#1B5E20;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:800;cursor:pointer;">Payslip</button></td>'+
+    '</tr>';
+  }).join('');
+
+  document.getElementById('emp-sheet-title').textContent='Salary Sheet \u2014 '+monthLabel;
+  document.getElementById('emp-sheet-body').innerHTML=
+    '<div style="background:#1B5E20;border-radius:12px;padding:12px 14px;margin-bottom:12px;color:white;display:flex;justify-content:space-between;align-items:center;">'+
+      '<div><div style="font-size:11px;opacity:.7;">Total Payroll</div><div style="font-size:22px;font-weight:900;">&#8377;'+Number(totalPayable).toLocaleString('en-IN')+'</div></div>'+
+      '<div style="text-align:right;"><div style="font-size:11px;opacity:.7;">Employees</div><div style="font-size:22px;font-weight:900;">'+rows.length+'</div></div>'+
+    '</div>'+
+    '<div style="overflow-x:auto;background:white;border-radius:12px;padding:8px;">'+
+      '<table style="width:100%;border-collapse:collapse;">'+
+        '<thead><tr style="border-bottom:2px solid #E0E0E0;">'+
+          '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:left;text-transform:uppercase;">Employee</th>'+
+          '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:center;">Days</th>'+
+          '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:right;">Earnings</th>'+
+          '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:right;">Deductions</th>'+
+          '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#1B5E20;text-align:right;">Net Pay</th>'+
+          '<th style="padding:8px 6px;"></th>'+
+        '</tr></thead>'+
+        '<tbody>'+tableRows+'</tbody>'+
+        '<tfoot><tr style="border-top:2px solid #1B5E20;background:#F8FFF8;">'+
+          '<td colspan="4" style="padding:10px 6px;font-size:12px;font-weight:800;color:#1B5E20;">Total Payable</td>'+
+          '<td style="padding:10px 6px;font-size:14px;font-weight:900;color:#1B5E20;text-align:right;">&#8377;'+Number(totalPayable).toLocaleString('en-IN')+'</td>'+
+          '<td></td>'+
+        '</tr></tfoot>'+
+      '</table>'+
+    '</div>';
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>'+
+    '<button class="btn" style="background:#1B5E20;color:white;" onclick="empFinaliseSalary()">&#10003; Finalise Salary</button>';
+  openEmpSheet();
+  window._salRows=rows;
+  window._salMonth=monthLabel;
+}
+
+function empShowPayslip(empId, monthLabel){
+  var rows=window._salRows||[];
+  var r=rows.find(function(x){return x.id===empId;});
+  if(!r){toast('Generate salary sheet first','warning');return;}
+  var e=EMP_LIST.find(function(x){return x.id===empId;})||{};
+  var pay=r.pay;
+  var extraEarnings=[];
+  try{extraEarnings=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
+
+  function drow(l,v,col){
+    return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F5F5F5;font-size:12px;">'+
+      '<span style="color:var(--text3);">'+l+'</span>'+
+      '<span style="font-weight:700;color:'+(col||'var(--text)')+';">&#8377;'+Number(v||0).toLocaleString('en-IN')+'</span>'+
+    '</div>';
+  }
+
+  var earnRows=drow('Basic',pay.basic,'#1565C0');
+  if(extraEarnings.length){
+    extraEarnings.forEach(function(ex){if(ex.amount>0) earnRows+=drow(ex.label,ex.amount,'#2E7D32');});
+  } else {
+    if(pay.da) earnRows+=drow('DA',pay.da,'#2E7D32');
+    if(pay.hra) earnRows+=drow('HRA',pay.hra,'#2E7D32');
+    if(pay.conveyance) earnRows+=drow('Conveyance',pay.conveyance,'#2E7D32');
+    if(pay.special_allowance) earnRows+=drow('Special Allowance',pay.special_allowance,'#2E7D32');
+  }
+  if(r.otPay>0) earnRows+=drow('OT ('+r.ot+' hrs)',r.otPay,'#F57F17');
+
+  document.getElementById('emp-sheet-title').textContent='Payslip \u2014 '+r.name;
+  document.getElementById('emp-sheet-body').innerHTML=
+    '<div style="border:2px solid #1B5E20;border-radius:14px;overflow:hidden;">'+
+      '<div style="background:#1B5E20;padding:14px 16px;color:white;">'+
+        '<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Atmagaurav Infra Pvt. Ltd.</div>'+
+        '<div style="font-size:16px;font-weight:900;">Salary Payslip</div>'+
+        '<div style="font-size:12px;opacity:.8;margin-top:2px;">'+monthLabel+'</div>'+
+      '</div>'+
+      '<div style="padding:10px 14px;background:#F8FFF8;border-bottom:1px solid #E0E0E0;display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;">'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Name: </span><b>'+r.name+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Code: </span><b>'+r.code+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Designation: </span><b>'+(e.designation||e.role||'\u2014')+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Department: </span><b>'+(e.department||'\u2014')+'</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">Days Worked: </span><b>'+r.days+' / 26</b></div>'+
+        '<div style="font-size:11px;"><span style="color:var(--text3);">OT Hours: </span><b>'+(r.ot||0)+'</b></div>'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:2px solid #1B5E20;">'+
+        '<div style="padding:10px 14px;border-right:1px solid #E0E0E0;">'+
+          '<div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;margin-bottom:6px;">Earnings</div>'+
+          earnRows+
+          '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:900;border-top:2px solid #2E7D32;margin-top:4px;color:#2E7D32;">'+
+            '<span>Total Earned</span><span>&#8377;'+Number(r.earned+r.otPay).toLocaleString('en-IN')+'</span>'+
+          '</div>'+
+        '</div>'+
+        '<div style="padding:10px 14px;">'+
+          '<div style="font-size:10px;font-weight:800;color:#C62828;text-transform:uppercase;margin-bottom:6px;">Deductions</div>'+
+          (r.pfEmp>0?drow('PF (Employee)',r.pfEmp,'#C62828'):'')+
+          (r.esic>0?drow('ESIC (Employee)',r.esic,'#C62828'):'')+
+          (r.tds>0?drow('TDS',r.tds,'#E65100'):'')+
+          (r.pt>0?drow('Profession Tax',r.pt,'#880E4F'):'')+
+          (r.adv>0?drow('Advance Recovery',r.adv,'#C62828'):'')+
+          '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:900;border-top:2px solid #C62828;margin-top:4px;color:#C62828;">'+
+            '<span>Total Deducted</span><span>&#8377;'+Number(r.pfEmp+r.esic+r.tds+r.pt+r.adv).toLocaleString('en-IN')+'</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:12px 16px;background:#1B5E2015;display:flex;justify-content:space-between;align-items:center;">'+
+        '<div style="font-size:14px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
+        '<div style="font-size:22px;font-weight:900;color:#1B5E20;">&#8377;'+Number(r.payable).toLocaleString('en-IN')+'</div>'+
+      '</div>'+
+      '<div style="padding:8px 14px;font-size:10px;color:var(--text3);text-align:center;background:white;">'+
+        'This is a computer-generated payslip. It does not require a signature.'+
+      '</div>'+
+    '</div>';
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="empGenerateSalary()">&#8592; Back to Sheet</button>';
 }
 
 function empFinaliseSalary(){
-  var month = (document.getElementById('sal-month')||{}).value||'';
+  var month = parseInt((document.getElementById('sal-month')||{}).value)||0;
   var year  = (document.getElementById('sal-year')||{}).value||'';
   if(!month||!year){toast('Select month and year','warning');return;}
-  toast('Salary finalised for '+['','January','February','March','April','May','June','July','August','September','October','November','December'][parseInt(month)]+' '+year,'success');
+  var MONTHS=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+  var monthLabel=MONTHS[month]+' '+year;
+
+  var active=EMP_LIST.filter(function(e){return e.status==='active';});
+  var rows=active.map(function(e){
+    var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+    var pay=pays[0];
+    if(!pay) return null;
+    var days=parseFloat((document.getElementById('sal-days-'+e.id)||{value:26}).value)||26;
+    var ot  =parseFloat((document.getElementById('sal-ot-'+e.id)||{value:0}).value)||0;
+    var adv =parseFloat((document.getElementById('sal-adv-'+e.id)||{value:0}).value)||0;
+    var gross=parseFloat(pay.gross)||0;
+    var earned=Math.round(gross/26*days);
+    var otPay =Math.round(gross/26/8*1.5*ot);
+    var pfEmp =Math.round((pay.pf_employee||0)*days/26);
+    var esic  =Math.round((pay.esic_employee||0)*days/26);
+    var tds=pay.tds||0; var pt=pay.profession_tax||0;
+    var payable=Math.max(0,earned+otPay-pfEmp-esic-tds-pt-adv);
+    return {id:e.id,name:name,code:e.employee_code||e.emp_id||'—',
+      days:days,ot:ot,gross:gross,earned:earned,otPay:otPay,
+      pfEmp:pfEmp,esic:esic,tds:tds,pt:pt,adv:adv,payable:payable,pay:pay};
+  }).filter(Boolean);
+
+  if(!rows.length){toast('No employees with pay structure. Go to Pay Fixation tab first.','warning');return;}
+
+  window._salRows=rows;
+  window._salMonth=monthLabel;
+
+  var total=rows.reduce(function(s,r){return s+r.payable;},0);
+  var tableRows=rows.map(function(r){
+    return '<tr style="border-bottom:1px solid #F0F4F8;">'+
+      '<td style="padding:8px 6px;font-size:12px;font-weight:700;">'+r.name+'<div style="font-size:10px;color:var(--text3);">'+r.code+'</div></td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:center;">'+r.days+(r.ot?'+'+r.ot+'h':'')+' </td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:right;">&#8377;'+Number(r.earned+r.otPay).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 6px;font-size:11px;text-align:right;color:#C62828;">&#8377;'+Number(r.pfEmp+r.esic+r.tds+r.pt+r.adv).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 6px;font-size:13px;font-weight:900;text-align:right;color:#1B5E20;">&#8377;'+Number(r.payable).toLocaleString('en-IN')+'</td>'+
+      '<td style="padding:8px 6px;text-align:center;">'+
+        '<button onclick="empShowPayslip(\''+r.id+'\',\''+monthLabel+'\')" style="background:#1B5E20;color:white;border:none;border-radius:6px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;">Payslip</button>'+
+      '</td>'+
+    '</tr>';
+  }).join('');
+
+  document.getElementById('emp-sheet-title').textContent='Salary Sheet — '+monthLabel;
+  document.getElementById('emp-sheet-body').innerHTML=
+    '<div style="background:#1B5E20;border-radius:12px;padding:12px 16px;margin-bottom:12px;color:white;display:flex;justify-content:space-between;align-items:center;">'+
+      '<div><div style="font-size:11px;opacity:.7;">Total Payroll</div><div style="font-size:24px;font-weight:900;">&#8377;'+Number(total).toLocaleString('en-IN')+'</div></div>'+
+      '<div style="text-align:right;"><div style="font-size:11px;opacity:.7;">Employees</div><div style="font-size:24px;font-weight:900;">'+rows.length+'</div></div>'+
+    '</div>'+
+    '<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;">'+
+    '<table style="width:100%;border-collapse:collapse;background:white;border-radius:12px;overflow:hidden;">'+
+      '<thead><tr style="background:#F8FFF8;border-bottom:2px solid #1B5E20;">'+
+        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:left;text-transform:uppercase;white-space:nowrap;">Employee</th>'+
+        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:var(--text3);text-align:center;white-space:nowrap;">Days</th>'+
+        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#2E7D32;text-align:right;white-space:nowrap;">Earnings</th>'+
+        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#C62828;text-align:right;white-space:nowrap;">Deductions</th>'+
+        '<th style="padding:8px 6px;font-size:10px;font-weight:800;color:#1B5E20;text-align:right;white-space:nowrap;">Net Pay</th>'+
+        '<th style="padding:8px 6px;"></th>'+
+      '</tr></thead>'+
+      '<tbody>'+tableRows+'</tbody>'+
+      '<tfoot><tr style="border-top:2px solid #1B5E20;background:#F8FFF8;">'+
+        '<td colspan="4" style="padding:10px 6px;font-size:12px;font-weight:800;color:#1B5E20;">TOTAL PAYROLL</td>'+
+        '<td style="padding:10px 6px;font-size:15px;font-weight:900;color:#1B5E20;text-align:right;">&#8377;'+Number(total).toLocaleString('en-IN')+'</td>'+
+        '<td></td>'+
+      '</tr></tfoot>'+
+    '</table></div>';
+
+  document.getElementById('emp-sheet-foot').innerHTML=
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Close</button>';
+  openEmpSheet();
+  toast('Salary sheet ready — tap Payslip to view individual slips','success');
 }
 
 // ════ INCREMENT ══════════════════════════════════════
@@ -6192,11 +6421,12 @@ function empPayHTML(){
     }
 
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
-      '<div style="padding:12px 14px;background:#F8FAFC;display:flex;align-items:center;gap:10px;">'+
+      '<div style="padding:12px 14px;background:#F8FAFC;display:flex;align-items:center;gap:8px;">'+
         '<div style="flex:1;">'+
           '<div style="font-size:14px;font-weight:800;">'+name+'</div>'+
           '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+' &bull; '+(e.department||'—')+'</div>'+
         '</div>'+
+        (latest?'<button onclick="empGenerateOfferLetter(\''+e.id+'\')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:7px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128196; Offer Letter</button>':'')+
         '<button onclick="empOpenPay(\''+e.id+'\',\''+safeN(name)+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:7px 14px;font-size:11px;font-weight:800;cursor:pointer;">'+
           (latest?'&#9998; Revise':'+ Fix Pay')+
         '</button>'+
@@ -6574,7 +6804,6 @@ function empOpenPay(empId, empName){
 
   document.getElementById('pay-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeSheet(\'ov-pay\',\'sh-pay\')">Cancel</button>'+
-    (existing.length?'<button class="btn" style="background:#1565C0;color:white;" onclick="empGenerateOfferLetter(\''+ empId +'\')">&#128196; Offer Letter</button>':'')+
     '<button class="btn" style="background:#1B5E20;color:white;" onclick="empSavePay()">\u{1F4BE} Save Pay Structure</button>';
 
   openSheet('ov-pay','sh-pay');
@@ -7151,6 +7380,17 @@ async function empSavePay(){
   </div>
   <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
     <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
+  </div>
+</div>
+
+<div class="app-screen" id="app-company">
+  <div style="background:#1565C0;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
+    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127970; Company Details</div>
+    <button onclick="companySave()" style="background:rgba(255,255,255,.2);border:none;color:white;border-radius:8px;padding:6px 14px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#128190; Save</button>
+  </div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;" id="company-body">
+    <div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div>
   </div>
 </div>
 
@@ -8063,6 +8303,202 @@ async function acSavePermissions(){
     await fetch(SUPABASE_URL+'/rest/v1/access_permissions',{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(inserts)});
     toast('\u2713 Permissions saved!','success');
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+
+// ════ COMPANY DETAILS ═══════════════════════════════════════════════════
+
+var COMPANY_DATA = {};
+
+async function initCompany(){
+  var body = document.getElementById('company-body');
+  body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div>';
+  try{
+    var rows = await sbFetch('company_details',{select:'*',order:'id.asc'});
+    COMPANY_DATA = (Array.isArray(rows)&&rows.length) ? rows[0] : {};
+  }catch(e){
+    COMPANY_DATA = {};
+  }
+  companyRender();
+}
+
+function companyRender(){
+  var d = COMPANY_DATA;
+  var body = document.getElementById('company-body');
+
+  function finp(id, label, val, placeholder, type){
+    type = type||'text';
+    return '<div><label class="flbl">'+label+'</label>'+
+      '<input id="co-'+id+'" class="finp" type="'+type+'" placeholder="'+(placeholder||'')+'" value="'+(val||'')+'"></div>';
+  }
+  function sec(icon, label, color){
+    return '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid '+color+'20;margin:14px 0 10px;">'+
+      '<div style="width:28px;height:28px;border-radius:8px;background:'+color+'20;display:flex;align-items:center;justify-content:center;font-size:14px;">'+icon+'</div>'+
+      '<div style="font-size:12px;font-weight:800;color:'+color+';text-transform:uppercase;letter-spacing:.7px;">'+label+'</div>'+
+    '</div>';
+  }
+  function docBox(id, label, url, hint){
+    var hasDoc = !!url;
+    return '<div style="margin-bottom:12px;">'+
+      '<label class="flbl">'+label+'</label>'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div class="upload-box" style="flex:1;min-height:48px;padding:10px;" onclick="document.getElementById(\'co-file-'+id+'\').click()">'+
+          '<input type="file" id="co-file-'+id+'" accept="image/*,application/pdf" style="display:none;" onchange="companyHandleDoc(\''+id+'\',this)">'+
+          (hasDoc
+            ? '<div style="display:flex;align-items:center;gap:8px;"><span style="font-size:18px;">&#128196;</span><div><div style="font-size:12px;font-weight:700;color:#1B5E20;">Uploaded</div><div style="font-size:10px;color:var(--text3);">Tap to replace</div></div></div>'
+            : '<div style="font-size:12px;color:var(--text3);">&#128206; '+(hint||'Tap to upload PDF or image')+'</div>'
+          )+
+        '</div>'+
+        (hasDoc
+          ? '<a href="'+url+'" target="_blank" style="background:#E3F2FD;color:#1565C0;border-radius:8px;padding:10px 14px;font-size:12px;font-weight:800;text-decoration:none;white-space:nowrap;">&#128065; View</a>'
+          : ''
+        )+
+      '</div>'+
+      '<div id="co-doc-status-'+id+'" style="font-size:11px;color:#2E7D32;margin-top:3px;display:none;">&#10003; New file selected</div>'+
+    '</div>';
+  }
+
+  body.innerHTML =
+    // Basic Info
+    sec('&#127968;','Company Information','#1565C0')+
+    '<div class="g2">'+
+      finp('name','Company Name',d.name,'e.g. Atmagaurav Infra Pvt. Ltd.')+
+      finp('type','Company Type',d.type,'e.g. Private Limited')+
+    '</div>'+
+    '<label class="flbl">Registered Address</label>'+
+    '<textarea id="co-address" class="ftxt" rows="3" placeholder="Full registered address...">'+(d.address||'')+'</textarea>'+
+    '<label class="flbl">Corporate / Office Address (if different)</label>'+
+    '<textarea id="co-address2" class="ftxt" rows="2" placeholder="Corporate office address...">'+(d.address2||'')+'</textarea>'+
+    '<div class="g2">'+
+      finp('email','Email','',d.email,'email')+
+      finp('phone','Phone',d.phone,'+91 XXXXX XXXXX','tel')+
+    '</div>'+
+    finp('website','Website',d.website,'https://www.yourcompany.com')+
+
+    // Registration Numbers
+    sec('&#128203;','Registration Numbers','#6A1B9A')+
+    '<div class="g2">'+
+      finp('cin','CIN Number',d.cin,'e.g. U45200MH2010PTC123456')+
+      finp('pan','PAN Number',d.pan,'e.g. AAACC1234D')+
+    '</div>'+
+    '<div class="g2">'+
+      finp('gstin','GST Number (GSTIN)',d.gstin,'e.g. 27AAACC1234D1ZV')+
+      finp('tan','TAN Number',d.tan,'e.g. MUMX12345A')+
+    '</div>'+
+    '<div class="g2">'+
+      finp('udyam','Udyam Registration No.',d.udyam,'e.g. UDYAM-MH-00-0000000')+
+      finp('shop_act','Shop Act Certificate No.',d.shop_act,'e.g. MH/MUM/2023/XXXXX')+
+    '</div>'+
+    '<div class="g2">'+
+      finp('esic_code','ESIC Code Number',d.esic_code,'e.g. 11001234560000101')+
+      finp('pf_code','PF / EPF Code',d.pf_code,'e.g. MH/MUM/0123456/000')+
+    '</div>'+
+    finp('msme','MSME / Udyog Aadhaar',d.msme,'e.g. MH01E0000000')+
+
+    // Statutory Documents
+    sec('&#128206;','Statutory Documents','#1B5E20')+
+    docBox('cin_doc','Certificate of Incorporation',d.cin_doc_url,'Upload Certificate of Incorporation')+
+    docBox('pan_doc','PAN Card',d.pan_doc_url,'Upload Company PAN Card')+
+    docBox('gst_doc','GST Registration Certificate',d.gst_doc_url,'Upload GST Certificate')+
+    docBox('tan_doc','TAN Allotment Letter',d.tan_doc_url,'Upload TAN Letter')+
+    docBox('udyam_doc','Udyam / MSME Certificate',d.udyam_doc_url,'Upload Udyam Certificate')+
+    docBox('shop_act_doc','Shop Act Certificate',d.shop_act_doc_url,'Upload Shop Act Certificate')+
+    docBox('esic_doc','ESIC Registration Certificate',d.esic_doc_url,'Upload ESIC Certificate')+
+    docBox('pf_doc','PF Registration Certificate',d.pf_doc_url,'Upload PF Certificate')+
+
+    // Bank Details
+    sec('&#127981;','Company Bank Details','#C62828')+
+    '<div class="g2">'+
+      finp('bank_name','Bank Name',d.bank_name,'e.g. State Bank of India')+
+      finp('bank_branch','Branch',d.bank_branch,'Branch name')+
+    '</div>'+
+    '<div class="g2">'+
+      finp('bank_acc','Account Number',d.bank_acc,'Company bank account no.')+
+      finp('bank_ifsc','IFSC Code',d.bank_ifsc,'e.g. SBIN0001234')+
+    '</div>'+
+    finp('bank_acc_name','Account Holder Name',d.bank_acc_name,'As per bank records')+
+    docBox('cheque_doc','Cancelled Cheque',d.cheque_doc_url,'Upload Cancelled Cheque');
+}
+
+// Track pending file uploads
+var COMPANY_PENDING_DOCS = {};
+
+function companyHandleDoc(id, input){
+  if(!input.files||!input.files[0]) return;
+  COMPANY_PENDING_DOCS[id] = input.files[0];
+  var status = document.getElementById('co-doc-status-'+id);
+  if(status){ status.style.display='block'; status.textContent = '\u2713 ' + input.files[0].name + ' \u2014 ready to upload'; }
+}
+
+async function companySave(){
+  var btn = document.querySelector('#app-company button[onclick="companySave()"]');
+  if(btn){ btn.textContent = '\u23f3 Saving...'; btn.disabled=true; }
+
+  try{
+    var data = {
+      name:       (document.getElementById('co-name')||{}).value||null,
+      type:       (document.getElementById('co-type')||{}).value||null,
+      address:    (document.getElementById('co-address')||{}).value||null,
+      address2:   (document.getElementById('co-address2')||{}).value||null,
+      email:      (document.getElementById('co-email')||{}).value||null,
+      phone:      (document.getElementById('co-phone')||{}).value||null,
+      website:    (document.getElementById('co-website')||{}).value||null,
+      cin:        (document.getElementById('co-cin')||{}).value||null,
+      pan:        (document.getElementById('co-pan')||{}).value||null,
+      gstin:      (document.getElementById('co-gstin')||{}).value||null,
+      tan:        (document.getElementById('co-tan')||{}).value||null,
+      udyam:      (document.getElementById('co-udyam')||{}).value||null,
+      shop_act:   (document.getElementById('co-shop_act')||{}).value||null,
+      esic_code:  (document.getElementById('co-esic_code')||{}).value||null,
+      pf_code:    (document.getElementById('co-pf_code')||{}).value||null,
+      msme:       (document.getElementById('co-msme')||{}).value||null,
+      bank_name:  (document.getElementById('co-bank_name')||{}).value||null,
+      bank_branch:(document.getElementById('co-bank_branch')||{}).value||null,
+      bank_acc:   (document.getElementById('co-bank_acc')||{}).value||null,
+      bank_ifsc:  (document.getElementById('co-bank_ifsc')||{}).value||null,
+      bank_acc_name:(document.getElementById('co-bank_acc_name')||{}).value||null,
+    };
+
+    // Upload any pending documents
+    var docFields = {
+      cin_doc:'cin_doc_url', pan_doc:'pan_doc_url', gst_doc:'gst_doc_url',
+      tan_doc:'tan_doc_url', udyam_doc:'udyam_doc_url', shop_act_doc:'shop_act_doc_url',
+      esic_doc:'esic_doc_url', pf_doc:'pf_doc_url', cheque_doc:'cheque_doc_url'
+    };
+    var docKeys = Object.keys(COMPANY_PENDING_DOCS);
+    if(docKeys.length){
+      toast('Uploading '+docKeys.length+' document(s)...','info');
+      for(var i=0;i<docKeys.length;i++){
+        var key = docKeys[i];
+        var field = docFields[key];
+        if(field){
+          var url = await uploadToCloudinary(COMPANY_PENDING_DOCS[key],'company_docs','co-file-'+key);
+          if(url) data[field] = url;
+        }
+      }
+    }
+
+    // Save to Supabase
+    if(COMPANY_DATA && COMPANY_DATA.id){
+      // Update existing
+      var res = await sbUpdate('company_details', COMPANY_DATA.id, data);
+      COMPANY_DATA = Object.assign(COMPANY_DATA, data);
+    } else {
+      // Insert new
+      var res = await sbInsert('company_details', data);
+      if(res && res[0]) COMPANY_DATA = res[0];
+    }
+
+    COMPANY_PENDING_DOCS = {};
+    toast('Company details saved!','success');
+    companyRender();
+
+  }catch(e){
+    toast('Error: '+e.message,'error');
+    console.error(e);
+  } finally {
+    if(btn){ btn.textContent = '\u{1F4BE} Save'; btn.disabled=false; }
+  }
 }
 
 </script>
