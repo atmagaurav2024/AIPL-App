@@ -5756,7 +5756,11 @@ function empShowPayslip(empId, monthLabel){
   window._curPayslipMonth = monthLabel;
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="empGenerateSalary()">&#8592; Back</button>'+
-    '<button class="btn" style="background:#C62828;color:white;" onclick="downloadPayslipPDF(window._curPayslipEmpId,window._curPayslipMonth)">&#128196; PDF</button>';
+    '<button class="btn" id="payslip-pdf-btn" style="background:#C62828;color:white;">&#128196; PDF</button>';
+  var pdfBtn = document.getElementById('payslip-pdf-btn');
+  if(pdfBtn) pdfBtn.addEventListener('click', function(){
+    downloadPayslipPDF(window._curPayslipEmpId, window._curPayslipMonth);
+  });
 }
 
 function empFinaliseSalary(){
