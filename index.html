@@ -88,7 +88,7 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 .reg-body{padding:0 16px 100px;}
 .card{background:var(--white);border-radius:16px;border:1px solid var(--border);box-shadow:var(--shadow);padding:16px;margin-bottom:12px;}
 .card-title{font-size:13px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px;}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:2px;}
 .cat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px;}
 .cat-item{border:2px solid var(--border);border-radius:14px;padding:14px 8px;text-align:center;cursor:pointer;transition:all .2s;background:var(--white);}
 .cat-item.on{border-color:var(--blue);background:#EFF6FF;}
@@ -1056,7 +1056,7 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 input,select,textarea{font-size:16px !important;}
 .sh-body .finp,.sh-body .fsel,.sh-body .ftxt{padding:11px 14px !important;margin-bottom:12px !important;font-size:15px !important;}
 .sh-body .flbl{margin-top:0 !important;margin-bottom:4px !important;display:block !important;}
-.sh-body .g2{margin-bottom:0 !important;}
+.sh-body .g2{margin-bottom:0 !important;}.sh-body .g3{margin-bottom:0 !important;}
 
 .sh-body .g2>div{min-width:0;overflow:hidden;}
 .sh-body .date-wrap{position:relative;display:block;width:100%;margin-bottom:12px;}
@@ -1065,7 +1065,7 @@ input,select,textarea{font-size:16px !important;}
 .ftxt{resize:none;height:72px;line-height:1.5;}
 .finp:focus,.fsel:focus,.ftxt:focus{border-color:var(--navy);}
 .finp::placeholder,.ftxt::placeholder{color:var(--text3);}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:2px;}.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:2px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
 .section-title{font-size:13px;font-weight:800;color:var(--navy);margin:4px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--border);}
 .btn{padding:12px 18px;border-radius:12px;border:none;font-family:'Nunito',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;flex:1;}
@@ -2862,13 +2862,15 @@ verifyOTP=async function(){
   if(code.length<6){toast('Enter all 6 digits','warning');return;}
   if(otpSource==='register'){
     var nameParts=(regData.name||'').split(' ');
+    var regMname = nameParts.length>2 ? nameParts.slice(1,-1).join(' ') : '';
     var roleMap2={'Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer'};
     var newEmpId=await getNextAIPLId();
     var regPassword = regData.password || (regData.phone ? regData.phone.replace(/[^0-9]/g,'').slice(-6) : '123456');
     var data={
       emp_id:newEmpId, badge_no:newEmpId,
       first_name:nameParts[0]||'',
-      last_name:nameParts.slice(1).join(' ')||'',
+      middle_name:regMname||null,
+      last_name:(nameParts.length>1?nameParts[nameParts.length-1]:'') ||'',
       phone:regData.phone||'',
       role:roleMap2[regData.role]||'viewer',
       designation:regData.role||'',
@@ -3486,7 +3488,7 @@ function mapSC(s){
     pbgAvail:s.pbg_available,emdAvail:s.emd_available,status:s.status||'active',col:'#1565C0'};
 }
 function mapEmployee(e){
-  return {id:e.id,empId:e.emp_id,name:((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown',
+  return {id:e.id,empId:e.emp_id,name:((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown',
     role:e.role||'viewer',access:e.designation||e.role,dept:e.department||'',
     phone:e.phone,phone2:e.phone2,dob:e.dob||e.date_of_birth,gender:e.gender,blood:e.blood_group,
     marital:e.marital_status,doj:e.date_of_joining,
@@ -3726,7 +3728,7 @@ function renderPendingInList(){
     return;
   }
   list.innerHTML = pendingEmployees.map(function(e,i){
-    var name=(e.first_name+' '+(e.last_name||'')).trim();
+    var name=((e.first_name||'')+( e.middle_name?' '+e.middle_name:'')+( e.last_name?' '+e.last_name:'')).trim();
     var submitted=new Date(e.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
     return '<div class="reg-card" onclick="openApprovalDetail('+i+')">'+
       '<div class="rc-accent" style="background:var(--amber)"></div>'+
@@ -4055,7 +4057,7 @@ function editRecord(type,id){
     }).join('');
     html='<div class="section-title">&#128101; Edit Employee</div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #1565C020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:12px;">👤</div><div style="font-size:11px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
-      '<div class="g2"><div><label class="flbl">First Name</label><input id="e-ufname" class="finp" value="'+esc(nameParts[0]||'')+'"></div><div><label class="flbl">Last Name</label><input id="e-ulname" class="finp" value="'+esc(nameParts.slice(1).join(' '))+'"></div></div>'+
+      '<div class="g3"><div><label class="flbl">First Name *</label><input id="e-ufname" class="finp" value="'+esc(nameParts[0]||'')+'"></div><div><label class="flbl">Middle Name</label><input id="e-umname" class="finp" value="'+esc(nameParts.length>2?nameParts.slice(1,-1).join(' '):'')+'"></div><div><label class="flbl">Last Name</label><input id="e-ulname" class="finp" value="'+esc(nameParts.length>1?nameParts[nameParts.length-1]:'')+'"></div></div>'+
       '<div class="g2"><div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="e-udob" value="'+(u.dob||'')+'"></div><div><label class="flbl">Gender</label><select id="e-ugender" class="fsel"><option value="">-- Select --</option>'+['Male','Female','Other'].map(function(g){return '<option'+(u.gender===g?' selected':'')+'>'+g+'</option>';}).join('')+'</select></div></div>'+
       '<div class="g2"><div><label class="flbl">Blood Group</label><select id="e-ublood" class="fsel"><option value="">--</option>'+['A+','A-','B+','B-','O+','O-','AB+','AB-'].map(function(b){return '<option'+(u.blood===b?' selected':'')+'>'+b+'</option>';}).join('')+'</select></div><div><label class="flbl">Marital Status</label><select id="e-umarital" class="fsel"><option value="">--</option>'+['Single','Married','Other'].map(function(m){return '<option'+(u.marital===m?' selected':'')+'>'+m+'</option>';}).join('')+'</select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #2E7D3220;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:12px;">🏗️</div><div style="font-size:11px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
@@ -4065,6 +4067,7 @@ function editRecord(type,id){
       '<div class="g2"><div><label class="flbl">Employment Type</label><select id="e-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location / Project</label><select id="e-ulocation" class="fsel"><option value="">&#9203; Loading...</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #E6510020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div><div style="font-size:11px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
       '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="e-uphone" class="finp" value="'+esc(u.phone||'')+'"></div><div><label class="flbl">Alternate Mobile</label><input id="e-uphone2" class="finp" value="'+esc(u.phone2||'')+'"></div></div>'+
+      '<label class="flbl">Email Address</label><input id="e-uemail" class="finp" type="email" placeholder="e.g. name@company.com" value="'+esc(u.email||'')+'">'+
       '<label class="flbl">Residential Address</label><textarea id="e-uaddress" class="ftxt" rows="2">'+esc(u.address||'')+'</textarea>'+
       '<label class="flbl">Permanent Address</label><textarea id="e-upermanent" class="ftxt" rows="2">'+esc(u.permanent||'')+'</textarea>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #6A1B9A20;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#6A1B9A20;display:flex;align-items:center;justify-content:center;font-size:12px;">🪪</div><div style="font-size:11px;font-weight:800;color:#6A1B9A;text-transform:uppercase;letter-spacing:.7px;">KYC Details</div></div>'+
@@ -4190,12 +4193,12 @@ function updateSC(id){
 
 function updateUser(id){
   var u=USERS.find(function(x){return x.id===id;});if(!u)return;
-  var fname=gv('e-ufname'),lname=gv('e-ulname');
-  var name=(fname+' '+lname).trim();
+  var fname=gv('e-ufname'),mname=gv('e-umname')||'',lname=gv('e-ulname');
+  var name=[fname,mname,lname].filter(Boolean).join(' ').trim();
   if(!name){toast('Name is required','warning');return;}
   var roleRaw=gv('e-urole');
   var roleMap={'Admin':'admin','Project Manager':'pm','Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer','Client Viewer':'viewer'};
-  u.name=name; u.phone=gv('e-uphone'); u.phone2=gv('e-uphone2');
+  u.name=name; u.phone=gv('e-uphone'); u.phone2=gv('e-uphone2'); u.email=gv('e-uemail')||null;
   u.dob=gv('e-udob'); u.gender=gv('e-ugender'); u.marital=gv('e-umarital');
   u.blood=gv('e-ublood');
   u.access=roleRaw; u.role=roleMap[roleRaw]||u.role;
@@ -4220,7 +4223,8 @@ function updateUser(id){
     if(urls[2]) u.panUrl=urls[2];
     try{
       await sbUpdate('employees',u.id,{
-        first_name:fname, last_name:lname||null,
+        first_name:fname, middle_name:mname||null, last_name:lname||null,
+        email:u.email||null,
         phone:u.phone||null, phone2:u.phone2||null,
         date_of_birth:u.dob||null, gender:u.gender||null,
         marital_status:u.marital||null, blood_group:u.blood||null,
@@ -4286,7 +4290,7 @@ function openAdd(){
     html=
       '<div class="section-title">&#128101; Register New Employee</div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #1565C020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#1565C020;display:flex;align-items:center;justify-content:center;font-size:14px;">👤</div><div style="font-size:12px;font-weight:800;color:#1565C0;text-transform:uppercase;letter-spacing:.7px;">Personal Details</div></div>'+
-      '<div class="g2"><div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name"></div></div>'+
+      '<div class="g3"><div><label class="flbl">First Name *</label><input id="f-ufname" class="finp" placeholder="First name"></div><div><label class="flbl">Middle Name</label><input id="f-umname" class="finp" placeholder="Middle name"></div><div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name"></div></div>'+
       '<div class="g2"><div><label class="flbl">Date of Birth</label><input class="finp" type="date" id="f-udob"></div><div><label class="flbl">Gender</label><select id="f-ugender" class="fsel"><option value="">-- Select --</option><option>Male</option><option>Female</option><option>Other</option></select></div></div>'+
       '<div class="g2"><div><label class="flbl">Blood Group</label><select id="f-ublood" class="fsel"><option value="">-- Select --</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div><div><label class="flbl">Marital Status</label><select id="f-umarital" class="fsel"><option value="">-- Select --</option><option>Single</option><option>Married</option><option>Other</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #2E7D3220;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#2E7D3220;display:flex;align-items:center;justify-content:center;font-size:14px;">🏗️</div><div style="font-size:12px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.7px;">Employment Details</div></div>'+
@@ -4469,8 +4473,8 @@ async function saveSC(){
 }
 
 async function saveUser(){
-  var fname=gv('f-ufname'), lname=gv('f-ulname');
-  var name=(fname+' '+lname).trim();
+  var fname=gv('f-ufname'), mname=gv('f-umname')||'', lname=gv('f-ulname');
+  var name=[fname,mname,lname].filter(Boolean).join(' ').trim();
   if(!name){toast('Name is required','warning');return;}
   var phone=gv('f-uphone');
   if(!phone){toast('Mobile number is required','warning');return;}
@@ -4854,7 +4858,7 @@ function openPendingApprovals(){
     body.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:40px;margin-bottom:10px;">✅</div><div style="font-weight:700;">No pending approvals</div></div>';
   } else {
     body.innerHTML = pendingEmployees.map(function(e,i){
-      var name = (e.first_name+' '+(e.last_name||'')).trim();
+      var name = ((e.first_name||'')+( e.middle_name?' '+e.middle_name:'')+( e.last_name?' '+e.last_name:'')).trim();
       var submitted = new Date(e.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
       return '<div style="padding:14px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openApprovalDetail('+i+')">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;">'+
@@ -4880,7 +4884,7 @@ function openPendingApprovals(){
 function openApprovalDetail(idx){
   var e = pendingEmployees[idx];
   if(!e) return;
-  var name = (e.first_name+' '+(e.last_name||'')).trim();
+  var name = ((e.first_name||'')+( e.middle_name?' '+e.middle_name:'')+( e.last_name?' '+e.last_name:'')).trim();
   var body = document.getElementById('approval-det-body');
   var foot = document.getElementById('approval-det-foot');
 
@@ -5680,7 +5684,7 @@ async function salFinalise(){
   var toSave = [];
 
   active.forEach(function(e){
-    var name = ((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim();
+    var name = ((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
     var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;})
                       .sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
     var pay = pays[0];
@@ -5779,7 +5783,7 @@ function empSalaryHTML(){
     rows = '<div style="text-align:center;padding:20px;color:var(--text3);">No active employees.</div>';
   } else {
     rows = active.map(function(e){
-      var name = ((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim();
+      var name = ((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
       var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;})
                         .sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
       var latest = pays[0];
@@ -6231,7 +6235,7 @@ function empFinaliseSalary(){
 
     var active=EMP_LIST.filter(function(e){return e.status==='active';});
     rows=active.map(function(e){
-      var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+      var name=(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');
       var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
       var pay=pays[0];
       if(!pay) return null;
@@ -6312,7 +6316,7 @@ function empIncrementHTML(){
     '<div style="font-size:11px;color:var(--text3);">Click + Increment to apply a revision. Full pay history is shown below each employee.</div>'+
   '</div>'+
   active.map(function(e){
-    var name = (e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var name = (e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');
     var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;})
                       .sort(function(a,b){return a.effective_date.localeCompare(b.effective_date);});
     var cur = pays[pays.length-1];
@@ -6549,7 +6553,7 @@ function empTransferHTML(){
     '<div style="font-size:11px;color:var(--text3);">All HR orders are recorded with date and can be downloaded anytime.</div>'+
   '</div>'+
   active.map(function(e){
-    var name = (e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var name = (e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');
     var orders = hrOrdersForEmp(e.id).filter(function(o){return o.order_type==='transfer'||o.order_type==='promotion';});
     var orderLog = '';
     if(orders.length){
@@ -6907,7 +6911,7 @@ async function empSaveResignation(){
 function empViewDetail(id){
   var e=EMP_LIST.find(function(x){return x.id===id;});
   if(!e)return;
-  var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
+  var name=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
   var statusCol={active:'#2E7D32',pending:'#F57F17',resigned:'#C62828',rejected:'#C62828'}[e.status]||'#37474F';
 
   function row(l,v){
@@ -7008,7 +7012,7 @@ function empViewDetail(id){
 async function empApprove(id){
   var e=EMP_LIST.find(function(x){return x.id===id;});
   if(!e)return;
-  var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim();
+  var name=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
   if(!confirm('Approve "'+name+'" as active employee?'))return;
   try{
     await sbUpdate('employees',id,{status:'active'});
@@ -7029,7 +7033,7 @@ async function empApprove(id){
 async function empReject(id){
   var e=EMP_LIST.find(function(x){return x.id===id;});
   if(!e)return;
-  var name=((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim();
+  var name=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
   var reason=prompt('Rejection reason (optional):');
   if(reason===null)return;
   try{
@@ -7077,7 +7081,7 @@ function empListHTML(status){
   }
 
   var rows=list.map(function(e){
-    var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var name=(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');
     var init=name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase()||'?';
     var hasPay=EMP_PAY.some(function(p){return p.employee_id===e.id;});
     var roleColors={'Admin':'#C62828','Project Manager':'#1565C0','Site Engineer':'#2E7D32','Finance / Accounts':'#6A1B9A'};
@@ -7103,6 +7107,11 @@ return '<div style="background:white;border-radius:14px;border:1px solid var(--b
             '<button onclick="empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}))" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#9998; Edit</button>'+
             '<button onclick="empReject(\''+e.id+'\')" style="background:#C62828;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#10005; Reject</button>'+
           '</div>':
+          status==='active'?
+          '<div style="display:flex;flex-direction:column;gap:6px;align-items:center;" onclick="event.stopPropagation()">'+
+            '<button onclick="downloadIDCard(\''+e.id+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;">&#127891; ID Card</button>'+
+            '<div style="font-size:18px;color:var(--text3);">&#8250;</div>'+
+          '</div>':
           '<div style="font-size:20px;color:var(--text3);">&#8250;</div>'
         )+
       '</div>'+
@@ -7118,7 +7127,7 @@ function empPayHTML(){
   if(!active.length)return '<div style="text-align:center;padding:40px;color:var(--text3);">No active employees. Approve employees first.</div>';
 
   return active.map(function(e){
-    var name=(e.first_name||'')+(e.last_name?' '+e.last_name:'');
+    var name=(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');
     var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
     var latest=pays[0];
 
@@ -7222,6 +7231,7 @@ function empOpenForm(emp){
   document.getElementById('emp-sheet-title').textContent=isEdit?'Edit Employee':'Register New Employee';
 
   var fname=isEdit?(e.first_name||''):'';
+  var mname=isEdit?(e.middle_name||''):'';
   var lname=isEdit?(e.last_name||''):'';
   var dob=isEdit?(e.date_of_birth||e.dob||''):'';
   var doj=isEdit?(e.date_of_joining||e.doj||''):'';
@@ -7232,6 +7242,7 @@ function empOpenForm(emp){
   var workLoc=isEdit?(e.work_location||e.location||''):'';
   var phone=isEdit?(e.phone||e.mobile||''):'';
   var phone2=isEdit?(e.phone2||''):'';
+  var email=isEdit?(e.email||''):'';
   var address=isEdit?(e.address||''):'';
   var permanent=isEdit?(e.permanent_address||e.permanent||''):'';
   var aadhar=isEdit?(e.aadhar||e.aadhar_no||''):'';
@@ -7261,8 +7272,9 @@ function empOpenForm(emp){
 
   var html=
     hdr('👤','Personal Details','#1565C0')+
-    '<div class="g2">'+
-      '<div><label class="flbl">First Name</label><input id="f-ufname" class="finp" placeholder="First name" value="'+safeN(fname)+'"></div>'+
+    '<div class="g3">'+
+      '<div><label class="flbl">First Name *</label><input id="f-ufname" class="finp" placeholder="First name" value="'+safeN(fname)+'"></div>'+
+      '<div><label class="flbl">Middle Name</label><input id="f-umname" class="finp" placeholder="Middle name (optional)" value="'+safeN(mname)+'"></div>'+
       '<div><label class="flbl">Last Name</label><input id="f-ulname" class="finp" placeholder="Last name" value="'+safeN(lname)+'"></div>'+
     '</div>'+
     '<div class="g2">'+
@@ -7289,7 +7301,10 @@ function empOpenForm(emp){
       '<div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+safeN(phone)+'"></div>'+
       '<div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional" value="'+safeN(phone2)+'"></div>'+
     '</div>'+
-    // Login credentials for NEW employees — placed here so admin sees it early
+    '<label class="flbl">Email Address</label><input id="f-uemail" class="finp" type="email" placeholder="e.g. name@company.com" value="'+safeN(email)+'">'+
+    '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address...">'+safeN(address)+'</textarea>'+
+    '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)...">'+safeN(permanent)+'</textarea>'+
+    // Login credentials for NEW employees
     (!isEdit?
       hdr('\uD83D\uDD10','Login Credentials','#1565C0')+
       '<div style="background:#E3F2FD;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:#1565C0;">'+
@@ -7306,8 +7321,6 @@ function empOpenForm(emp){
         '<span class="inp-ic" onclick="var el=document.getElementById(\'f-upassword2\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
       '</div>'
     :'')+
-    '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address...">'+safeN(address)+'</textarea>'+
-    '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)...">'+safeN(permanent)+'</textarea>'+
     hdr('🪪','KYC Details','#6A1B9A')+
     '<div class="g2">'+
       '<div><label class="flbl">Aadhar Number</label><input id="f-uaadhar" class="finp" placeholder="XXXX XXXX XXXX" value="'+safeN(aadhar)+'"></div>'+
@@ -7376,8 +7389,8 @@ function empOpenForm(emp){
 
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
-    (isEdit?'<button class="btn" style="background:#C62828;color:white;" onclick="empDeleteEmployee(\''+e.id+'\',\''+safeN(fname+' '+lname)+'\')">🗑 Delete</button>':'')+
-    (isEdit?'<button class="btn" style="background:#1565C0;color:white;" onclick="empResetPassword(\''+e.id+'\',\''+safeN(fname+' '+lname)+'\',\''+safeN(phone)+'\')">🔑 Reset Password</button>':'')+
+    (isEdit&&e.status!=='resigned'?'<button class="btn" style="background:#C62828;color:white;" onclick="empDeleteEmployee(\''+e.id+'\',\''+safeN([fname,mname,lname].filter(Boolean).join(' '))+'\')">🗑 Delete</button>':'')+
+    (isEdit?'<button class="btn" style="background:#1565C0;color:white;" onclick="empResetPassword(\''+e.id+'\',\''+safeN([fname,mname,lname].filter(Boolean).join(' '))+'\',\''+safeN(phone)+'\')">🔑 Reset Password</button>':'')+
     '<button class="btn btn-indigo" onclick="empFormSave()" style="flex:1;">'+(isEdit?'✓ Save Changes':'✓ Register Employee')+'</button>';
 
   openEmpSheet();
@@ -7496,8 +7509,8 @@ async function empResetPassword(empId, empName, phone){
 
 async function empFormSave(){
   var editId=(document.getElementById('f-uedit-id')||{}).value||'';
-  var fname=gv('f-ufname'), lname=gv('f-ulname');
-  var name=(fname+' '+lname).trim();
+  var fname=gv('f-ufname'), mname=gv('f-umname')||'', lname=gv('f-ulname');
+  var name=[fname,mname,lname].filter(Boolean).join(' ').trim();
   if(!name){toast('Name is required','warning');return;}
   var phone=gv('f-uphone');
   if(!editId&&!phone){toast('Mobile number is required','warning');return;}
@@ -7521,7 +7534,8 @@ async function empFormSave(){
   var role=roleMap[roleRaw]||'viewer';
 
   var data={
-    first_name:fname, last_name:lname||'',
+    first_name:fname, middle_name:mname||null, last_name:lname||null,
+    email:gv('f-uemail')||null,
     phone:phone||null, phone2:gv('f-uphone2')||null,
     date_of_birth:gv('f-udob')||null, gender:gv('f-ugender')||null,
     blood_group:gv('f-ublood')||null, marital_status:gv('f-umarital')||null,
@@ -7554,7 +7568,7 @@ async function empFormSave(){
       var ui=USERS.findIndex(function(x){return x.id===editId;});
       if(ui>-1)USERS[ui]=Object.assign(USERS[ui],{name:name,role:role,access:roleRaw,dept:data.department||'',phone:data.phone||''});
       var ei=EMP_LIST.findIndex(function(x){return x.id===editId;});
-      if(ei>-1)EMP_LIST[ei]=Object.assign(EMP_LIST[ei],data,{first_name:fname,last_name:lname});
+      if(ei>-1)EMP_LIST[ei]=Object.assign(EMP_LIST[ei],data,{first_name:fname,middle_name:mname||null,last_name:lname});
       // Reset password if entered
       if(pw1 && phone){
         try{
@@ -8608,7 +8622,7 @@ var PC_IN=[],PC_EXP=[],PC_EMPS=[],PC_PROJS=[],PC_ACTIVE=null;
 var PC_CAT={Labour:{e:'&#128d7;',c:'#E07820'},Material:{e:'&#129521;',c:'#3B82F6'},Diesel:{e:'&#9981;',c:'#8B5CF6'},Machinery:{e:'&#128667;',c:'#F59E0B'},Food:{e:'&#127860;',c:'#10B981'},Transport:{e:'&#128667;',c:'#06B6D4'},Advance:{e:'&#128179;',c:'#EC4899'},Office:{e:'&#127970;',c:'#6B7280'},Other:{e:'&#128230;',c:'#9CA3AF'}};
 function pcFmt(n){return '\u20b9'+Number(n||0).toLocaleString('en-IN');}
 function pcFmtD(d){if(!d)return '\u2014';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
-function pcEmpName(id){var e=PC_EMPS.find(function(x){return x.id===id;})||{};return(e.first_name||'')+(e.last_name?' '+e.last_name:'');}
+function pcEmpName(id){var e=PC_EMPS.find(function(x){return x.id===id;})||{};return(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');}
 function pcEmpBal(id){return PC_IN.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)-PC_EXP.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);}
 async function initPettyCash(){
   var el=document.getElementById('pc-main');if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:#9CA3AF;">&#9203; Loading...</div>';
@@ -9010,7 +9024,7 @@ async function avLoadPartyNames(){
       list=(Array.isArray(d)?d:[]).map(function(s){return {id:s.id,name:s.name,sub:s.trade||''};});
     } else if(type==='employee'){
       var d=await sbFetch('employees',{select:'id,first_name,last_name,emp_id,designation',filter:'status=eq.active',order:'first_name.asc'});
-      list=(Array.isArray(d)?d:[]).map(function(e){return {id:e.id,name:(e.first_name||'')+(e.last_name?' '+e.last_name:''),sub:(e.emp_id?e.emp_id+' • ':'')+(e.designation||'')};});
+      list=(Array.isArray(d)?d:[]).map(function(e){return {id:e.id,name:(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:''),sub:(e.emp_id?e.emp_id+' • ':'')+(e.designation||'')};});
     }
     ACC_PARTY_CACHE[type]=list;
     if(!list.length){
@@ -9236,7 +9250,7 @@ async function initAccess(){
   try{
     var emps=await sbFetch('employees',{select:'id,first_name,last_name,emp_id',filter:'status=eq.active',order:'first_name.asc'});
     var sel=document.getElementById('ac-emp-sel');
-    if(sel&&Array.isArray(emps)){sel.innerHTML='<option value="">— Select Employee —</option>'+emps.map(function(e){var n=(e.first_name||'')+(e.last_name?' '+e.last_name:'');return '<option value="'+e.id+'">'+n+(e.emp_id?' ('+e.emp_id+')':'')+'</option>';}).join('');}
+    if(sel&&Array.isArray(emps)){sel.innerHTML='<option value="">— Select Employee —</option>'+emps.map(function(e){var n=(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');return '<option value="'+e.id+'">'+n+(e.emp_id?' ('+e.emp_id+')':'')+'</option>';}).join('');}
   }catch(e){console.error(e);}
 }
 function acSwitchTab(tab){
@@ -10043,29 +10057,34 @@ function downloadTransferOrder(empId, type, details){
 
 function empDownloadHTML(){
   // Only show employees who were actually employed (active or resigned)
-  // Exclude: rejected (never approved), pending (not yet approved), and any deleted (not in EMP_LIST)
-  var all = EMP_LIST.filter(function(e){
-    return e.status==='active' || e.status==='resigned';
-  });
-  if(!all.length) return '<div style="text-align:center;padding:40px;color:var(--text3);">No employees found.</div>';
+  var active   = EMP_LIST.filter(function(e){ return e.status==='active'; });
+  var resigned = EMP_LIST.filter(function(e){ return e.status==='resigned'; });
+
+  if(!active.length && !resigned.length)
+    return '<div style="text-align:center;padding:40px;color:var(--text3);">No employees found.</div>';
 
   if(!EMP_ORDERS.length) hrLoadOrders().then(function(){ empRender(); });
 
-  return '<div style="background:white;border-radius:14px;padding:12px 14px;margin-bottom:12px;">'+
-    '<div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:4px;">&#128196; Document Downloads</div>'+
-    '<div style="font-size:11px;color:var(--text3);">Click any employee to view and download all their HR letters and orders.</div>'+
-  '</div>'+
-  all.map(function(e){
-    var name = ((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim();
-    var statusCol = {active:'#2E7D32',resigned:'#C62828',rejected:'#C62828'}[e.status]||'#37474F';
+  function empCard(e){
+    var name = ((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
+    var statusCol = e.status==='resigned' ? '#C62828' : '#2E7D32';
+    var initials  = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
     return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;">'+
       '<div onclick="empToggleDocList(\'doc-'+e.id+'\')" style="padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;">'+
         '<div style="width:38px;height:38px;border-radius:10px;background:'+statusCol+';display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:white;flex-shrink:0;overflow:hidden;">'+
-          (e.profile_photo||e.photo_url?'<img src="'+(e.profile_photo||e.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">':name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase())+
+          (e.profile_photo||e.photo_url
+            ? '<img src="'+(e.profile_photo||e.photo_url)+'" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">'
+            : initials)+
         '</div>'+
         '<div style="flex:1;min-width:0;">'+
-          '<div style="font-size:13px;font-weight:800;">'+name+'</div>'+
-          '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
+          '<div style="font-size:13px;font-weight:800;">'+name+
+            (e.status==='resigned'
+              ? '<span style="background:#FFEBEE;color:#C62828;border-radius:5px;padding:1px 7px;font-size:9px;font-weight:800;margin-left:6px;">RESIGNED</span>'
+              : '')+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+
+            (e.last_working_day ? ' &bull; LWD: '+e.last_working_day : '')+
+          '</div>'+
         '</div>'+
         '<div style="font-size:18px;color:var(--text3);" id="doc-arr-'+e.id+'">&#8250;</div>'+
       '</div>'+
@@ -10073,7 +10092,33 @@ function empDownloadHTML(){
         '<div style="text-align:center;padding:12px;color:var(--text3);font-size:12px;">&#9203; Loading...</div>'+
       '</div>'+
     '</div>';
-  }).join('');
+  }
+
+  var html =
+    '<div style="background:white;border-radius:14px;padding:12px 14px;margin-bottom:12px;">'+
+      '<div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:4px;">&#128196; Document Downloads</div>'+
+      '<div style="font-size:11px;color:var(--text3);">Click any employee to view and download all HR letters and orders.</div>'+
+    '</div>';
+
+  // Active employees
+  if(active.length){
+    html += active.map(empCard).join('');
+  }
+
+  // Resigned employees — separated with a header
+  if(resigned.length){
+    html +=
+      '<div style="display:flex;align-items:center;gap:10px;margin:16px 0 10px;">'+
+        '<div style="flex:1;height:1px;background:var(--border);"></div>'+
+        '<div style="background:#FFEBEE;color:#C62828;border-radius:20px;padding:4px 14px;font-size:11px;font-weight:800;white-space:nowrap;">'+
+          '&#128683; Resigned Employees ('+resigned.length+')'+
+        '</div>'+
+        '<div style="flex:1;height:1px;background:var(--border);"></div>'+
+      '</div>'+
+      resigned.map(empCard).join('');
+  }
+
+  return html;
 }
 
 function empToggleDocList(divId){
@@ -10102,7 +10147,7 @@ function empToggleDocList(divId){
 
 function empDocList(e){
   var empId = e.id;
-  var name  = ((e.first_name||'')+(e.last_name?' '+e.last_name:'')).trim();
+  var name  = ((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
   var orders = hrOrdersForEmp(empId);
   var pays   = EMP_PAY.filter(function(p){return p.employee_id===empId;})
                       .sort(function(a,b){return a.effective_date.localeCompare(b.effective_date);});
@@ -10356,6 +10401,120 @@ function downloadPayFixationOrder(empId, effectiveDate, details){
 }
 
 // ─── Resignation Acceptance Letter PDF ───────────────────────────────────
+function downloadIDCard(empId){
+  var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
+  var name = ((emp.first_name||'')+(emp.middle_name?' '+emp.middle_name:'')+(emp.last_name?' '+emp.last_name:'')).trim()||'—';
+  var code  = emp.employee_code||emp.emp_id||'—';
+  var desig = emp.designation||emp.role||'—';
+  var dept  = emp.department||'—';
+  var doj   = emp.date_of_joining||emp.doj||'—';
+  var blood = emp.blood_group||emp.blood||'';
+  var phone = emp.phone||emp.mobile||'';
+  var photo = emp.profile_photo||emp.photo_url||'';
+  var dojFmt= doj&&doj!=='—'?new Date(doj).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):doj;
+
+  var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
+  var compAddr = typeof coAddr==='function'?coAddr():'';
+  var compPhone= typeof coPhone==='function'?coPhone():'';
+
+  // Initials avatar (used if no photo)
+  var initials = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
+
+  var photoSection = photo
+    ? '<img src="'+photo+'" style="width:80px;height:80px;object-fit:cover;border-radius:50%;border:3px solid white;display:block;margin:0 auto 8px;">'
+    : '<div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,0.25);border:3px solid white;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:900;color:white;margin:0 auto 8px;">'+initials+'</div>';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ID Card - '+name+'</title>'+
+    '<style>'+
+    '*{margin:0;padding:0;box-sizing:border-box;}'+
+    'body{font-family:Arial,sans-serif;background:#f0f0f0;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;}'+
+    '.card-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;}'+
+    // Front
+    '.card{width:85.6mm;height:54mm;border-radius:10px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.2);position:relative;display:flex;flex-direction:column;}'+
+    '.front{background:linear-gradient(135deg,#1B5E20 0%,#2E7D32 60%,#1565C0 100%);}'+
+    '.front-head{padding:8px 10px 6px;text-align:center;color:white;}'+
+    '.co-name{font-size:8px;font-weight:900;letter-spacing:0.5px;text-transform:uppercase;opacity:0.9;}'+
+    '.id-title{font-size:6px;letter-spacing:2px;opacity:0.7;text-transform:uppercase;margin-top:1px;}'+
+    '.front-body{display:flex;padding:6px 10px;gap:8px;flex:1;align-items:center;}'+
+    '.photo-wrap{flex-shrink:0;}'+
+    '.photo{width:52px;height:52px;border-radius:8px;border:2px solid rgba(255,255,255,0.5);object-fit:cover;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:900;color:white;}'+
+    '.emp-info{flex:1;color:white;}'+
+    '.emp-name{font-size:10px;font-weight:900;line-height:1.2;margin-bottom:3px;}'+
+    '.emp-desig{font-size:7.5px;opacity:0.85;margin-bottom:2px;}'+
+    '.emp-dept{font-size:7px;opacity:0.7;margin-bottom:4px;}'+
+    '.emp-code-badge{background:rgba(255,255,255,0.2);border-radius:4px;padding:2px 6px;font-size:7px;font-weight:800;letter-spacing:0.5px;display:inline-block;}'+
+    '.front-foot{background:rgba(0,0,0,0.2);padding:4px 10px;display:flex;justify-content:space-between;align-items:center;}'+
+    '.front-foot span{font-size:6.5px;color:rgba(255,255,255,0.8);}'+
+    // Back
+    '.back{background:white;border-top:6px solid #1B5E20;}'+
+    '.back-head{background:#1B5E20;padding:5px 10px;text-align:center;color:white;font-size:7px;font-weight:700;letter-spacing:0.5px;}'+
+    '.back-body{padding:8px 10px;flex:1;}'+
+    '.info-row{display:flex;justify-content:space-between;padding:2.5px 0;border-bottom:0.5px solid #f0f0f0;font-size:7px;}'+
+    '.info-label{color:#666;font-weight:600;}'+
+    '.info-val{color:#222;font-weight:700;text-align:right;}'+
+    '.back-foot{background:#f8f8f8;padding:5px 10px;display:flex;flex-direction:column;align-items:center;gap:1px;}'+
+    '.emergency{font-size:6px;color:#C62828;font-weight:700;}'+
+    '.co-addr{font-size:5.5px;color:#888;text-align:center;}'+
+    // Barcode-style decoration
+    '.barcode{display:flex;gap:1px;align-items:flex-end;height:16px;}'+
+    '.bar{background:#1B5E20;border-radius:1px;}'+
+    '@media print{@page{size:85.6mm 54mm;margin:0;}body{background:white;min-height:unset;padding:0;display:block;}.card-wrap{gap:0;}.card{box-shadow:none;border-radius:0;page-break-after:always;}body>*{page-break-inside:avoid;}}'+
+    '</style></head><body>'+
+    '<div class="card-wrap">'+
+
+    // ── FRONT ──────────────────────────────────────────────────────────
+    '<div class="card front">'+
+      '<div class="front-head">'+
+        '<div class="co-name">'+compName+'</div>'+
+        '<div class="id-title">Employee Identity Card</div>'+
+      '</div>'+
+      '<div class="front-body">'+
+        '<div class="photo-wrap">'+
+          (photo
+            ? '<img class="photo" src="'+photo+'">'
+            : '<div class="photo">'+initials+'</div>')+
+        '</div>'+
+        '<div class="emp-info">'+
+          '<div class="emp-name">'+name+'</div>'+
+          '<div class="emp-desig">'+desig+'</div>'+
+          '<div class="emp-dept">'+dept+'</div>'+
+          '<div class="emp-code-badge">ID: '+code+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="front-foot">'+
+        '<span>DOJ: '+dojFmt+'</span>'+
+        (blood?'<span>Blood: <b style="color:#ff8a80;">'+blood+'</b></span>':'')+
+        '<span>'+compPhone+'</span>'+
+      '</div>'+
+    '</div>'+
+
+    // ── BACK ───────────────────────────────────────────────────────────
+    '<div class="card back">'+
+      '<div class="back-head">'+compName+' &mdash; Employee Details</div>'+
+      '<div class="back-body">'+
+        '<div class="info-row"><span class="info-label">Employee ID</span><span class="info-val">'+code+'</span></div>'+
+        '<div class="info-row"><span class="info-label">Name</span><span class="info-val">'+name+'</span></div>'+
+        '<div class="info-row"><span class="info-label">Designation</span><span class="info-val">'+desig+'</span></div>'+
+        '<div class="info-row"><span class="info-label">Department</span><span class="info-val">'+dept+'</span></div>'+
+        '<div class="info-row"><span class="info-label">Date of Joining</span><span class="info-val">'+dojFmt+'</span></div>'+
+        (blood?'<div class="info-row"><span class="info-label">Blood Group</span><span class="info-val" style="color:#C62828;font-weight:800;">'+blood+'</span></div>':'')+
+        (phone?'<div class="info-row"><span class="info-label">Mobile</span><span class="info-val">'+phone+'</span></div>':'')+
+      '</div>'+
+      '<div class="back-foot">'+
+        '<div class="emergency">&#9888; If found, please return to: '+compName+'</div>'+
+        (compAddr?'<div class="co-addr">'+compAddr+'</div>':'')+
+      '</div>'+
+    '</div>'+
+
+    '</div>'+
+    '<script>window.onload=function(){window.print();}<\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('Allow popups to print ID card','warning');}
+}
+
 function downloadResignationLetter(empId){
   var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
   var name = ((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'—';
