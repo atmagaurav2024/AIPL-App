@@ -7085,6 +7085,7 @@ return '<div style="background:white;border-radius:14px;border:1px solid var(--b
         (status==='pending'?
           '<div style="display:flex;flex-direction:column;gap:6px;" onclick="event.stopPropagation()">'+
             '<button onclick="empApprove(\''+e.id+'\')" style="background:#2E7D32;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#10003; Approve</button>'+
+            '<button onclick="empOpenForm(EMP_LIST.find(function(x){return x.id===\''+e.id+'\';}))" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#9998; Edit</button>'+
             '<button onclick="empReject(\''+e.id+'\')" style="background:#C62828;color:white;border:none;border-radius:8px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#10005; Reject</button>'+
           '</div>':
           '<div style="font-size:20px;color:var(--text3);">&#8250;</div>'
@@ -7453,8 +7454,12 @@ async function empFormSave(){
       }
     }
     closeEmpSheet();
-    // Switch to pending tab so admin can see the new employee
-    empTab('pending', document.getElementById('emp-t-pending'));
+    // For new employee → go to pending tab; for edit → stay on current tab
+    if(editId){
+      empRender();
+    } else {
+      empTab('pending', document.getElementById('emp-t-pending'));
+    }
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
