@@ -10450,7 +10450,7 @@ function downloadIDCard(empId){
     var rects = '';
     var x = 0;
     bars.forEach(function(b){
-      if(b.filled) rects += '<rect x="'+x+'" y="0" width="'+b.w+'" height="32" fill="#0d1f3c"/>';
+      if(b.filled) rects += '<rect x="'+x+'" y="0" width="'+b.w+'" height="32" fill="rgba(255,255,255,0.85)"/>';
       x += b.w;
     });
     return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="32" viewBox="0 0 '+totalW+' 32" preserveAspectRatio="none">'+
