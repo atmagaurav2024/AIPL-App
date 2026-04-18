@@ -14,7 +14,7 @@
 html,body{height:100%;overflow:hidden;}
 
 /* App-level screens */
-.app-screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:10;}
+.app-screen{position:fixed;inset:0;display:none;flex-direction:column;overflow:hidden;z-index:50;}
 .app-screen.on{display:flex;}
 @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 .app-screen.on{animation:fadeIn .25s ease;}
@@ -2296,6 +2296,8 @@ var currentApp = null;
 var appScreenIds = ['app-dashboard','app-attendance','app-registry'];
 
 function showApp(name){
+  // Hide all login/splash screens first
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on');});
   document.querySelectorAll('.app-screen').forEach(function(s){s.classList.remove('on');});
   var target=document.getElementById('app-'+name);
   if(!target){toast('Module coming soon','info');return;}
@@ -2523,7 +2525,7 @@ function verifyOTP(){
     var newId='REG-'+String(REGISTRATIONS.length+1).padStart(3,'0');
     regData.id=newId;
     regData.status='pending';
-    regData.submitted=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    regData.submitted=fmtDate(new Date());
     REGISTRATIONS.push(regData);
     document.getElementById('pending-ref-id').textContent='Ref: AIPL-'+newId;
     showScreen('scr-pending');
@@ -3729,7 +3731,7 @@ function renderPendingInList(){
   }
   list.innerHTML = pendingEmployees.map(function(e,i){
     var name=((e.first_name||'')+( e.middle_name?' '+e.middle_name:'')+( e.last_name?' '+e.last_name:'')).trim();
-    var submitted=new Date(e.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+    var submitted=fmtDate(e.created_at);
     return '<div class="reg-card" onclick="openApprovalDetail('+i+')">'+
       '<div class="rc-accent" style="background:var(--amber)"></div>'+
       '<div class="rc-body">'+
@@ -4859,7 +4861,7 @@ function openPendingApprovals(){
   } else {
     body.innerHTML = pendingEmployees.map(function(e,i){
       var name = ((e.first_name||'')+( e.middle_name?' '+e.middle_name:'')+( e.last_name?' '+e.last_name:'')).trim();
-      var submitted = new Date(e.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+      var submitted = fmtDate(e.created_at);
       return '<div style="padding:14px;border-bottom:1px solid var(--border);cursor:pointer;" onclick="openApprovalDetail('+i+')">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;">'+
           '<div style="display:flex;align-items:center;gap:10px;">'+
@@ -4905,7 +4907,7 @@ function openApprovalDetail(idx){
       row('Department',e.department)+
       row('Mobile',e.phone)+
       row('Work Location',e.work_location)+
-      row('Submitted',new Date(e.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}))+
+      row('Submitted',fmtDate(e.created_at))+
     '</div>'+
     '<div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:12px;padding:12px;font-size:12px;color:#E65100;font-weight:600;margin-bottom:6px;">'+
       '⚠️ Review all details carefully before approving. Approved employees will get app access.'+
@@ -5514,6 +5516,22 @@ var EMP_ROLES=['Admin','Project Manager','Site Engineer','Junior Engineer','QC E
 function openEmpSheet(){openSheet('ov-emp','sh-emp');}
 function closeEmpSheet(){closeSheet('ov-emp','sh-emp');}
 
+
+// Global date formatter: YYYY-MM-DD -> DD/MM/YYYY
+function fmtDate(d){
+  if(!d||d==='\u2014') return d||'\u2014';
+  var m=String(d).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(m) return m[3]+'/'+m[2]+'/'+m[1];
+  try{
+    var dt=new Date(d);
+    if(!isNaN(dt)){
+      return String(dt.getDate()).padStart(2,'0')+'/'+
+             String(dt.getMonth()+1).padStart(2,'0')+'/'+dt.getFullYear();
+    }
+  }catch(ex){}
+  return d;
+}
+
 async function initEmpMgmt(){
   hrLoadOrders();
   salLoadRecords();
@@ -5989,7 +6007,7 @@ function salDownloadPDF(month, year, label){
   var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
   var compAddr = typeof coAddr==='function'?coAddr():'';
   var compGST  = typeof coGST==='function'?coGST():'';
-  var today    = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var today    = fmtDate(new Date());
 
   var trs = records.map(function(r,i){
     var ded=(r.pf_employee||0)+(r.esic_employee||0)+(r.tds||0)+(r.profession_tax||0)+(r.advance_deduct||0);
@@ -6198,7 +6216,7 @@ function downloadSalaryPDF(){
   var total=rows.reduce(function(s,r){return s+r.payable;},0);
   var compName=typeof coName==='function'?coName():'';
   var compAddr=typeof coAddr==='function'?coAddr():'';
-  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var today=fmtDate(new Date());
   var trs=rows.map(function(r,i){
     var e=EMP_LIST.find(function(x){return x.id===r.id;})||{};
     return '<tr style="background:'+(i%2?'#F9FFF9':'white')+'">' +
@@ -6347,7 +6365,7 @@ function empIncrementHTML(){
               '<div style="font-size:12px;font-weight:900;">&#8377;'+Number(p.basic||0).toLocaleString('en-IN')+'</div>'+
               '<div style="font-size:10px;color:var(--text3);">Net &#8377;'+Number(p.net_salary||0).toLocaleString('en-IN')+'</div>'+
             '</div>'+
-            (i>0?'<button data-inc-del-payid="'+p.id+'" data-inc-del-name="'+name+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;">&#128465;</button>'+'<button id="dl-inc-'+e.id+'-'+i+'" data-eid="'+e.id+'" data-nb="'+p.basic+'" data-ob="'+prevBasic+'" data-dt="'+p.effective_date+'" data-rm="'+(p.remarks||'')+'" data-pobj="'+encodeURIComponent(JSON.stringify(prevPay||{}))+'" data-nobj="'+encodeURIComponent(JSON.stringify(p))+'" style="background:#E3F2FD;color:#1565C0;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;flex-shrink:0;">&#128196;</button>':'<span style="font-size:10px;color:var(--text3);padding:0 4px;">First</span>')+
+            (i>0?'<button data-inc-del-payid="'+p.id+'" data-inc-del-name="'+name+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;">&#128465;</button>'+'<button id="dl-inc-'+e.id+'-'+i+'" data-eid="'+e.id+'" data-nb="'+p.basic+'" data-ob="'+prevBasic+'" data-dt="'+fmtDate(p.effective_date)+'" data-rm="'+(p.remarks||'')+'" data-pobj="'+encodeURIComponent(JSON.stringify(prevPay||{}))+'" data-nobj="'+encodeURIComponent(JSON.stringify(p))+'" style="background:#E3F2FD;color:#1565C0;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;flex-shrink:0;">&#128196;</button>':'<span style="font-size:10px;color:var(--text3);padding:0 4px;">First</span>')+
           '</div>'+
         '</div>';
       }).join('');
@@ -6510,27 +6528,90 @@ async function hrSaveOrder(empId, orderType, effectiveDate, details, orderRef){
   }catch(e){ console.warn('hrSaveOrder error:',e); return null; }
 }
 
+
 async function hrDeleteOrder(orderId, label, refreshFn){
   if(!confirm('Delete "'+label+'"?\n\nThis will permanently remove this record and cannot be undone.')) return;
   try{
-    // Find the order before deleting so we can clean up pay records
     var order = EMP_ORDERS.find(function(o){return o.id===orderId;});
     var details = {};
     if(order){ try{details=JSON.parse(order.details||'{}');}catch(ex){} }
 
-    // Delete from employee_orders
     await sbDelete('employee_orders', orderId);
     EMP_ORDERS = EMP_ORDERS.filter(function(o){return o.id!==orderId;});
 
-    // For pay fixation / increment: also delete the linked employee_pay record
-    if(order && (order.order_type==='pay_fixation'||order.order_type==='increment'||order.order_type==='revision')){
+    var empId = order ? order.employee_id : null;
+    var idx = empId ? EMP_LIST.findIndex(function(e){return e.id===empId;}) : -1;
+
+    // INCREMENT: delete pay record, show old basic
+    if(order && order.order_type==='increment'){
       var payId = details.pay_record_id || (details.newPay&&details.newPay.id) || null;
-      if(payId){
+      if(payId){ try{ await sbDelete('employee_pay',payId); EMP_PAY=EMP_PAY.filter(function(p){return p.id!==payId;}); }catch(ex){} }
+      var oldBasic = details.oldBasic || (details.oldPay&&details.oldPay.basic) || null;
+      toast(label+' deleted'+(oldBasic?' \u2014 reverted to \u20b9'+Number(oldBasic).toLocaleString('en-IN'):''),'info');
+      if(typeof refreshFn==='function') refreshFn();
+      return;
+    }
+
+    // PAY FIXATION / REVISION: delete linked pay record
+    if(order && (order.order_type==='pay_fixation'||order.order_type==='revision')){
+      var payId = details.pay_record_id || (details.newPay&&details.newPay.id) || null;
+      if(payId){ try{ await sbDelete('employee_pay',payId); EMP_PAY=EMP_PAY.filter(function(p){return p.id!==payId;}); }catch(ex){} }
+      toast(label+' deleted','info');
+      if(typeof refreshFn==='function') refreshFn();
+      return;
+    }
+
+    // PROMOTION: revert designation to previous role
+    if(order && order.order_type==='promotion' && empId){
+      var prevRole = details.prevRole||null;
+      if(prevRole){
         try{
-          await sbDelete('employee_pay', payId);
-          EMP_PAY = EMP_PAY.filter(function(p){return p.id!==payId;});
-        }catch(ex){ console.warn('Could not delete pay record:',ex); }
+          await sbUpdate('employees',empId,{designation:prevRole});
+          if(idx>-1) EMP_LIST[idx].designation=prevRole;
+          toast(label+' deleted \u2014 designation reverted to "'+prevRole+'"','info');
+        }catch(ex){ toast(label+' deleted (could not revert designation \u2014 update manually)','warning'); }
+      } else {
+        toast(label+' deleted \u2014 no previous role stored, update manually','info');
       }
+      if(typeof refreshFn==='function') refreshFn();
+      return;
+    }
+
+    // TRANSFER: revert department to previous dept
+    if(order && order.order_type==='transfer' && empId){
+      var prevDept = details.prevDept||null;
+      if(prevDept){
+        try{
+          await sbUpdate('employees',empId,{department:prevDept});
+          if(idx>-1) EMP_LIST[idx].department=prevDept;
+          toast(label+' deleted \u2014 department reverted to "'+prevDept+'"','info');
+        }catch(ex){ toast(label+' deleted (could not revert department \u2014 update manually)','warning'); }
+      } else {
+        toast(label+' deleted','info');
+      }
+      if(typeof refreshFn==='function') refreshFn();
+      return;
+    }
+
+    // RESIGNATION: reinstate employee as active
+    if(order && order.order_type==='resignation' && empId){
+      try{
+        await sbUpdate('employees',empId,{
+          status:'active',
+          resignation_date:null,
+          last_working_day:null,
+          resignation_reason:null,
+          rejection_reason:null
+        });
+        if(idx>-1){
+          EMP_LIST[idx].status='active';
+          EMP_LIST[idx].resignation_date=null;
+          EMP_LIST[idx].last_working_day=null;
+        }
+        toast(label+' deleted \u2014 employee reinstated as Active','success');
+      }catch(ex){ toast(label+' deleted (could not reinstate \u2014 update manually)','warning'); }
+      if(typeof refreshFn==='function') refreshFn();
+      return;
     }
 
     toast(label+' deleted','info');
@@ -6572,11 +6653,11 @@ function empTransferHTML(){
           return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;'+(i>0?'border-top:1px solid #F0F4F8;':'')+'">'+
             '<div style="flex:1;min-width:0;">'+
               '<div style="font-size:11px;font-weight:800;color:'+typeCol+';">'+typeLabel+'</div>'+
-              '<div style="font-size:10px;color:var(--text3);">w.e.f. '+o.effective_date+' · '+summary+(o.order_ref?' · '+o.order_ref:'')+'</div>'+
+              '<div style="font-size:10px;color:var(--text3);">w.e.f. '+fmtDate(o.effective_date)+' · '+summary+(o.order_ref?' · '+o.order_ref:'')+'</div>'+
             '</div>'+
             '<div style="display:flex;gap:6px;flex-shrink:0;">'+
-              '<button data-del-ord-id="'+o.id+'" data-del-ord-label="'+typeLabel+' '+o.effective_date+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;">&#128465;</button>'+
-              '<button id="hr-ord-'+o.id+'" data-type="'+o.order_type+'" data-eid="'+e.id+'" data-det="'+encodeURIComponent(o.details||'{}')+'" data-dt="'+o.effective_date+'" style="background:#E8EAF6;color:#3949AB;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;">&#128196;</button>'+
+              '<button data-del-ord-id="'+o.id+'" data-del-ord-label="'+typeLabel+' '+fmtDate(o.effective_date)+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;">&#128465;</button>'+
+              '<button id="hr-ord-'+o.id+'" data-type="'+o.order_type+'" data-eid="'+e.id+'" data-det="'+encodeURIComponent(o.details||'{}')+'" data-dt="'+fmtDate(o.effective_date)+'" style="background:#E8EAF6;color:#3949AB;border:none;border-radius:6px;padding:4px 8px;font-size:10px;font-weight:800;cursor:pointer;">&#128196;</button>'+
             '</div>'+
           '</div>';
         }).join('')+
@@ -6848,12 +6929,12 @@ function hrPayLogForEmp(empId){
       return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;'+(i>0?'border-top:1px solid #F9F9F9;':'')+'">'+
         '<div style="flex:1;min-width:0;">'+
           '<span style="font-size:10px;font-weight:800;color:'+typeColor+';">'+typeLabel+'</span>'+
-          '<span style="font-size:10px;color:var(--text3);margin-left:6px;">'+o.effective_date+'</span>'+
+          '<span style="font-size:10px;color:var(--text3);margin-left:6px;">'+fmtDate(o.effective_date)+'</span>'+
           (d.remarks?' <span style="font-size:10px;color:var(--text3);">· '+d.remarks.replace('Increment: ','')+'</span>':'')+
         '</div>'+
         '<div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">'+
           (d.net_salary||d.newPay?'<span style="font-size:11px;font-weight:800;">Net &#8377;'+(d.net_salary||(d.newPay?d.newPay.net_salary:0)||0).toLocaleString('en-IN')+'</span>':'')+
-          '<button data-del-pay-ord-id="'+o.id+'" data-del-pay-ord-label="'+typeLabel+' '+o.effective_date+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:3px 7px;font-size:10px;font-weight:800;cursor:pointer;">&#128465;</button>'+
+          '<button data-del-pay-ord-id="'+o.id+'" data-del-pay-ord-label="'+typeLabel+' '+fmtDate(o.effective_date)+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:3px 7px;font-size:10px;font-weight:800;cursor:pointer;">&#128465;</button>'+
           (hasFullData?'<button data-ord-id="'+o.id+'" data-ord-type="'+o.order_type+'" style="background:#E3F2FD;color:#1565C0;border:none;border-radius:6px;padding:3px 7px;font-size:10px;font-weight:800;cursor:pointer;">&#128196;</button>':'')+
         '</div>'+
       '</div>';
@@ -6903,6 +6984,10 @@ async function empSaveResignation(){
     await sbUpdate('employees',empId,updateData);
     var idx=EMP_LIST.findIndex(function(e){return e.id===empId;});
     if(idx>-1) EMP_LIST[idx].status='resigned';
+    // Save order record so deletion can reinstate the employee
+    await hrSaveOrder(empId,'resignation',resDate,{
+      resDate:resDate, lwd:lwd, reason:reason, remarks:remarks
+    },null);
     toast('Resignation recorded','info');
     closeEmpSheet(); empRender();
   }catch(e){toast('Error: '+e.message,'error');}
@@ -7778,7 +7863,7 @@ function empOpenPay(empId, empName){
               '<div style="font-size:10px;color:var(--text3);">Basic ₹'+Number(p.basic||0).toLocaleString('en-IN')+' &bull; Net ₹'+Number(p.net_salary||0).toLocaleString('en-IN')+'</div>'+
             '</div>'+
             '<div style="display:flex;align-items:center;gap:4px;">'+
-              '<input type="date" value="'+p.effective_date+'" data-payid="'+p.id+'" '+
+              '<input type="date" value="'+fmtDate(p.effective_date)+'" data-payid="'+p.id+'" '+
                 'style="border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;color:#333;" '+
                 'onchange="payUpdateEffectiveDate(\''+p.id+'\',this.value)">'+
             '</div>'+
@@ -8023,9 +8108,9 @@ function empGenerateOfferLetter(empId){
   var dept=emp.department||'—';
   var doj=emp.date_of_joining||emp.doj||pay.effective_date||'—';
   var empCode=emp.employee_code||emp.emp_id||'—';
-  var today=new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
-  var dojFmt=doj&&doj!=='—'?new Date(doj).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):doj;
-  var wef=pay.effective_date?new Date(pay.effective_date).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):today;
+  var today=fmtDate(new Date());
+  var dojFmt=doj&&doj!=='—'?fmtDate(doj):doj;
+  var wef=pay.effective_date?fmtDate(pay.effective_date):today;
 
   // Parse earnings
   var extraEarnings=[];
@@ -8623,7 +8708,7 @@ async function execDelAllot(id){if(!confirm('Remove?'))return;WA_ALLOT=WA_ALLOT.
 var PC_IN=[],PC_EXP=[],PC_EMPS=[],PC_PROJS=[],PC_ACTIVE=null;
 var PC_CAT={Labour:{e:'&#128d7;',c:'#E07820'},Material:{e:'&#129521;',c:'#3B82F6'},Diesel:{e:'&#9981;',c:'#8B5CF6'},Machinery:{e:'&#128667;',c:'#F59E0B'},Food:{e:'&#127860;',c:'#10B981'},Transport:{e:'&#128667;',c:'#06B6D4'},Advance:{e:'&#128179;',c:'#EC4899'},Office:{e:'&#127970;',c:'#6B7280'},Other:{e:'&#128230;',c:'#9CA3AF'}};
 function pcFmt(n){return '\u20b9'+Number(n||0).toLocaleString('en-IN');}
-function pcFmtD(d){if(!d)return '\u2014';return new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});}
+function pcFmtD(d){if(!d)return '\u2014';return fmtDate(d);}
 function pcEmpName(id){var e=PC_EMPS.find(function(x){return x.id===id;})||{};return(e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'');}
 function pcEmpBal(id){return PC_IN.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0)-PC_EXP.filter(function(r){return r.employee_id===id;}).reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);}
 async function initPettyCash(){
@@ -9637,7 +9722,7 @@ function downloadSalaryPDF(){
         '<td>\u20b9'+Number(total).toLocaleString('en-IN')+'</td>'+
       '</tr></tfoot>'+
     '</table>'+
-    '<div class="footer">Generated on '+new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'})+
+    '<div class="footer">Generated on '+fmtDate(new Date())+
       ' &nbsp;|&nbsp; '+compName+' &nbsp;|&nbsp; Computer generated document</div>'+
     '<script>window.onload=function(){window.print();}<\/script>'+
     '</body></html>';
@@ -9692,7 +9777,7 @@ function downloadPayslipPDF(empId, monthLabel){
   if(r.pt>0)    dedRows+=erow('Profession Tax',r.pt);
   if(r.adv>0)   dedRows+=erow('Advance Recovery',r.adv);
 
-  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var today = fmtDate(new Date());
 
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
     '<title>Payslip - '+r.name+' - '+monthLabel+'</title>'+
@@ -9779,8 +9864,8 @@ function downloadIncrementLetter(empId, newBasic, oldBasic, effectiveDate, remar
   var code  = emp.employee_code||emp.emp_id||'—';
   var desig = emp.designation||emp.role||'—';
   var dept  = emp.department||'—';
-  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
-  var wefFmt = effectiveDate ? new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}) : today;
+  var today = fmtDate(new Date());
+  var wefFmt = effectiveDate ? fmtDate(effectiveDate) : today;
   var increment = Number(newBasic) - Number(oldBasic);
   var pct = Number(oldBasic)>0 ? ((increment/Number(oldBasic))*100).toFixed(1) : '0';
   var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
@@ -9968,7 +10053,7 @@ function downloadTransferOrder(empId, type, details){
   var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
   var name = ((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'—';
   var code  = emp.employee_code||emp.emp_id||'—';
-  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var today = fmtDate(new Date());
   var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
   var compAddr = typeof coAddr==='function'?coAddr():'';
   var compCIN  = typeof coCIN==='function'?coCIN():'';
@@ -9977,7 +10062,7 @@ function downloadTransferOrder(empId, type, details){
   var titleStr = isPromo ? 'PROMOTION ORDER' : 'TRANSFER ORDER';
   var effectiveDate = details.date || today;
   var wefFmt = effectiveDate&&effectiveDate!==today ?
-    new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}) : effectiveDate;
+    fmtDate(effectiveDate) : effectiveDate;
 
   var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
     '<title>'+titleStr+' - '+name+'</title>'+
@@ -10323,8 +10408,8 @@ function downloadPayFixationOrder(empId, effectiveDate, details){
   var code  = emp.employee_code||emp.emp_id||'—';
   var desig = emp.designation||emp.role||'—';
   var dept  = emp.department||'—';
-  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
-  var wefFmt= effectiveDate?new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):today;
+  var today = fmtDate(new Date());
+  var wefFmt= effectiveDate?fmtDate(effectiveDate):today;
   var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
   var compAddr = typeof coAddr==='function'?coAddr():'';
   var compCIN  = typeof coCIN==='function'?coCIN():'';
@@ -10417,7 +10502,7 @@ function downloadIDCard(empId){
   var email = emp.email||'—';
   var addr  = emp.address||'';
   var photo = emp.profile_photo||emp.photo_url||'';
-  var dojFmt= doj ? new Date(doj).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+  var dojFmt= doj ? fmtDate(doj) : '—';
   var initials = name.split(' ').map(function(w){return w[0]||'';}).join('').slice(0,2).toUpperCase();
 
   var compName  = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
@@ -10663,7 +10748,7 @@ function downloadResignationLetter(empId){
   var code  = emp.employee_code||emp.emp_id||'—';
   var desig = emp.designation||emp.role||'—';
   var dept  = emp.department||'—';
-  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var today = fmtDate(new Date());
   var resDate = emp.resignation_date||'—';
   var lwd     = emp.last_working_day||'—';
   var reason  = emp.resignation_reason||emp.rejection_reason||'Personal reasons';
@@ -10672,8 +10757,8 @@ function downloadResignationLetter(empId){
   var compCIN = typeof coCIN==='function'?coCIN():'';
   var compGST = typeof coGST==='function'?coGST():'';
 
-  var resDateFmt = resDate&&resDate!=='—'?new Date(resDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):resDate;
-  var lwdFmt     = lwd&&lwd!=='—'?new Date(lwd).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}):lwd;
+  var resDateFmt = resDate&&resDate!=='—'?fmtDate(resDate):resDate;
+  var lwdFmt     = lwd&&lwd!=='—'?fmtDate(lwd):lwd;
 
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Resignation Acceptance - '+name+'</title>'+
     '<style>body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}.page{max-width:720px;margin:0 auto;padding:40px 50px;}'+
@@ -10867,7 +10952,7 @@ function salBuildLogSection(logMap, logKeys){
                   '<td style="padding:7px 8px;text-align:right;font-weight:900;color:#1B5E20;">&#8377;'+Number(r.net_payable||0).toLocaleString('en-IN')+'</td>'+
                   '<td style="padding:7px 8px;text-align:center;">'+
                     (isPaid
-                      ? '<div style="font-size:10px;color:#1B5E20;font-weight:700;">'+r.payment_date+'</div>'+
+                      ? '<div style="font-size:10px;color:#1B5E20;font-weight:700;">'+fmtDate(r.payment_date)+'</div>'+
                         (r.payment_ref?'<div style="font-size:9px;color:var(--text3);">'+r.payment_ref+'</div>':'')
                       : '<span style="font-size:10px;color:#E65100;font-weight:700;">Pending</span>'
                     )+
@@ -11219,7 +11304,7 @@ function annDownloadPDF(){
   var compName  = typeof coName==='function'?coName():'AIPL';
   var compAddr  = typeof coAddr==='function'?coAddr():'';
   var compGST   = typeof coGST==='function'?coGST():'';
-  var today     = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var today     = fmtDate(new Date());
   var hasOT     = empList.some(function(e){return e.ot_pay>0;});
 
   function inr(n){ return '\u20b9'+Number(n||0).toLocaleString('en-IN'); }
