@@ -2422,15 +2422,8 @@ function doLogout(){
 // ═══════════════════════════════════════════
 
 // ── REGISTRATIONS DATA ─────────────────────────────────────────────────
-var REGISTRATIONS = [
-  {id:'REG-001',name:'Amit Sharma',category:'employee',role:'Site Engineer',phone:'98765 10001',email:'amit.sharma@aipl.com',company:'AIPL',dept:'Engineering',project:'NH-48 Bypass',gst:'',status:'approved',submitted:'01 Mar 2026',col:'#1565C0'},
-  {id:'REG-002',name:'Priya Nair',category:'employee',role:'QC Engineer',phone:'98765 10002',email:'priya.nair@aipl.com',company:'AIPL',dept:'QHSE',project:'Municipal Office',gst:'',status:'approved',submitted:'02 Mar 2026',col:'#2E7D32'},
-  {id:'REG-003',name:'Ravi Infra Pvt. Ltd.',category:'subcontractor',role:'Subcontractor',phone:'98765 11111',email:'ravi@raviinfra.in',company:'Ravi Infra Pvt. Ltd.',dept:'Civil Works',project:'NH-48 Bypass',gst:'27BBBRI5678G2ZY',status:'approved',submitted:'28 Feb 2026',col:'#6A1B9A'},
-  {id:'REG-004',name:'Suresh Mehta',category:'labour',role:'Labour Contractor',phone:'98765 20001',email:'suresh.mehta@gmail.com',company:'SM Labour Contractors',dept:'Labour',project:'Bridge Rehab',gst:'',status:'pending',submitted:'05 Mar 2026',col:'#E65100'},
-  {id:'REG-005',name:'Ganesh Civil Works',category:'subcontractor',role:'Subcontractor',phone:'98765 44444',email:'ganesh@ganeshcivil.in',company:'Ganesh Civil Works',dept:'Civil Works',project:'Municipal Office',gst:'27EEEGANESH7890J',status:'pending',submitted:'06 Mar 2026',col:'#6A1B9A'},
-  {id:'REG-006',name:'Rekha Patel',category:'employee',role:'Safety Officer',phone:'98765 10003',email:'rekha.patel@aipl.com',company:'AIPL',dept:'QHSE',project:'All Projects',gst:'',status:'pending',submitted:'07 Mar 2026',col:'#C62828'},
-  {id:'REG-007',name:'Vijay Labour Co.',category:'labour',role:'Labour Contractor',phone:'98765 30001',email:'vijay@vijaylabour.com',company:'Vijay Labour Co.',dept:'Labour',project:'Riverfront Drain',gst:'',status:'blacklisted',submitted:'20 Feb 2026',col:'#37474F'},
-];
+var REGISTRATIONS = [];
+
 
 var adminFilter = 'all';
 var regStep = 1;
@@ -4047,9 +4040,10 @@ function editRecord(type,id){
     var u=USERS.find(function(x){return x.id===id;});if(!u)return;
     title='Edit Employee \u2014 '+u.id;
     var nameParts=(u.name||'').split(' ');
-    var projOpts=['All Projects','Head Office','NH-48 Bypass','Municipal Office','Riverfront Drain','Bridge Rehab'].map(function(p){
-      return '<option'+(u.project===p?' selected':'')+'>'+p+'</option>';
-    }).join('');
+    var projOpts='<option value="">All Projects</option>';
+    if(typeof PROJ_DATA!=='undefined'&&PROJ_DATA.length){
+      projOpts+= PROJ_DATA.map(function(p){return '<option value="'+p.name+'"'+(u.project===p.name?' selected':'')+'>'+p.name+'</option>';}).join('');
+    }
     var stOpts=['active','pending','inactive'].map(function(st){
       return '<option value="'+st+'"'+(u.status===st?' selected':'')+'>'+st+'</option>';
     }).join('');
@@ -4068,7 +4062,7 @@ function editRecord(type,id){
       '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="e-udoj" value="'+(u.doj||'')+'">'+
       '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="e-urole" class="fsel">'+roleOpts+'</select></div><div><label class="flbl">Status</label><select id="e-ustatus" class="fsel">'+stOpts+'</select></div></div>'+
       '<div class="g2"><div><label class="flbl">Department</label><select id="e-udept" class="fsel">'+deptOpts+'</select></div><div><label class="flbl">Project</label><select id="e-uproject" class="fsel">'+projOpts+'</select></div></div>'+
-      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="e-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location</label><select id="e-ulocation" class="fsel">'+['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'].map(function(l){return '<option'+(u.location===l?' selected':'')+'>'+l+'</option>';}).join('')+'</select></div></div>'+
+      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="e-uemptype" class="fsel">'+['Full Time','Part Time','Contract','Daily Wage'].map(function(t){return '<option'+(u.empType===t?' selected':'')+'>'+t+'</option>';}).join('')+'</select></div><div><label class="flbl">Work Location / Project</label><select id="e-ulocation" class="fsel"><option value="">&#9203; Loading...</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:8px 0 4px;border-bottom:2px solid #E6510020;margin:12px 0 8px;"><div style="width:24px;height:24px;border-radius:7px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:12px;">📞</div><div style="font-size:11px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
       '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="e-uphone" class="finp" value="'+esc(u.phone||'')+'"></div><div><label class="flbl">Alternate Mobile</label><input id="e-uphone2" class="finp" value="'+esc(u.phone2||'')+'"></div></div>'+
       '<label class="flbl">Residential Address</label><textarea id="e-uaddress" class="ftxt" rows="2">'+esc(u.address||'')+'</textarea>'+
@@ -4126,10 +4120,31 @@ function editRecord(type,id){
   document.getElementById('add-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeSheet(\'ov-add\',\'sh-add\')">Cancel</button>'+
     '<button class="btn btn-navy" onclick="'+saveCall+'">&#10003; Save Changes</button>';
-  setTimeout(function(){openSheet('ov-add','sh-add');},200);
+  setTimeout(function(){
+    openSheet('ov-add','sh-add');
+    // Populate work location from live projects
+    loadLocationDropdown('e-ulocation', typeof u!=='undefined'?u.location:'');
+    loadLocationDropdown('f-ulocation', '');
+  },200);
 }
 
 function esc(s){return s?String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;'):''; }
+
+// Load work location dropdown from live projects
+async function loadLocationDropdown(selectId, currentVal){
+  var el = document.getElementById(selectId);
+  if(!el) return;
+  try{
+    var projs = await sbFetch('projects',{select:'id,name',order:'name.asc'});
+    var locs = ['Head Office'].concat(Array.isArray(projs)?projs.map(function(p){return p.name;}):[]);
+    el.innerHTML = '<option value="">-- Select Location --</option>'+
+      locs.map(function(l){
+        return '<option value="'+l+'"'+(l===currentVal?' selected':'')+'>'+l+'</option>';
+      }).join('');
+  }catch(e){
+    el.innerHTML = '<option value="">Head Office</option>';
+  }
+}
 
 function updateVendor(id){
   var v=VENDORS.find(function(x){return x.id===id;});if(!v)return;
@@ -4278,7 +4293,7 @@ function openAdd(){
       '<label class="flbl">Date of Joining</label><input class="finp" type="date" id="f-udoj">'+
       '<div class="g2"><div><label class="flbl">Role / Designation</label><select id="f-urole" class="fsel">'+catOptions('role')+'</select></div><div><label class="flbl">Department</label><select id="f-udept" class="fsel">'+catOptions('dept')+'</select></div></div>'+
       '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel" id="emp-proj-sel"><option value="">All Projects</option></select>'+
-      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option>Head Office</option><option>NH-48 Bypass Site</option><option>Municipal Office Site</option><option>Riverfront Drain Site</option><option>Bridge Rehab Site</option></select></div></div>'+
+      '<div class="g2"><div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option>Full Time</option><option>Part Time</option><option>Contract</option><option>Daily Wage</option></select></div><div><label class="flbl">Work Location / Project</label><select id="f-ulocation" class="fsel"><option value="">&#9203; Loading...</option></select></div></div>'+
       '<div style="display:flex;align-items:center;gap:8px;padding:10px 0 6px;border-bottom:2px solid #E6510020;margin:14px 0 10px;"><div style="width:28px;height:28px;border-radius:8px;background:#E6510020;display:flex;align-items:center;justify-content:center;font-size:14px;">📞</div><div style="font-size:12px;font-weight:800;color:#E65100;text-transform:uppercase;letter-spacing:.7px;">Contact Details</div></div>'+
       '<div class="g2"><div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile"></div><div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional"></div></div>'+
       '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address..."></textarea>'+
@@ -7267,7 +7282,7 @@ function empOpenForm(emp){
     '<label class="flbl">Project Assignment</label><select id="f-uproject" class="fsel"><option value="">Loading...</option></select>'+
     '<div class="g2">'+
       '<div><label class="flbl">Employment Type</label><select id="f-uemptype" class="fsel"><option value="">-- Select --</option>'+sel(empType,['Full Time','Part Time','Contract','Daily Wage'])+'</select></div>'+
-      '<div><label class="flbl">Work Location</label><select id="f-ulocation" class="fsel"><option value="">-- Select --</option>'+sel(workLoc,['Head Office','NH-48 Bypass Site','Municipal Office Site','Riverfront Drain Site','Bridge Rehab Site'])+'</select></div>'+
+      '<div><label class="flbl">Work Location / Project</label><select id="f-ulocation" class="fsel"><option value="">&#9203; Loading...</option></select></div>'+
     '</div>'+
     hdr('📞','Contact Details','#E65100')+
     '<div class="g2">'+
@@ -7367,6 +7382,9 @@ function empOpenForm(emp){
 
   openEmpSheet();
 
+  // Load work location from projects immediately
+  loadLocationDropdown('f-ulocation', workLoc);
+
   // Load Role, Dept, Project dropdowns from Supabase
   var roleVal=isEdit?(e.designation||e.role||''):'';
   var deptVal=isEdit?(e.department||e.dept||''):'';
@@ -7396,11 +7414,20 @@ function empOpenForm(emp){
       ps.innerHTML='<option value="">All Projects</option>'+
         projs.map(function(p){return '<option value="'+p.id+'"'+(p.id===projVal||p.name===projVal?' selected':'')+'>'+p.name+'</option>';}).join('');
     }
+    // Also populate work location from projects + Head Office
+    var ls=document.getElementById('f-ulocation');
+    if(ls){
+      var locOpts=['Head Office'].concat(projs.map(function(p){return p.name;}));
+      ls.innerHTML='<option value="">-- Select --</option>'+
+        locOpts.map(function(l){return '<option value="'+l+'"'+(l===workLoc?' selected':'')+'>'+l+'</option>';}).join('');
+    }
   }).catch(function(err){
     var rs=document.getElementById('f-urole');
     if(rs) rs.innerHTML='<option value="">-- Select Role --</option>'+catOptions('role');
     var ds=document.getElementById('f-udept');
     if(ds) ds.innerHTML='<option value="">-- Select Dept --</option>'+catOptions('dept');
+    var ls=document.getElementById('f-ulocation');
+    if(ls) ls.innerHTML='<option value="">Head Office</option>';
     console.warn('Dropdown load error:',err);
   });
 }
@@ -7410,8 +7437,11 @@ async function empDeleteEmployee(id,name){
   try{
     toast('Deleting...','info');
     await sbDelete('employees',id);
-    EMP_LIST=EMP_LIST.filter(function(e){return e.id!==id;});
-    USERS=USERS.filter(function(u){return u.id!==id;});
+    EMP_LIST       = EMP_LIST.filter(function(e){return e.id!==id;});
+    USERS          = USERS.filter(function(u){return u.id!==id;});
+    EMP_PAY        = EMP_PAY.filter(function(p){return p.employee_id!==id;});
+    EMP_ORDERS     = EMP_ORDERS.filter(function(o){return o.employee_id!==id;});
+    SALARY_RECORDS = SALARY_RECORDS.filter(function(r){return r.employee_id!==id;});
     closeEmpSheet();
     empRender();
     toast(name+' deleted','success');
@@ -7419,23 +7449,49 @@ async function empDeleteEmployee(id,name){
 }
 
 async function empResetPassword(empId, empName, phone){
-  var pw1 = prompt('Set new password for '+empName+'\n(min 6 characters):');
-  if(!pw1) return;
-  if(pw1.length<6){toast('Password must be at least 6 characters','warning');return;}
-  var pw2 = prompt('Confirm new password:');
-  if(pw1!==pw2){toast('Passwords do not match','warning');return;}
   if(!phone){toast('No mobile number on file — cannot reset password','error');return;}
-  try{
-    toast('Resetting password...','info');
-    // Try to sign up again (will fail if exists, so use admin password update)
-    var authResult = await authSignUp(phone, pw1);
-    if(authResult && authResult.error && authResult.error.message && authResult.error.message.includes('already')){
-      // User exists — use admin API to update
-      toast('Account exists — use Supabase dashboard to reset password, or contact support.','warning');
-      return;
-    }
-    toast(empName+'\'s login password updated!','success');
-  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+  document.getElementById('emp-sheet-title').textContent = '\uD83D\uDD10 Reset Password — '+empName;
+  document.getElementById('emp-sheet-body').innerHTML =
+    '<div style="background:#FFF3E0;border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#E65100;">'+
+      '&#8505; Login username is the mobile number: <b>'+phone+'</b>'+
+    '</div>'+
+    '<label class="flbl">New Password *</label>'+
+    '<div class="inp-wrap">'+
+      '<input id="reset-pw1" class="finp" type="password" placeholder="Min 6 characters" style="margin-bottom:0;padding-right:44px;">'+
+      '<span class="inp-ic" onclick="var el=document.getElementById(\'reset-pw1\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
+    '</div>'+
+    '<label class="flbl" style="margin-top:8px;">Confirm Password *</label>'+
+    '<div class="inp-wrap">'+
+      '<input id="reset-pw2" class="finp" type="password" placeholder="Re-enter password" style="margin-bottom:0;padding-right:44px;">'+
+      '<span class="inp-ic" onclick="var el=document.getElementById(\'reset-pw2\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
+    '</div>';
+  document.getElementById('emp-sheet-foot').innerHTML =
+    '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
+    '<button class="btn" style="background:#1B5E20;color:white;" id="reset-pw-btn">\uD83D\uDD10 Set Password</button>';
+  var btn = document.getElementById('reset-pw-btn');
+  if(btn) btn.addEventListener('click', async function(){
+    var pw1 = (document.getElementById('reset-pw1')||{}).value||'';
+    var pw2 = (document.getElementById('reset-pw2')||{}).value||'';
+    if(!pw1){toast('Enter new password','warning');return;}
+    if(pw1.length<6){toast('Min 6 characters','warning');return;}
+    if(pw1!==pw2){toast('Passwords do not match','warning');return;}
+    try{
+      toast('Updating password...','info');
+      var authResult = await authSignUp(phone, pw1);
+      if(authResult && authResult.error){
+        var msg = authResult.error.message||'';
+        if(msg.toLowerCase().includes('already')){
+          toast('Account already exists. Use Supabase Auth dashboard to reset, or employee can use Forgot Password on login.','info');
+        } else {
+          toast('Auth error: '+msg,'warning');
+        }
+      } else {
+        toast(empName+'\'s password updated successfully!','success');
+        closeEmpSheet();
+      }
+    }catch(e){toast('Error: '+e.message,'error');}
+  });
+  openEmpSheet();
 }
 
 async function empFormSave(){
@@ -9986,8 +10042,10 @@ function downloadTransferOrder(empId, type, details){
 // ════════════════════════════════════════════════════════════════════════
 
 function empDownloadHTML(){
+  // Only show employees who were actually employed (active or resigned)
+  // Exclude: rejected (never approved), pending (not yet approved), and any deleted (not in EMP_LIST)
   var all = EMP_LIST.filter(function(e){
-    return e.status==='active'||e.status==='resigned'||e.status==='rejected';
+    return e.status==='active' || e.status==='resigned';
   });
   if(!all.length) return '<div style="text-align:center;padding:40px;color:var(--text3);">No employees found.</div>';
 
