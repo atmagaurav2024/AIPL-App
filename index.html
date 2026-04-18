@@ -10450,11 +10450,10 @@ function downloadIDCard(empId){
     var rects = '';
     var x = 0;
     bars.forEach(function(b){
-      if(b.filled) rects += '<rect x="'+x+'" y="0" width="'+b.w+'" height="40" fill="#0d1f3c"/>';
+      if(b.filled) rects += '<rect x="'+x+'" y="0" width="'+b.w+'" height="32" fill="#0d1f3c"/>';
       x += b.w;
     });
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="40" viewBox="0 0 '+totalW+' 40" preserveAspectRatio="none">'+
-      '<rect width="'+totalW+'" height="40" fill="white"/>'+
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="32" viewBox="0 0 '+totalW+' 32" preserveAspectRatio="none">'+
       rects+
     '</svg>';
   }
@@ -10467,7 +10466,7 @@ function downloadIDCard(empId){
     '<title>ID Card \u2014 '+name+'</title>'+
     '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">'+
     '<style>'+
-    '*{margin:0;padding:0;box-sizing:border-box;}'+
+    '*{margin:0;padding:0;box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'+
     'body{font-family:"Nunito",sans-serif;background:#CBD5E0;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:40px 20px;gap:30px;flex-wrap:wrap;}'+
 
     /* Each card is 54×86mm — vertical CR80 */
@@ -10504,8 +10503,8 @@ function downloadIDCard(empId){
 
     /* barcode */
     '.f-barcode{padding:6px 12px 8px;flex-shrink:0;}'+
-    '.f-barcode-inner{background:white;border-radius:6px;padding:6px 8px 4px;text-align:center;}'+
-    '.f-barcode-txt{font-family:"Montserrat",sans-serif;font-size:6px;font-weight:700;color:#333;letter-spacing:3px;margin-top:2px;}'+
+    '.f-barcode-inner{padding:0 8px 4px;text-align:center;}'+
+    '.f-barcode-txt{font-family:"Montserrat",sans-serif;font-size:6px;font-weight:700;color:rgba(255,255,255,0.7);letter-spacing:3px;margin-top:3px;}'+
 
     /* validity strip */
     '.f-bottom{margin-top:auto;background:linear-gradient(90deg,#1B5E20,#1565C0);padding:4px 12px;text-align:center;flex-shrink:0;}'+
@@ -10541,7 +10540,8 @@ function downloadIDCard(empId){
     '.b-footer-accent{width:24px;height:2px;background:linear-gradient(90deg,#1B5E20,#1565C0);border-radius:2px;margin-bottom:4px;}'+
 
     '@media print{'+
-      'body{background:white;min-height:unset;padding:10mm;gap:8mm;align-items:flex-start;justify-content:flex-start;}'+
+      'body{background:white;min-height:unset;padding:10mm;gap:8mm;align-items:flex-start;justify-content:flex-start;-webkit-print-color-adjust:exact;print-color-adjust:exact;}'+
+      '*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}'+
       '.card{box-shadow:none;page-break-inside:avoid;}'+
       '@page{size:A4 portrait;margin:10mm;}'+
       '@keyframes spin{}'+
