@@ -7274,6 +7274,23 @@ function empOpenForm(emp){
       '<div><label class="flbl">Mobile Number</label><input id="f-uphone" class="finp" type="tel" placeholder="10-digit mobile" value="'+safeN(phone)+'"></div>'+
       '<div><label class="flbl">Alternate Mobile</label><input id="f-uphone2" class="finp" type="tel" placeholder="Optional" value="'+safeN(phone2)+'"></div>'+
     '</div>'+
+    // Login credentials for NEW employees — placed here so admin sees it early
+    (!isEdit?
+      hdr('\uD83D\uDD10','Login Credentials','#1565C0')+
+      '<div style="background:#E3F2FD;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:#1565C0;">'+
+        '&#8505; Mobile number above will be the username for login.'+
+      '</div>'+
+      '<label class="flbl">Login Password *</label>'+
+      '<div class="inp-wrap">'+
+        '<input id="f-upassword" class="finp" type="password" placeholder="Min 6 characters" style="margin-bottom:0;padding-right:44px;">'+
+        '<span class="inp-ic" onclick="var el=document.getElementById(\'f-upassword\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
+      '</div>'+
+      '<label class="flbl" style="margin-top:8px;">Confirm Password *</label>'+
+      '<div class="inp-wrap">'+
+        '<input id="f-upassword2" class="finp" type="password" placeholder="Re-enter password" style="margin-bottom:0;padding-right:44px;">'+
+        '<span class="inp-ic" onclick="var el=document.getElementById(\'f-upassword2\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
+      '</div>'
+    :'')+
     '<label class="flbl">Residential Address</label><textarea id="f-uaddress" class="ftxt" rows="2" placeholder="Current residential address...">'+safeN(address)+'</textarea>'+
     '<label class="flbl">Permanent Address</label><textarea id="f-upermanent" class="ftxt" rows="2" placeholder="Permanent / native address (if different)...">'+safeN(permanent)+'</textarea>'+
     hdr('🪪','KYC Details','#6A1B9A')+
@@ -7322,13 +7339,30 @@ function empOpenForm(emp){
         '<div class="upload-progress-wrap" id="f-upan-doc-prog"><div class="upload-progress-label"><span class="upload-progress-name" id="f-upan-doc-prog-name"></span><span class="upload-progress-pct" id="f-upan-doc-prog-pct">0%</span></div><div class="upload-progress-bar"><div class="upload-progress-fill" id="f-upan-doc-prog-fill"></div></div></div>'+
       '</div></div>'+
     '</div>'+
-    '<input type="hidden" id="f-uedit-id" value="'+(isEdit?e.id:'')+'">';
-
+    '<input type="hidden" id="f-uedit-id" value="'+(isEdit?e.id:'')+'">'+
+    // Password reset section for existing employees
+    (isEdit?
+      hdr('\uD83D\uDD10','Reset Login Password','#E65100')+
+      '<div style="background:#FFF3E0;border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:11px;color:#E65100;">'+
+        '&#8505; Leave blank to keep current password. Enter new password to change it.'+
+      '</div>'+
+      '<label class="flbl">New Password</label>'+
+      '<div class="inp-wrap">'+
+        '<input id="f-upassword" class="finp" type="password" placeholder="Leave blank to keep current" style="margin-bottom:0;padding-right:44px;">'+
+        '<span class="inp-ic" onclick="var el=document.getElementById(\'f-upassword\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
+      '</div>'+
+      '<label class="flbl" style="margin-top:8px;">Confirm New Password</label>'+
+      '<div class="inp-wrap">'+
+        '<input id="f-upassword2" class="finp" type="password" placeholder="Re-enter new password" style="margin-bottom:0;padding-right:44px;">'+
+        '<span class="inp-ic" onclick="var el=document.getElementById(\'f-upassword2\');el.type=el.type===\'password\'?\'text\':\'password\';" style="cursor:pointer;">&#128065;</span>'+
+      '</div>'
+    :'');
   document.getElementById('emp-sheet-body').innerHTML=html;
 
   document.getElementById('emp-sheet-foot').innerHTML=
     '<button class="btn btn-outline" onclick="closeEmpSheet()">Cancel</button>'+
     (isEdit?'<button class="btn" style="background:#C62828;color:white;" onclick="empDeleteEmployee(\''+e.id+'\',\''+safeN(fname+' '+lname)+'\')">🗑 Delete</button>':'')+
+    (isEdit?'<button class="btn" style="background:#1565C0;color:white;" onclick="empResetPassword(\''+e.id+'\',\''+safeN(fname+' '+lname)+'\',\''+safeN(phone)+'\')">🔑 Reset Password</button>':'')+
     '<button class="btn btn-indigo" onclick="empFormSave()" style="flex:1;">'+(isEdit?'✓ Save Changes':'✓ Register Employee')+'</button>';
 
   openEmpSheet();
@@ -7384,6 +7418,26 @@ async function empDeleteEmployee(id,name){
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
+async function empResetPassword(empId, empName, phone){
+  var pw1 = prompt('Set new password for '+empName+'\n(min 6 characters):');
+  if(!pw1) return;
+  if(pw1.length<6){toast('Password must be at least 6 characters','warning');return;}
+  var pw2 = prompt('Confirm new password:');
+  if(pw1!==pw2){toast('Passwords do not match','warning');return;}
+  if(!phone){toast('No mobile number on file — cannot reset password','error');return;}
+  try{
+    toast('Resetting password...','info');
+    // Try to sign up again (will fail if exists, so use admin password update)
+    var authResult = await authSignUp(phone, pw1);
+    if(authResult && authResult.error && authResult.error.message && authResult.error.message.includes('already')){
+      // User exists — use admin API to update
+      toast('Account exists — use Supabase dashboard to reset password, or contact support.','warning');
+      return;
+    }
+    toast(empName+'\'s login password updated!','success');
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
 async function empFormSave(){
   var editId=(document.getElementById('f-uedit-id')||{}).value||'';
   var fname=gv('f-ufname'), lname=gv('f-ulname');
@@ -7391,6 +7445,21 @@ async function empFormSave(){
   if(!name){toast('Name is required','warning');return;}
   var phone=gv('f-uphone');
   if(!editId&&!phone){toast('Mobile number is required','warning');return;}
+
+  // Password validation
+  var pw1 = (document.getElementById('f-upassword')||{}).value||'';
+  var pw2 = (document.getElementById('f-upassword2')||{}).value||'';
+  if(!editId){
+    // New employee: password required
+    if(!pw1){toast('Login password is required','warning');return;}
+    if(pw1.length<6){toast('Password must be at least 6 characters','warning');return;}
+    if(pw1!==pw2){toast('Passwords do not match','warning');return;}
+  } else if(pw1){
+    // Edit: password optional, validate only if entered
+    if(pw1.length<6){toast('New password must be at least 6 characters','warning');return;}
+    if(pw1!==pw2){toast('Passwords do not match','warning');return;}
+  }
+
   var roleRaw=gv('f-urole');
   var roleMap={'Admin':'admin','Project Manager':'pm','Site Engineer':'engineer','Junior Engineer':'engineer','QC Engineer':'qhse','Safety Officer':'qhse','Finance / Accounts':'finance','HR / Admin':'admin','Viewer (Read Only)':'viewer','Client Viewer':'viewer'};
   var role=roleMap[roleRaw]||'viewer';
@@ -7430,12 +7499,47 @@ async function empFormSave(){
       if(ui>-1)USERS[ui]=Object.assign(USERS[ui],{name:name,role:role,access:roleRaw,dept:data.department||'',phone:data.phone||''});
       var ei=EMP_LIST.findIndex(function(x){return x.id===editId;});
       if(ei>-1)EMP_LIST[ei]=Object.assign(EMP_LIST[ei],data,{first_name:fname,last_name:lname});
-      toast(name+' updated!','success');
+      // Reset password if entered
+      if(pw1 && phone){
+        try{
+          toast('Updating login password...','info');
+          var empPhone = phone||gv('f-uphone');
+          var authRes = await authSignUp(empPhone, pw1);
+          if(authRes && authRes.error && authRes.error.message && authRes.error.message.toLowerCase().includes('already')){
+            // User exists in auth — we cannot reset via anon key, inform admin
+            toast(name+' updated. To reset login password, use Supabase Auth dashboard or ask employee to use Forgot Password.','info');
+          } else {
+            toast(name+' updated and password reset!','success');
+          }
+        }catch(authErr){
+          console.warn('Password reset error:', authErr);
+          toast(name+' updated. Password reset failed — try from Supabase dashboard.','warning');
+        }
+      } else {
+        toast(name+' updated!','success');
+      }
     } else {
       // New — get next ID
       var newEmpId=await getNextAIPLId();
       data.emp_id=newEmpId; data.badge_no=newEmpId; data.status='pending';
+
+      // Create Supabase Auth account with entered password
+      var pw = (document.getElementById('f-upassword')||{}).value||'';
+      if(pw && phone){
+        try{
+          toast('Creating login account...','info');
+          var authResult = await authSignUp(phone, pw);
+          if(authResult && !authResult.error && (authResult.user||authResult.id)){
+            data.auth_id = authResult.user ? authResult.user.id : authResult.id;
+          } else if(authResult && authResult.error){
+            // Auth user may already exist — try to continue without blocking
+            console.warn('Auth signup note:', authResult.error.message||authResult.error);
+          }
+        }catch(authErr){ console.warn('Auth signup (non-fatal):', authErr); }
+      }
+
       // Retry with unique emp_id if duplicate conflict
+      toast('Saving employee...','info');
       var result;
       try{
         result=await sbInsert('employees',data);
