@@ -2890,10 +2890,15 @@ verifyOTP=async function(){
     try{
       toast('Creating account...','info');
       // Create Supabase Auth account
-      var authResult = await authSignUp(regData.phone, regPassword);
-      if(authResult && (authResult.id||(authResult.user&&authResult.user.id))){
-        data.auth_id = authResult.user ? authResult.user.id : authResult.id;
-      }
+      // Auth signup is optional - employee record saves even if auth fails
+      try{
+        var authResult = await authSignUp(regData.phone, regPassword);
+        if(authResult && !authResult.error && (authResult.id||(authResult.user&&authResult.user.id))){
+          data.auth_id = authResult.user ? authResult.user.id : authResult.id;
+        } else if(authResult && authResult.error){
+          console.warn('Auth signup skipped:', authResult.error.message||authResult.error);
+        }
+      }catch(authErr){ console.warn('Auth signup error (non-fatal):', authErr); }
       // Upload docs if provided
       var rPhoto=document.getElementById('r-uphoto')&&document.getElementById('r-uphoto').files[0];
       var rAadhar=document.getElementById('r-uaadhar-doc')&&document.getElementById('r-uaadhar-doc').files[0];
@@ -2902,7 +2907,17 @@ verifyOTP=async function(){
       if(rAadhar) data.aadhar_doc_url = await uploadToCloudinary(rAadhar,'kyc','r-uaadhar-doc');
       if(rPan) data.pan_doc_url = await uploadToCloudinary(rPan,'kyc','r-upan-doc');
       toast('Saving registration...','info');
-      var result=await sbInsert('employees',data);
+      // Retry with unique emp_id if duplicate conflict
+      var result;
+      try{
+        result=await sbInsert('employees',data);
+      }catch(insErr){
+        if(insErr.message&&(insErr.message.includes('duplicate')||insErr.message.includes('23505'))){
+          data.emp_id='AIPL-T'+String(Date.now()).slice(-6);
+          data.badge_no=data.emp_id;
+          result=await sbInsert('employees',data);
+        } else { throw insErr; }
+      }
       if(result&&result[0]){
         var refId=result[0].emp_id||newEmpId;
         document.getElementById('pending-ref-id').textContent='Ref: '+refId;
@@ -5047,7 +5062,6 @@ async function getNextAIPLId(){
   try{
     var data = await sbFetch('employees',{select:'emp_id',order:'created_at.desc'});
     if(!data || !data.length) return 'AIPL-001';
-    // Find highest AIPL-XXX number
     var max = 0;
     data.forEach(function(e){
       if(e.emp_id && e.emp_id.startsWith('AIPL-')){
@@ -5057,7 +5071,8 @@ async function getNextAIPLId(){
     });
     return 'AIPL-'+String(max+1).padStart(3,'0');
   } catch(e){
-    return 'AIPL-'+String(Date.now()).slice(-3);
+    // Timestamp fallback guarantees uniqueness
+    return 'AIPL-T'+String(Date.now()).slice(-6);
   }
 }
 
@@ -7468,7 +7483,17 @@ async function empFormSave(){
       // New — get next ID
       var newEmpId=await getNextAIPLId();
       data.emp_id=newEmpId; data.badge_no=newEmpId; data.status='active';
-      var result=await sbInsert('employees',data);
+      // Retry with unique emp_id if duplicate conflict
+      var result;
+      try{
+        result=await sbInsert('employees',data);
+      }catch(insErr){
+        if(insErr.message&&(insErr.message.includes('duplicate')||insErr.message.includes('23505'))){
+          data.emp_id='AIPL-T'+String(Date.now()).slice(-6);
+          data.badge_no=data.emp_id;
+          result=await sbInsert('employees',data);
+        } else { throw insErr; }
+      }
       if(result&&result[0]){
         var mapped=mapEmployee(result[0]);
         USERS.unshift(mapped);
@@ -7484,6 +7509,7 @@ async function empFormSave(){
 function empOpenPay(empId, empName){
   var existing=EMP_PAY.filter(function(p){return p.employee_id===empId;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
   var v=existing[0]||{};
+  var emp=EMP_LIST.find(function(e){return e.id===empId;})||{};
 
   // Load extra_earnings and extra_deductions from previous record if any
   var extraEarnings=v.extra_earnings?JSON.parse(v.extra_earnings):[];
@@ -7491,6 +7517,11 @@ function empOpenPay(empId, empName){
 
   var pfApplicable=v.pf_employee>0||extraEarnings.length===0?true:v.pf_applicable!==false;
   var esicApplicable=v.esic_employee>0||extraEarnings.length===0?true:v.esic_applicable!==false;
+
+  // Default effective date: DOJ for first fixation, today for revision
+  var defaultDate = existing.length
+    ? new Date().toISOString().slice(0,10)
+    : (emp.date_of_joining||emp.doj||new Date().toISOString().slice(0,10));
 
   document.getElementById('pay-sheet-title').textContent='\u{1F4B8} Pay Fixation \u2014 '+empName;
 
@@ -7503,7 +7534,7 @@ function empOpenPay(empId, empName){
       '</div>'+
       '<div>'+
         '<label style="font-size:10px;opacity:.7;display:block;margin-bottom:4px;">Effective Date *</label>'+
-        '<input id="pf-date" type="date" value="'+(existing.length?new Date().toISOString().slice(0,10):(emp?emp.date_of_joining||emp.doj||new Date().toISOString().slice(0,10):new Date().toISOString().slice(0,10)))+'" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:6px 10px;color:white;font-size:12px;font-weight:700;font-family:Nunito,sans-serif;outline:none;">'+
+        '<input id="pf-date" type="date" value="'+defaultDate+'" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:6px 10px;color:white;font-size:12px;font-weight:700;font-family:Nunito,sans-serif;outline:none;">'+
       '</div>'+
     '</div>'+
 
@@ -7600,6 +7631,29 @@ function empOpenPay(empId, empName){
 
     '<label class="flbl">Remarks / Order Reference</label>'+
     '<input id="pf-remarks" class="finp" placeholder="e.g. Pay fixation as on date of joining" value="'+(v.remarks||'')+'">'+
+
+    // ── Pay History Log with editable effective dates ──────────────────────
+    (existing.length?
+      '<div style="background:#F8FAFC;border-radius:10px;border:1px solid var(--border);padding:10px 12px;margin-top:10px;">'+
+        '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Pay History — tap date to edit</div>'+
+        existing.sort(function(a,b){return a.effective_date.localeCompare(b.effective_date);}).map(function(p,i){
+          var typeLabel={initial:'Initial Fixation',increment:'Increment',revision:'Revision'}[p.pay_type]||'Pay Record';
+          var typeColor={initial:'#1565C0',increment:'#2E7D32',revision:'#E65100'}[p.pay_type]||'#37474F';
+          return '<div style="display:flex;align-items:center;gap:8px;padding:6px 0;'+(i>0?'border-top:1px solid #F0F4F8;':'')+'">'+
+            '<div style="flex:1;">'+
+              '<div style="font-size:11px;font-weight:800;color:'+typeColor+';">'+typeLabel+'</div>'+
+              '<div style="font-size:10px;color:var(--text3);">Basic ₹'+Number(p.basic||0).toLocaleString('en-IN')+' &bull; Net ₹'+Number(p.net_salary||0).toLocaleString('en-IN')+'</div>'+
+            '</div>'+
+            '<div style="display:flex;align-items:center;gap:4px;">'+
+              '<input type="date" value="'+p.effective_date+'" data-payid="'+p.id+'" '+
+                'style="border:1px solid var(--border);border-radius:6px;padding:3px 6px;font-size:11px;font-family:Nunito,sans-serif;outline:none;color:#333;" '+
+                'onchange="payUpdateEffectiveDate(\''+p.id+'\',this.value)">'+
+            '</div>'+
+          '</div>';
+        }).join('')+
+      '</div>'
+    :'')+
+
     '<input type="hidden" id="pf-emp-id" value="'+empId+'">';
 
   document.getElementById('pay-sheet-foot').innerHTML=
@@ -7810,6 +7864,16 @@ function payCalc(){
 
 // Old name kept for compatibility
 function payAutoCalc(){payCalc();}
+
+async function payUpdateEffectiveDate(payId, newDate){
+  if(!payId||!newDate){toast('Invalid date','warning');return;}
+  try{
+    await sbUpdate('employee_pay', payId, {effective_date:newDate});
+    var rec = EMP_PAY.find(function(p){return p.id===payId;});
+    if(rec) rec.effective_date = newDate;
+    toast('Effective date updated to '+newDate,'success');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
 function payNetCalc(){payCalc();}
 
 
