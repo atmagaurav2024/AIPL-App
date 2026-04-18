@@ -6723,7 +6723,6 @@ function empOpenPromotion(empId, empName){
   document.getElementById('emp-sheet-body').innerHTML =
     '<label class="flbl">Effective Date *</label><input id="pro-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
     '<label class="flbl">New Designation / Role</label><select id="pro-role" class="fsel"><option value="">Loading...</option></select>'+
-    '<label class="flbl">New Grade</label><input id="pro-grade" class="finp" placeholder="e.g. Grade-2, Manager...">'+
     '<label class="flbl">Remarks / Order Reference</label><input id="pro-remarks" class="finp" placeholder="Promotion order reference...">'+
     '<input type="hidden" id="pro-emp-id" value="'+empId+'">';
   document.getElementById('emp-sheet-foot').innerHTML =
@@ -6740,7 +6739,7 @@ async function empSavePromotion(){
   var empId  = (document.getElementById('pro-emp-id')||{}).value||'';
   var date   = (document.getElementById('pro-date')||{}).value||'';
   var role   = (document.getElementById('pro-role')||{}).value||'';
-  var grade  = (document.getElementById('pro-grade')||{}).value||'';
+  var grade  = '';
   var remarks= (document.getElementById('pro-remarks')||{}).value||'';
   if(!empId){toast('Error: no employee','error');return;}
   if(!date){toast('Effective date required','warning');return;}
@@ -10941,7 +10940,7 @@ function empAnnualHTML(){
     '</div>'+
 
     // Custom date range (hidden by default)
-    '<div id="ann-custom" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
+    '<div id="ann-custom" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
       '<div><label class="flbl">From Date</label><input id="ann-from" class="finp" type="date" value="'+curFYStart+'-04-01"></div>'+
       '<div><label class="flbl">To Date</label><input id="ann-to" class="finp" type="date" value="'+curFYEnd+'-03-31"></div>'+
     '</div>'+
