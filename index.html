@@ -7142,100 +7142,66 @@ function empPayHTML(){
 
     var detailHTML='';
     if(latest){
-      // Parse dynamic earnings
-      var extraEarnings=[];
-      try{extraEarnings=latest.extra_earnings?JSON.parse(latest.extra_earnings):[];}catch(ex){}
-      // If no extra_earnings stored, fall back to legacy columns
+      var extraEarnings=[];try{extraEarnings=latest.extra_earnings?JSON.parse(latest.extra_earnings):[];}catch(ex){}
+      var extraDeductions=[];try{extraDeductions=latest.extra_deductions?JSON.parse(latest.extra_deductions):[];}catch(ex){}
       var earnings=extraEarnings.length?extraEarnings:[
-        {label:'DA',amount:latest.da||0},
-        {label:'HRA',amount:latest.hra||0},
-        {label:'Conveyance',amount:latest.conveyance||0},
-        {label:'Special Allowance',amount:latest.special_allowance||0},
-        {label:'Medical Allowance',amount:latest.medical_allowance||0},
-        {label:'Other Allowance',amount:latest.other_allowance||0}
+        {label:'DA',amount:latest.da||0},{label:'HRA',amount:latest.hra||0},
+        {label:'Conveyance',amount:latest.conveyance||0},{label:'Special Allowance',amount:latest.special_allowance||0},
+        {label:'Medical Allowance',amount:latest.medical_allowance||0},{label:'Other Allowance',amount:latest.other_allowance||0}
       ].filter(function(x){return x.amount>0;});
 
-      // Parse dynamic deductions
-      var extraDeductions=[];
-      try{extraDeductions=latest.extra_deductions?JSON.parse(latest.extra_deductions):[];}catch(ex){}
-
-      // Earnings rows
-      var earnRows='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
-        payMini('Basic',latest.basic,'#1565C0')+'</div>';
-      if(earnings.length){
-        // Two per row
-        var earnGrid='';
-        for(var i=0;i<earnings.length;i+=2){
-          earnGrid+='<div style="display:grid;grid-template-columns:1fr'+(earnings[i+1]?' 1fr':'')+';gap:6px;margin-bottom:4px;">';
-          earnGrid+=payMini(earnings[i].label,earnings[i].amount,'#2E7D32');
-          if(earnings[i+1])earnGrid+=payMini(earnings[i+1].label,earnings[i+1].amount,'#2E7D32');
-          earnGrid+='</div>';
-        }
-        earnRows+=earnGrid;
-      }
-
-      // Gross
-      var grossRow='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#E8F5E9;border-radius:10px;margin:6px 0;">'+
-        '<div style="font-size:12px;font-weight:800;color:#2E7D32;">Gross Salary</div>'+
-        '<div style="font-size:16px;font-weight:900;color:#2E7D32;">&#8377;'+Number(latest.gross||0).toLocaleString('en-IN')+'</div>'+
-      '</div>';
-
-      // Fixed deductions
-      var fixedDedRows='';
-      if(latest.pf_employee>0||latest.pf_employer>0){
-        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
-          payMini('PF (Employee)',latest.pf_employee,'#C62828')+
-          payMini('PF (Employer)',latest.pf_employer,'#880E4F')+
-        '</div>';
-      }
-      if(latest.esic_employee>0||latest.esic_employer>0){
-        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
-          payMini('ESIC (Employee)',latest.esic_employee,'#C62828')+
-          payMini('ESIC (Employer)',latest.esic_employer,'#880E4F')+
-        '</div>';
-      }
-      if(latest.tds>0){
-        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
-          payMini('TDS',latest.tds,'#E65100')+
-          (latest.profession_tax>0?payMini('Profession Tax',latest.profession_tax,'#880E4F'):'<div></div>')+
-        '</div>';
-      } else if(latest.profession_tax>0){
-        fixedDedRows+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:4px;">'+
-          payMini('Profession Tax',latest.profession_tax,'#880E4F')+
-          '<div></div>'+
+      function pr(l,v,col){
+        return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #F5F5F5;font-size:12px;">'+
+          '<span style="color:var(--text3);">'+l+'</span>'+
+          '<span style="font-weight:700;color:'+col+';">&#8377;'+Number(v||0).toLocaleString('en-IN')+'</span>'+
         '</div>';
       }
 
-      // Dynamic other deductions
-      var dynDedRows='';
-      if(extraDeductions.length){
-        for(var j=0;j<extraDeductions.length;j+=2){
-          dynDedRows+='<div style="display:grid;grid-template-columns:1fr'+(extraDeductions[j+1]?' 1fr':'')+';gap:6px;margin-bottom:4px;">';
-          dynDedRows+=payMini(extraDeductions[j].label,extraDeductions[j].amount,'#C62828');
-          if(extraDeductions[j+1])dynDedRows+=payMini(extraDeductions[j+1].label,extraDeductions[j+1].amount,'#C62828');
-          dynDedRows+='</div>';
-        }
-      }
+      // Earnings column
+      var earnHTML = pr('Basic',latest.basic,'#1565C0');
+      earnings.forEach(function(ex){ earnHTML+=pr(ex.label,ex.amount,'#2E7D32'); });
 
-      // Net
-      var netRow='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#1B5E2015;border-radius:10px;border:1.5px solid #1B5E2030;">'+
-        '<div style="font-size:12px;font-weight:800;color:#1B5E20;">Net Take Home</div>'+
-        '<div style="font-size:16px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
-      '</div>';
+      // Deductions column
+      var dedHTML='';
+      if(latest.pf_employee>0) dedHTML+=pr('PF (Employee 12%)',latest.pf_employee,'#C62828');
+      if(latest.pf_employer>0) dedHTML+=pr('PF (Employer 12%)',latest.pf_employer,'#880E4F');
+      if(latest.esic_employee>0) dedHTML+=pr('ESIC (Emp 0.75%)',latest.esic_employee,'#C62828');
+      if(latest.esic_employer>0) dedHTML+=pr('ESIC (Empr 3.25%)',latest.esic_employer,'#880E4F');
+      if(latest.tds>0) dedHTML+=pr('TDS',latest.tds,'#E65100');
+      if(latest.profession_tax>0) dedHTML+=pr('Profession Tax',latest.profession_tax,'#880E4F');
+      extraDeductions.forEach(function(d){ dedHTML+=pr(d.label,d.amount,'#C62828'); });
+      var totalDed=(latest.pf_employee||0)+(latest.pf_employer||0)+(latest.esic_employee||0)+(latest.esic_employer||0)+(latest.tds||0)+(latest.profession_tax||0)+extraDeductions.reduce(function(s,d){return s+(d.amount||0);},0);
 
       detailHTML=
-        '<div style="padding:10px 14px;">'+
-          // Section: Earnings
-          '<div style="font-size:10px;font-weight:800;color:#2E7D32;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">&#128197; Earnings</div>'+
-          earnRows+
-          grossRow+
-          // Section: Deductions
-          '<div style="font-size:10px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;margin:8px 0 6px;">&#128203; Deductions</div>'+
-          fixedDedRows+
-          dynDedRows+
-          netRow+
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">'+
-            '<div style="font-size:10px;color:var(--text3);">w.e.f. '+latest.effective_date+(latest.remarks?' &bull; '+latest.remarks:'')+'</div>'+
+        '<div style="border:2px solid #E0E0E0;border-radius:12px;margin:0 14px 12px;overflow:hidden;">'+
+          // Two-col header
+          '<div style="display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid #E0E0E0;">'+
+            '<div style="padding:6px 10px;background:#2E7D32;text-align:center;"><span style="font-size:10px;font-weight:800;color:white;text-transform:uppercase;">Earnings</span></div>'+
+            '<div style="padding:6px 10px;background:#C62828;text-align:center;"><span style="font-size:10px;font-weight:800;color:white;text-transform:uppercase;">Deductions</span></div>'+
+          '</div>'+
+          // Two-col body
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">'+
+            '<div style="padding:8px 10px;border-right:1px solid #F0F0F0;">'+
+              earnHTML+
+              '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:900;border-top:2px solid #2E7D32;margin-top:4px;color:#2E7D32;">'+
+                '<span>Gross</span><span>&#8377;'+Number(latest.gross||0).toLocaleString('en-IN')+'</span>'+
+              '</div>'+
+            '</div>'+
+            '<div style="padding:8px 10px;">'+
+              (dedHTML||'<div style="font-size:11px;color:var(--text3);padding:4px 0;">No deductions</div>')+
+              '<div style="display:flex;justify-content:space-between;padding:6px 0;font-size:12px;font-weight:900;border-top:2px solid #C62828;margin-top:4px;color:#C62828;">'+
+                '<span>Total</span><span>&#8377;'+Number(totalDed).toLocaleString('en-IN')+'</span>'+
+              '</div>'+
+            '</div>'+
+          '</div>'+
+          // Net Take Home footer
+          '<div style="background:#1B5E20;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">'+
+            '<div style="font-size:12px;font-weight:800;color:white;">Net Take Home</div>'+
+            '<div style="font-size:18px;font-weight:900;color:white;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
+          '</div>'+
+          // Footer: date + delete
+          '<div style="padding:8px 10px;background:#F8FAFC;display:flex;justify-content:space-between;align-items:center;">'+
+            '<div style="font-size:10px;color:var(--text3);">w.e.f. '+latest.effective_date+(latest.remarks?' &bull; '+latest.remarks.replace('Increment: ',''):'')+'</div>'+
             '<button data-pay-del-id="'+latest.id+'" data-pay-del-name="'+safeN(name)+'" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#128465; Delete</button>'+
           '</div>'+
         '</div>';
@@ -7537,7 +7503,7 @@ function empOpenPay(empId, empName){
       '</div>'+
       '<div>'+
         '<label style="font-size:10px;opacity:.7;display:block;margin-bottom:4px;">Effective Date *</label>'+
-        '<input id="pf-date" type="date" value="'+(new Date().toISOString().slice(0,10))+'" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:6px 10px;color:white;font-size:12px;font-weight:700;font-family:Nunito,sans-serif;outline:none;">'+
+        '<input id="pf-date" type="date" value="'+(existing.length?new Date().toISOString().slice(0,10):(emp?emp.date_of_joining||emp.doj||new Date().toISOString().slice(0,10):new Date().toISOString().slice(0,10)))+'" style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:7px;padding:6px 10px;color:white;font-size:12px;font-weight:700;font-family:Nunito,sans-serif;outline:none;">'+
       '</div>'+
     '</div>'+
 
@@ -9607,64 +9573,6 @@ function downloadPayslipPDF(empId, monthLabel){
 
 // ════ PATCH: empOpenPay — default effective date to DOJ, remarks shows pay history log ════
 
-var _origEmpOpenPay = empOpenPay;
-empOpenPay = function(empId, empName){
-  // Call original
-  _origEmpOpenPay(empId, empName);
-
-  // After original renders: fix effective date default and remarks
-  setTimeout(function(){
-    var emp = EMP_LIST.find(function(e){return e.id===empId;});
-    var existing = EMP_PAY.filter(function(p){return p.employee_id===empId;})
-                          .sort(function(a,b){return a.effective_date.localeCompare(b.effective_date);});
-
-    // Set effective date: if no pay record → use DOJ, else today
-    var dateEl = document.getElementById('pf-date');
-    if(dateEl && !existing.length && emp){
-      var doj = emp.date_of_joining||emp.doj||'';
-      if(doj) dateEl.value = doj;
-    }
-
-    // Replace static remarks with pay history log + editable field
-    var remarksEl = document.getElementById('pf-remarks');
-    if(remarksEl && remarksEl.parentNode){
-      var label = remarksEl.previousElementSibling;
-      if(label) label.remove();
-      var container = remarksEl.parentNode;
-
-      // Build history log HTML
-      var logHtml = '';
-      if(existing.length){
-        logHtml = '<div style="background:#F8FAFC;border-radius:10px;padding:10px 12px;margin-bottom:10px;border:1px solid var(--border);">'+
-          '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;">Pay History</div>'+
-          existing.map(function(p,i){
-            var typeLabel = {initial:'Initial Fixation',increment:'Increment',revision:'Revision'}[p.pay_type]||p.pay_type||'Pay Record';
-            var typeColor = {initial:'#1565C0',increment:'#2E7D32',revision:'#E65100'}[p.pay_type]||'#37474F';
-            return '<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;'+(i>0?'border-top:1px solid #F0F4F8;':'')+'">'+
-              '<div>'+
-                '<div style="font-size:11px;font-weight:800;color:'+typeColor+';">'+typeLabel+'</div>'+
-                '<div style="font-size:10px;color:var(--text3);">w.e.f. '+p.effective_date+(p.remarks?' • '+p.remarks:'')+'</div>'+
-              '</div>'+
-              '<div style="text-align:right;">'+
-                '<div style="font-size:12px;font-weight:900;">₹'+Number(p.basic||0).toLocaleString('en-IN')+'</div>'+
-                '<div style="font-size:10px;color:var(--text3);">Net ₹'+Number(p.net_salary||0).toLocaleString('en-IN')+'</div>'+
-              '</div>'+
-            '</div>';
-          }).join('')+
-        '</div>';
-      }
-
-      // Insert log + remarks label before the hidden input
-      var hiddenInput = document.getElementById('pf-emp-id');
-      var newBlock = document.createElement('div');
-      newBlock.innerHTML = logHtml +
-        '<label class="flbl">Remarks / Pay Order Reference</label>'+
-        '<input id="pf-remarks" class="finp" placeholder="e.g. Pay fixation as on date of joining" value="'+(remarksEl.value||'')+'">';
-      container.insertBefore(newBlock, hiddenInput);
-      remarksEl.remove();
-    }
-  }, 100);
-};
 
 // ════ INCREMENT APPROVAL LETTER ═════════════════════════════════════════
 
