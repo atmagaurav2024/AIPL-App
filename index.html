@@ -10421,21 +10421,42 @@ function downloadIDCard(empId){
   var compName  = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
   var compAddr  = typeof coAddr==='function'?coAddr():'';
   var compEmail = typeof coEmail==='function'?coEmail():'';
-  var compPhone2= typeof coPhone==='function'?coPhone():'';
 
-  // Simple barcode-like SVG using code characters
+  // Proper barcode: encode each character as fixed pattern of narrow(1)/wide(2) bars
   function barcodeStripes(txt){
-    var stripes='';
-    var seed = 0;
-    for(var i=0;i<txt.length;i++) seed += txt.charCodeAt(i);
-    // generate 60 bars of varying widths
-    var x=0;
-    for(var i=0;i<60;i++){
-      var w = (((seed * (i+7) * 13) % 3) + 1);
-      if(i%2===0) stripes += '<rect x="'+x+'" y="0" width="'+w+'" height="100%" fill="#0a1628"/>';
-      x += w + 1;
+    // Code 39 narrow=1px wide=3px, alternating bar/space
+    var C39 = {
+      '0':'nnnwwnwnn','1':'wnnwnnnnw','2':'nnwwnnnnw','3':'wnwwnnnnn',
+      '4':'nnnwwnnnw','5':'wnnwwnnnn','6':'nnwwwnnnn','7':'nnnwnnwnw',
+      '8':'wnnwnnwnn','9':'nnwwnnwnn','A':'wnnnnwnnw','B':'nnwnnwnnw',
+      'C':'wnwnnwnnn','D':'nnnnnwnnw','E':'wnnnnwnnn','F':'nnwnnwnnn',
+      'G':'nnnnnwwnw','H':'wnnnnwwnn','I':'nnwnnwwnn','J':'nnnnnwwnn',
+      'K':'wnnnnnnww','L':'nnwnnnnww','M':'wnwnnnnwn','N':'nnnnnwnnww',
+      'P':'wnnnnnnwn','Q':'nnwnnnnwn','-':'nnnnnnnww','*':'nnnnnnnwn'
+    };
+    var N=1, W=3, G=1; // narrow bar, wide bar, gap
+    var bars = [];
+    var str = ('*'+txt.toUpperCase()+'*').replace(/[^0-9A-Z\-\*]/g,'');
+    for(var i=0;i<str.length;i++){
+      var pat = C39[str[i]]||C39['*'];
+      for(var j=0;j<9;j++){
+        var w = pat[j]==='w'?W:N;
+        bars.push({w:w, filled: j%2===0}); // even=bar, odd=space
+      }
+      if(i<str.length-1) bars.push({w:G, filled:false}); // inter-char gap
     }
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="32" viewBox="0 0 120 40" preserveAspectRatio="none">'+stripes+'</svg>';
+    // Build SVG
+    var totalW = bars.reduce(function(s,b){return s+b.w;},0);
+    var rects = '';
+    var x = 0;
+    bars.forEach(function(b){
+      if(b.filled) rects += '<rect x="'+x+'" y="0" width="'+b.w+'" height="40" fill="#0d1f3c"/>';
+      x += b.w;
+    });
+    return '<svg xmlns="http://www.w3.org/2000/svg" width="100%" height="40" viewBox="0 0 '+totalW+' 40" preserveAspectRatio="none">'+
+      '<rect width="'+totalW+'" height="40" fill="white"/>'+
+      rects+
+    '</svg>';
   }
 
   var photoHTML = photo
@@ -10622,7 +10643,6 @@ function downloadIDCard(empId){
         '<div class="b-footer-detail">'+
           (compAddr?compAddr+'<br>':'')+
           (compEmail?'&#9993; '+compEmail:'')+
-          (compPhone2?'&nbsp;&nbsp;&#128222; '+compPhone2:'')+
         '</div>'+
       '</div>'+
     '</div>'+
