@@ -2217,6 +2217,13 @@ var currentApp = null;
 var appScreenIds = ['app-dashboard','app-attendance','app-registry'];
 
 function showApp(name){
+  // Permission check (admins bypass, dashboard always allowed)
+  if(name!=='dashboard' && currentUser && currentUser.role!=='admin'){
+    if(!canAccess(name,'view')){
+      toast('Access denied — you do not have permission to view this module','warning');
+      return;
+    }
+  }
   // Hide all login/splash screens first
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on');});
   document.querySelectorAll('.app-screen').forEach(function(s){s.classList.remove('on');});
@@ -2417,6 +2424,7 @@ async function doLogin(){
         updateDashboardUser();
         showApp('dashboard');
         loadPendingApprovals();
+        loadUserPermissions();
         toast('Welcome back, '+currentUser.name+'!','success');
       } else {
         // Auth succeeded but no employee record — could be admin
@@ -2424,6 +2432,7 @@ async function doLogin(){
         updateDashboardUser();
         showApp('dashboard');
         loadPendingApprovals();
+        loadUserPermissions();
         toast('Welcome back!','success');
       }
     } else if(result.error_description||result.msg){
@@ -9437,16 +9446,90 @@ function acLoadPermissions(){acLoadPerms();}
 function acToggle(modKey,param,chk){if(!AC_PERMISSIONS[modKey])AC_PERMISSIONS[modKey]={};AC_PERMISSIONS[modKey][param]=chk.checked;}
 async function acSavePermissions(){
   if(!AC_TARGET){toast('Select employee or role first','warning');return;}
-  toast('Saving...','info');
+  toast('Saving permissions...','info');
   try{
-    var inserts=[];AC_MODS.forEach(function(mod){var mp=AC_PERMISSIONS[mod.key]||{};mod.params.forEach(function(p){inserts.push({target_type:AC_TAB,employee_id:AC_TAB==='emp'?AC_TARGET:null,role:AC_TAB==='role'?AC_TARGET:null,module:mod.key,permission:p,granted:mp[p]===true});});});
+    var inserts=[];
+    AC_MODS.forEach(function(mod){
+      var mp=AC_PERMISSIONS[mod.key]||{};
+      mod.params.forEach(function(p){
+        inserts.push({
+          target_type:AC_TAB,
+          employee_id:AC_TAB==='emp'?AC_TARGET:null,
+          role:AC_TAB==='role'?AC_TARGET:null,
+          module:mod.key,
+          permission:p,
+          granted:mp[p]===true
+        });
+      });
+    });
     var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;
-    await fetch(SUPABASE_URL+'/rest/v1/access_permissions?'+filter,{method:'DELETE',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}});
-    await fetch(SUPABASE_URL+'/rest/v1/access_permissions',{method:'POST',headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},body:JSON.stringify(inserts)});
-    toast('\u2713 Permissions saved!','success');
-  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+    // Delete existing then insert fresh
+    await fetch(SUPABASE_URL+'/rest/v1/access_permissions?'+filter,{
+      method:'DELETE',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY}
+    });
+    var res = await fetch(SUPABASE_URL+'/rest/v1/access_permissions',{
+      method:'POST',
+      headers:{'apikey':SUPABASE_ANON_KEY,'Authorization':'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json','Prefer':'return=minimal'},
+      body:JSON.stringify(inserts)
+    });
+    if(!res.ok){
+      var err=await res.text();
+      // Table may not exist yet
+      if(err.includes('relation') || err.includes('does not exist')){
+        toast('Table "access_permissions" not found. Run the SQL below to create it.','error');
+        console.warn('CREATE TABLE access_permissions (id uuid DEFAULT gen_random_uuid() PRIMARY KEY, target_type text, employee_id uuid REFERENCES employees(id) ON DELETE CASCADE, role text, module text, permission text, granted boolean DEFAULT false, created_at timestamptz DEFAULT now());');
+        return;
+      }
+      throw new Error(err);
+    }
+    toast('\u2713 Permissions saved for '+(AC_TAB==='emp'?'employee':'role')+'!','success');
+    // Reload user permissions if saving for current user
+    if(AC_TAB==='emp' && currentUser && AC_TARGET===currentUser.id){
+      await loadUserPermissions();
+    }
+  }catch(e){toast('Error saving: '+e.message,'error');console.error(e);}
 }
 
+// ── Permission enforcement ─────────────────────────────────────────────
+var USER_PERMISSIONS = {}; // loaded after login
+
+async function loadUserPermissions(){
+  if(!currentUser) return;
+  try{
+    // Load by employee_id first, then by role
+    var empFilter = 'employee_id=eq.'+currentUser.id;
+    var roleFilter = 'role=eq.'+(currentUser.access||currentUser.role||'');
+    var results = await Promise.all([
+      sbFetch('access_permissions',{select:'*',filter:empFilter}),
+      sbFetch('access_permissions',{select:'*',filter:roleFilter})
+    ]);
+    USER_PERMISSIONS = {};
+    // Role permissions first (lower priority)
+    if(Array.isArray(results[1])) results[1].forEach(function(r){
+      if(!USER_PERMISSIONS[r.module]) USER_PERMISSIONS[r.module]={};
+      USER_PERMISSIONS[r.module][r.permission] = r.granted;
+    });
+    // Employee-specific permissions override role (higher priority)
+    if(Array.isArray(results[0])) results[0].forEach(function(r){
+      if(!USER_PERMISSIONS[r.module]) USER_PERMISSIONS[r.module]={};
+      USER_PERMISSIONS[r.module][r.permission] = r.granted;
+    });
+  }catch(e){
+    USER_PERMISSIONS = {};
+    console.warn('loadUserPermissions: table may not exist yet',e);
+  }
+}
+
+function canAccess(module, permission){
+  // Admins always have full access
+  if(currentUser && currentUser.role==='admin') return true;
+  // If no permissions defined, default to allow (graceful degradation)
+  if(!Object.keys(USER_PERMISSIONS).length) return true;
+  var mp = USER_PERMISSIONS[module];
+  if(!mp) return false;
+  return mp[permission||'view'] === true;
+}
 
 // ════ COMPANY DETAILS ═══════════════════════════════════════════════════
 
