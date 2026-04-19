@@ -5657,6 +5657,7 @@ async function salLoadRecords(){
 }
 
 // ── Finalise salary: save all employee records for the month ─────────────
+
 async function salFinalise(){
   var month = parseInt((document.getElementById('sal-month')||{}).value)||0;
   var year  = parseInt((document.getElementById('sal-year')||{}).value)||0;
@@ -5665,45 +5666,76 @@ async function salFinalise(){
   var MONTHS=['','January','February','March','April','May','June','July','August','September','October','November','December'];
   var monthLabel = MONTHS[month]+' '+year;
 
-  // Check already finalised
-  var already = SALARY_RECORDS.filter(function(r){return r.month===month&&r.year===year;});
+  // Collect only checked/selected employees
+  var active = EMP_LIST.filter(function(e){return e.status==='active';});
+  var selected = active.filter(function(e){
+    var chk = document.getElementById('sal-sel-'+e.id);
+    return chk && chk.checked;
+  });
+  if(!selected.length){toast('Select at least one employee to finalise','warning');return;}
+
+  // Check already finalised for selected employees
+  var already = SALARY_RECORDS.filter(function(r){
+    return r.month===month && r.year===year &&
+           selected.some(function(e){return e.id===r.employee_id;});
+  });
   if(already.length){
-    if(!confirm('Salary for '+monthLabel+' is already finalised ('+already.length+' records).\n\nOverwrite / re-finalise?')) return;
-    // Delete existing records for this month
+    if(!confirm('Salary for '+already.length+' of these employees already finalised for '+monthLabel+'.\n\nOverwrite?')) return;
     try{
-      for(var i=0;i<already.length;i++){
-        await sbDelete('salary_records', already[i].id);
-      }
-      SALARY_RECORDS = SALARY_RECORDS.filter(function(r){return !(r.month===month&&r.year===year);});
-    }catch(ex){ console.warn('Could not delete old records',ex); }
+      for(var i=0;i<already.length;i++) await sbDelete('salary_records',already[i].id);
+      SALARY_RECORDS = SALARY_RECORDS.filter(function(r){
+        return !(r.month===month&&r.year===year&&selected.some(function(e){return e.id===r.employee_id;}));
+      });
+    }catch(ex){console.warn('delete old:',ex);}
   }
 
-  var active = EMP_LIST.filter(function(e){return e.status==='active';});
   var toSave = [];
-
-  active.forEach(function(e){
+  selected.forEach(function(e){
     var name = ((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
     var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;})
                       .sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
     var pay = pays[0];
-    if(!pay) return; // skip if no pay structure
+    if(!pay) return;
 
-    var daysEl = document.getElementById('sal-days-'+e.id);
-    var otEl   = document.getElementById('sal-ot-'+e.id);
-    var advEl  = document.getElementById('sal-adv-'+e.id);
-    var lwp    = parseFloat(daysEl?daysEl.value:0)||0;
-    var days   = Math.max(0, 26 - lwp); // days worked = 26 - LWP
-    var ot     = parseFloat(otEl?otEl.value:0)||0;
-    var adv    = parseFloat(advEl?advEl.value:0)||0;
+    var lwp  = parseFloat((document.getElementById('sal-days-'+e.id)||{value:0}).value)||0;
+    var days = Math.max(0, 26 - lwp);
+    var ot   = parseFloat((document.getElementById('sal-ot-'+e.id)||{value:0}).value)||0;
+    var ratio = days/26;
 
-    var gross    = parseFloat(pay.gross)||0;
-    var earned   = Math.round(gross/26*days);
-    var otPay    = Math.round(gross/26/8*1.5*ot);
-    var pfEmp    = Math.round((pay.pf_employee||0)*days/26);
-    var esic     = Math.round((pay.esic_employee||0)*days/26);
-    var tds      = pay.tds||0;
-    var pt       = pay.profession_tax||0;
-    var payable  = Math.max(0, earned+otPay-pfEmp-esic-tds-pt-adv);
+    // Read earnings from DOM (editable)
+    var basic   = parseFloat((document.getElementById('sal-earn-basic-'+e.id)||{value:pay.basic||0}).value)||0;
+    var grossEl = document.getElementById('sal-earn-gross-'+e.id);
+    var gross   = grossEl ? parseFloat(grossEl.value)||0 : parseFloat(pay.gross||0);
+    var earned  = Math.round(gross * ratio);
+    var otPay   = Math.round(gross/26/8*1.5*ot);
+
+    // Read deductions from DOM (editable)
+    var pfEmp = parseFloat((document.getElementById('sal-ded-pf-'+e.id)||{value:0}).value)||0;
+    var esic  = parseFloat((document.getElementById('sal-ded-esic-'+e.id)||{value:0}).value)||0;
+    var tds   = parseFloat((document.getElementById('sal-ded-tds-'+e.id)||{value:0}).value)||0;
+    var pt    = parseFloat((document.getElementById('sal-ded-pt-'+e.id)||{value:0}).value)||0;
+    var adv   = parseFloat((document.getElementById('sal-ded-adv-'+e.id)||{value:0}).value)||0;
+    // Extra custom deductions
+    var extraDeds = [];
+    var extraDedEls = document.querySelectorAll('[data-extra-ded-emp="'+e.id+'"]');
+    var extraDedTotal = 0;
+    extraDedEls.forEach(function(el){
+      var amt = parseFloat(el.value)||0;
+      var lbl = el.getAttribute('data-extra-ded-label')||'Other';
+      if(amt) { extraDeds.push({label:lbl,amount:amt}); extraDedTotal+=amt; }
+    });
+    // Extra custom earnings
+    var extraEarns = [];
+    var extraEarnEls = document.querySelectorAll('[data-extra-earn-emp="'+e.id+'"]');
+    var extraEarnTotal = 0;
+    extraEarnEls.forEach(function(el){
+      var amt = parseFloat(el.value)||0;
+      var lbl = el.getAttribute('data-extra-earn-label')||'Other';
+      if(amt) { extraEarns.push({label:lbl,amount:amt}); extraEarnTotal+=amt; }
+    });
+
+    var totalDed = pfEmp+esic+tds+pt+adv+extraDedTotal;
+    var payable  = Math.max(0, earned+otPay+extraEarnTotal-totalDed);
 
     toSave.push({
       month:month, year:year, month_label:monthLabel,
@@ -5712,131 +5744,205 @@ async function salFinalise(){
       designation:e.designation||e.role||'',
       department:e.department||'',
       days_worked:days, ot_hours:ot, advance_deduct:adv,
-      basic:pay.basic||0, gross:gross, earned:earned, ot_pay:otPay,
+      basic:basic, gross:gross, earned:earned, ot_pay:otPay,
       pf_employee:pfEmp, esic_employee:esic, tds:tds,
       profession_tax:pt, net_payable:payable,
       pay_structure_id:pay.id||null,
+      extra_earnings:extraEarns.length?JSON.stringify(extraEarns):null,
+      extra_deductions:extraDeds.length?JSON.stringify(extraDeds):null,
       finalised_by:currentUser?currentUser.name:null,
       finalised_at:new Date().toISOString()
     });
   });
 
-  if(!toSave.length){toast('No employees with pay structure to finalise','warning');return;}
-
-  toast('Finalising salary for '+monthLabel+'...','info');
+  if(!toSave.length){toast('No employees with pay structure selected','warning');return;}
+  toast('Finalising '+toSave.length+' employees for '+monthLabel+'...','info');
   try{
-    // Insert all records
-    var inserted = [];
+    var inserted=[];
     for(var j=0;j<toSave.length;j++){
-      var res = await sbInsert('salary_records', toSave[j]);
+      var res=await sbInsert('salary_records',toSave[j]);
       if(res&&res[0]) inserted.push(res[0]);
     }
-    SALARY_RECORDS = inserted.concat(SALARY_RECORDS);
+    SALARY_RECORDS=inserted.concat(SALARY_RECORDS);
     toast('Salary finalised for '+monthLabel+' — '+inserted.length+' employees','success');
-    window._salRows = [];
-    window._salMonth = '';
-    // Re-render salary tab to show the log
+    window._salRows=[]; window._salMonth='';
     empRender();
-  }catch(e){
-    toast('Error: '+e.message,'error');
-    console.error(e);
-  }
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
-// ── Salary tab HTML — two views: Current Month input + Monthly Log ────────
+function salRecalc(empId){
+  var lwp   = parseFloat((document.getElementById('sal-days-'+empId)||{value:0}).value)||0;
+  var days  = Math.max(0,26-lwp); var ratio=days/26;
+  var gross = parseFloat((document.getElementById('sal-earn-gross-'+empId)||{value:0}).value)||0;
+  var ot    = parseFloat((document.getElementById('sal-ot-'+empId)||{value:0}).value)||0;
+  var earned = Math.round(gross*ratio);
+  var otPay  = Math.round(gross/26/8*1.5*ot);
+  var pf   = parseFloat((document.getElementById('sal-ded-pf-'+empId)||{value:0}).value)||0;
+  var esic = parseFloat((document.getElementById('sal-ded-esic-'+empId)||{value:0}).value)||0;
+  var tds  = parseFloat((document.getElementById('sal-ded-tds-'+empId)||{value:0}).value)||0;
+  var pt   = parseFloat((document.getElementById('sal-ded-pt-'+empId)||{value:0}).value)||0;
+  var adv  = parseFloat((document.getElementById('sal-ded-adv-'+empId)||{value:0}).value)||0;
+  var extraD=0; document.querySelectorAll('[data-extra-ded-emp="'+empId+'"]').forEach(function(el){extraD+=parseFloat(el.value)||0;});
+  var extraE=0; document.querySelectorAll('[data-extra-earn-emp="'+empId+'"]').forEach(function(el){extraE+=parseFloat(el.value)||0;});
+  var net = Math.max(0, earned+otPay+extraE-pf-esic-tds-pt-adv-extraD);
+  var pel = document.getElementById('sal-payable-'+empId);
+  if(pel) pel.textContent = '₹'+net.toLocaleString('en-IN');
+}
+
+function salAddExtraRow(empId, type){
+  // type = 'earn' or 'ded'
+  var containerId = 'sal-extra-'+type+'-'+empId;
+  var container = document.getElementById(containerId);
+  if(!container) return;
+  var idx = container.children.length;
+  var row = document.createElement('div');
+  row.style.cssText='display:grid;grid-template-columns:1fr auto auto;gap:4px;margin-top:4px;align-items:center;';
+  var col = type==='earn'?'#1B5E20':'#C62828';
+  row.innerHTML=
+    '<input class="finp" placeholder="Label (e.g. Bonus)" style="margin-bottom:0;font-size:11px;" '+
+      'data-extra-'+type+'-emp="'+empId+'" data-extra-'+type+'-label="" '+
+      'oninput="this.setAttribute(\'data-extra-'+type+'-label\',this.value)" style="grid-column:1;">'+
+    '<input class="finp" type="number" placeholder="Amount" min="0" style="margin-bottom:0;font-size:11px;" '+
+      'data-extra-'+type+'-emp="'+empId+'" data-extra-'+type+'-label="Custom" '+
+      'oninput="salRecalc(\''+empId+'\')">'+
+    '<button onclick="this.parentElement.remove();salRecalc(\''+empId+'\')" '+
+      'style="background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">✕</button>';
+  container.appendChild(row);
+}
+
 function empSalaryHTML(){
   var active = EMP_LIST.filter(function(e){return e.status==='active';});
-
-  // Clear stale cache so View Sheet always rebuilds from current DOM inputs
-  window._salRows = [];
-  window._salMonth = '';
-
-  // Load records if not yet loaded
+  window._salRows=[]; window._salMonth='';
   if(!SALARY_RECORDS.length) salLoadRecords();
 
-  var now = new Date();
+  var now=new Date();
   var MONTHS=['','January','February','March','April','May','June','July','August','September','October','November','December'];
-  var monthOpts = MONTHS.slice(1).map(function(m,i){
-    return '<option value="'+(i+1)+'"'+((i+1)===now.getMonth()+1?' selected':'')+'>'+m+'</option>';
-  }).join('');
-  var yearOpts = [now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1].map(function(y){
-    return '<option value="'+y+'"'+(y===now.getFullYear()?' selected':'')+'>'+y+'</option>';
-  }).join('');
+  var monthOpts=MONTHS.slice(1).map(function(m,i){return '<option value="'+(i+1)+'"'+((i+1)===now.getMonth()+1?' selected':'')+'>'+m+'</option>';}).join('');
+  var yearOpts=[now.getFullYear()-1,now.getFullYear(),now.getFullYear()+1].map(function(y){return '<option value="'+y+'"'+(y===now.getFullYear()?' selected':'')+'>'+y+'</option>';}).join('');
 
-  // ── Header: month/year selector + two actions ──────────────────────────
   var header =
     '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
-      '<div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px;">&#128200; Monthly Salary</div>'+
-      '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Set working days, OT and advance for each employee, then click <b>Finalise</b> to save as permanent record.</div>'+
-      '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">'+
+      '<div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px;">&#128200; Monthly Salary Finalisation</div>'+
+      '<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">Select employees, edit earnings/deductions, then click <b>Finalise Selected</b>.</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
         '<div><label class="flbl">Month</label><select id="sal-month" class="fsel">'+monthOpts+'</select></div>'+
         '<div><label class="flbl">Year</label><select id="sal-year" class="fsel">'+yearOpts+'</select></div>'+
-        '<button onclick="salFinalise()" style="padding:10px 16px;background:#1B5E20;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#10003; Finalise</button>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<button onclick="salSelectAll(true)" style="flex:1;padding:8px;background:#E8F5E9;color:#1B5E20;border:1px solid #A5D6A7;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">&#9989; Select All</button>'+
+        '<button onclick="salSelectAll(false)" style="flex:1;padding:8px;background:#F5F5F5;color:var(--text2);border:1px solid var(--border);border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;">&#9645; Deselect All</button>'+
+        '<button onclick="salFinalise()" style="flex:2;padding:8px 14px;background:#1B5E20;color:white;border:none;border-radius:8px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#10003; Finalise Selected</button>'+
       '</div>'+
     '</div>';
 
-  // ── Employee rows ──────────────────────────────────────────────────────
-  var rows = '';
+  var rows='';
   if(!active.length){
-    rows = '<div style="text-align:center;padding:20px;color:var(--text3);">No active employees.</div>';
+    rows='<div style="text-align:center;padding:20px;color:var(--text3);">No active employees.</div>';
   } else {
     rows = active.map(function(e){
-      var name = ((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
-      var pays = EMP_PAY.filter(function(p){return p.employee_id===e.id;})
-                        .sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
-      var latest = pays[0];
-      if(!latest) return (
+      var name=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
+      var pays=EMP_PAY.filter(function(p){return p.employee_id===e.id;}).sort(function(a,b){return b.effective_date.localeCompare(a.effective_date);});
+      var pay=pays[0];
+      if(!pay) return (
         '<div style="background:white;border-radius:12px;padding:12px 14px;margin-bottom:8px;border-left:3px solid #E65100;">'+
           '<div style="font-size:13px;font-weight:800;">'+name+'</div>'+
-          '<div style="font-size:11px;color:#E65100;margin-top:4px;">&#9888; Pay structure not fixed. '+
-            '<span style="cursor:pointer;text-decoration:underline;" onclick="empTab(\'pay\',document.getElementById(\'emp-t-pay\'))">Fix now</span>'+
-          '</div>'+
+          '<div style="font-size:11px;color:#E65100;margin-top:4px;">&#9888; No pay structure. <span style="cursor:pointer;text-decoration:underline;" onclick="empTab(\'pay\',document.getElementById(\'emp-t-pay\'))">Fix now</span></div>'+
         '</div>'
       );
+
+      var ratio = 1; // default full month
+      var b  = pay.basic||0;
+      var g  = pay.gross||0;
+      var pf = pay.pf_employee||0;
+      var es = pay.esic_employee||0;
+      var td = pay.tds||0;
+      var pt = pay.profession_tax||0;
+      var net= pay.net_salary||0;
+
       return (
-        '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;" id="sal-row-'+e.id+'">'+
-          '<div style="padding:10px 14px;display:flex;align-items:center;gap:10px;">'+
-            '<div style="flex:1;">'+
+        '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" id="sal-row-'+e.id+'">'+
+
+          // ── Header row with checkbox ──────────────────────────────────
+          '<div style="padding:10px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">'+
+            '<input type="checkbox" id="sal-sel-'+e.id+'" checked style="width:18px;height:18px;accent-color:#1B5E20;cursor:pointer;flex-shrink:0;">'+
+            '<label for="sal-sel-'+e.id+'" style="flex:1;cursor:pointer;">'+
               '<div style="font-size:13px;font-weight:800;">'+name+'</div>'+
               '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
-            '</div>'+
+            '</label>'+
             '<div style="text-align:right;">'+
-              '<div style="font-size:13px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
-              '<div style="font-size:10px;color:var(--text3);">Net/month</div>'+
+              '<div id="sal-payable-'+e.id+'" style="font-size:15px;font-weight:900;color:#1B5E20;">&#8377;'+Number(net).toLocaleString('en-IN')+'</div>'+
+              '<div style="font-size:9px;color:var(--text3);">Net Payable</div>'+
             '</div>'+
           '</div>'+
-          '<div style="padding:0 14px 10px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">'+
-            '<div><label class="flbl" style="margin-bottom:2px;">LWP Days</label>'+
-              '<input id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="26" value="0" placeholder="0" style="margin-bottom:0;" oninput="empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')"></div>'+
+
+          // ── Attendance inputs ──────────────────────────────────────────
+          '<div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-bottom:1px solid #F0F0F0;">'+
+            '<div><label class="flbl" style="margin-bottom:2px;">LWP Days (0–26)</label>'+
+              '<input id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="26" value="0" style="margin-bottom:0;" oninput="salRecalc(\''+e.id+'\')"></div>'+
             '<div><label class="flbl" style="margin-bottom:2px;">OT Hours</label>'+
-              '<input id="sal-ot-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput="empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')"></div>'+
-            '<div><label class="flbl" style="margin-bottom:2px;">Advance Deduct</label>'+
-              '<input id="sal-adv-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput="empCalcSalary(\''+e.id+'\','+latest.gross+','+latest.net_salary+','+latest.pf_employee+','+latest.esic_employee+','+latest.tds+')"></div>'+
+              '<input id="sal-ot-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput="salRecalc(\''+e.id+'\')"></div>'+
           '</div>'+
-          '<div style="margin:0 14px 10px;padding:8px 12px;background:#E8F5E9;border-radius:8px;display:flex;justify-content:space-between;align-items:center;">'+
-            '<div style="font-size:12px;font-weight:800;color:#1B5E20;">Payable Amount</div>'+
-            '<div id="sal-payable-'+e.id+'" style="font-size:16px;font-weight:900;color:#1B5E20;">&#8377;'+Number(latest.net_salary||0).toLocaleString('en-IN')+'</div>'+
+
+          // ── Earnings ──────────────────────────────────────────────────
+          '<div style="padding:10px 14px;border-bottom:1px solid #F0F0F0;">'+
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
+              '<span style="font-size:10px;font-weight:800;color:#1B5E20;text-transform:uppercase;letter-spacing:.5px;">&#128178; Earnings</span>'+
+              '<button onclick="salAddExtraRow(\''+e.id+'\',\'earn\')" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Add</button>'+
+            '</div>'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'+
+              '<div style="font-size:10px;color:var(--text3);">Basic</div>'+
+              '<input id="sal-earn-basic-'+e.id+'" class="finp" type="number" value="'+b+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+              '<div style="font-size:10px;color:var(--text3);">Gross (full month)</div>'+
+              '<input id="sal-earn-gross-'+e.id+'" class="finp" type="number" value="'+g+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+            '</div>'+
+            '<div id="sal-extra-earn-'+e.id+'"></div>'+
           '</div>'+
+
+          // ── Deductions ────────────────────────────────────────────────
+          '<div style="padding:10px 14px;">'+
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
+              '<span style="font-size:10px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;">&#128683; Deductions</span>'+
+              '<button onclick="salAddExtraRow(\''+e.id+'\',\'ded\')" style="background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Add</button>'+
+            '</div>'+
+            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'+
+              '<div style="font-size:10px;color:var(--text3);">PF (Employee)</div>'+
+              '<input id="sal-ded-pf-'+e.id+'" class="finp" type="number" value="'+pf+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+              '<div style="font-size:10px;color:var(--text3);">ESIC (Employee)</div>'+
+              '<input id="sal-ded-esic-'+e.id+'" class="finp" type="number" value="'+es+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+              '<div style="font-size:10px;color:var(--text3);">TDS</div>'+
+              '<input id="sal-ded-tds-'+e.id+'" class="finp" type="number" value="'+td+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+              '<div style="font-size:10px;color:var(--text3);">Profession Tax</div>'+
+              '<input id="sal-ded-pt-'+e.id+'" class="finp" type="number" value="'+pt+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+              '<div style="font-size:10px;color:var(--text3);">Advance Recovery</div>'+
+              '<input id="sal-ded-adv-'+e.id+'" class="finp" type="number" value="0" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+            '</div>'+
+            '<div id="sal-extra-ded-'+e.id+'"></div>'+
+          '</div>'+
+
         '</div>'
       );
     }).join('');
   }
 
-  // ── Monthly Log ────────────────────────────────────────────────────────
-  // Group SALARY_RECORDS by month+year
-  var logMap = {};
+  var logMap={};
   SALARY_RECORDS.forEach(function(r){
-    var key = r.year+'-'+String(r.month).padStart(2,'0');
+    var key=r.year+'-'+String(r.month).padStart(2,'0');
     if(!logMap[key]) logMap[key]={label:r.month_label,month:r.month,year:r.year,records:[],total:0};
-    logMap[key].records.push(r);
-    logMap[key].total += Number(r.net_payable||0);
+    logMap[key].records.push(r); logMap[key].total+=Number(r.net_payable||0);
   });
-  var logKeys = Object.keys(logMap).sort().reverse();
+  var logKeys=Object.keys(logMap).sort().reverse();
+  var logSection=salBuildLogSection(logMap,logKeys);
 
-  var logSection = salBuildLogSection(logMap, logKeys);
-
-  return header + rows + logSection;
+  return header+rows+logSection;
 }
+
+function salSelectAll(checked){
+  EMP_LIST.filter(function(e){return e.status==='active';}).forEach(function(e){
+    var chk=document.getElementById('sal-sel-'+e.id);
+    if(chk) chk.checked=checked;
+  });
+}
+
 
 function salToggleLog(divId){
   var el  = document.getElementById(divId);
