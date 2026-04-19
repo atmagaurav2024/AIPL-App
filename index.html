@@ -9372,6 +9372,33 @@ async function initAccess(){
 }
 
 
+async function acBuildRoleDropdown(){
+  var sel = document.getElementById('ac-role-sel');
+  if(sel) sel.innerHTML = '<option value="">&#9203; Loading roles...</option>';
+  try{
+    // Fetch roles from categories table
+    var rows = await sbFetch('categories',{select:'name',filter:'type=eq.role&active=eq.true',order:'name.asc'});
+    var roles = Array.isArray(rows) ? rows.map(function(r){return r.name;}) : [];
+    // Fallback: distinct designations from employees if categories empty
+    if(!roles.length){
+      var emps = await sbFetch('employees',{select:'designation',filter:'status=eq.active'});
+      if(Array.isArray(emps)){
+        var seen={};
+        emps.forEach(function(e){ if(e.designation) seen[e.designation]=true; });
+        roles = Object.keys(seen).sort();
+      }
+    }
+    if(sel){
+      sel.innerHTML = roles.length
+        ? '<option value="">— Select Role —</option>'+roles.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')
+        : '<option value="">— No roles found —</option>';
+    }
+  }catch(err){
+    console.error('acBuildRoleDropdown error:',err);
+    if(sel) sel.innerHTML='<option value="">— Error loading roles —</option>';
+  }
+}
+
 async function acSwitchTab(tab){
   AC_TAB=tab;AC_TARGET=null;AC_PERMISSIONS={};
   var eb=document.getElementById('ac-tab-emp'),rb=document.getElementById('ac-tab-role'),sd=document.getElementById('ac-selector');
