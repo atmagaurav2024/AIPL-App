@@ -10339,6 +10339,47 @@ function empDocList(e){
     );
   }
 
+  // ── Salary Payslips ───────────────────────────────────────────────────
+  // Get unique months from SALARY_RECORDS for this employee
+  var empSalRecs = SALARY_RECORDS.filter(function(r){return r.employee_id===empId && r.payment_date;})
+                                  .sort(function(a,b){
+                                    if(b.year!==a.year) return b.year-a.year;
+                                    return b.month-a.month;
+                                  });
+  var now2 = new Date();
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var monthOpts = months.map(function(m,i){
+    return '<option value="'+(i+1)+'"'+((i+1)===now2.getMonth()+1?' selected':'')+'>'+m+'</option>';
+  }).join('');
+  var yearOpts = [now2.getFullYear()-1, now2.getFullYear()].map(function(y){
+    return '<option value="'+y+'"'+(y===now2.getFullYear()?' selected':'')+'>'+y+'</option>';
+  }).join('');
+
+  html += '<div style="font-size:10px;font-weight:800;color:var(--text3);text-transform:uppercase;padding:8px 0 4px;letter-spacing:.5px;">Salary Payslip</div>';
+
+  // Quick links for paid months
+  if(empSalRecs.length){
+    html += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">';
+    empSalRecs.slice(0,6).forEach(function(r){
+      html += '<button data-slip-rid="'+r.id+'" data-slip-eid="'+empId+'" '+
+        'style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:800;cursor:pointer;">'+
+        r.month_label+'</button>';
+    });
+    html += '</div>';
+  }
+
+  // Month/Year selector for any month
+  html += '<div style="background:#F8FAFC;border-radius:10px;padding:10px 12px;margin-bottom:4px;">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr auto;gap:6px;align-items:end;">'+
+      '<div><label style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:3px;">Month</label>'+
+        '<select id="slip-month-'+empId+'" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:11px;font-family:Nunito,sans-serif;">'+monthOpts+'</select></div>'+
+      '<div><label style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:3px;">Year</label>'+
+        '<select id="slip-year-'+empId+'" style="width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:7px;font-size:11px;font-family:Nunito,sans-serif;">'+yearOpts+'</select></div>'+
+      '<button data-slip-custom-eid="'+empId+'" style="background:#1565C0;color:white;border:none;border-radius:7px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;">&#128196; Get Slip</button>'+
+    '</div>'+
+    '<div id="slip-msg-'+empId+'" style="font-size:10px;color:var(--text3);margin-top:5px;"></div>'+
+  '</div>';
+
   if(!html){
     html = '<div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;">No documents yet. Add pay fixation, increment or transfer to generate letters.</div>';
   }
@@ -10393,6 +10434,43 @@ function hrWireDownloadButtons(containerId){
       } else if(action==='resignation'){
         downloadResignationLetter(empId);
       }
+    });
+  });
+
+  // Wire payslip quick-month buttons (paid months)
+  container.querySelectorAll('button[data-slip-rid]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var rid=btn.getAttribute('data-slip-rid');
+      var eid=btn.getAttribute('data-slip-eid');
+      salShowRecordPayslip(rid,eid);
+    });
+  });
+
+  // Wire custom month/year payslip selector
+  container.querySelectorAll('button[data-slip-custom-eid]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var empId=btn.getAttribute('data-slip-custom-eid');
+      var monthEl=document.getElementById('slip-month-'+empId);
+      var yearEl =document.getElementById('slip-year-'+empId);
+      var msgEl  =document.getElementById('slip-msg-'+empId);
+      if(!monthEl||!yearEl) return;
+      var month=parseInt(monthEl.value);
+      var year =parseInt(yearEl.value);
+      var MTHS=['','January','February','March','April','May','June','July','August','September','October','November','December'];
+      var label=MTHS[month]+' '+year;
+      var rec=SALARY_RECORDS.find(function(r){
+        return r.employee_id===empId&&r.month===month&&r.year===year;
+      });
+      if(!rec){
+        if(msgEl) msgEl.innerHTML='<span style="color:#E65100;">&#9888; No finalised salary record for '+label+'. Finalise salary first.</span>';
+        return;
+      }
+      if(!rec.payment_date){
+        if(msgEl) msgEl.innerHTML='<span style="color:#E65100;">&#9888; '+label+' salary not yet marked as paid. Mark payment first.</span>';
+        return;
+      }
+      if(msgEl) msgEl.innerHTML='';
+      salShowRecordPayslip(rec.id,empId);
     });
   });
 }
