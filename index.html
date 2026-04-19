@@ -5560,7 +5560,7 @@ function empRender(){
       });
     },200);
   }
-  else if(EMP_TAB==='annual'){el.innerHTML=empAnnualHTML();}
+  else if(EMP_TAB==='annual'){empAnnualHTML();}
   else if(EMP_TAB==='downloads'){el.innerHTML=empDownloadHTML();}
   // Wire up increment history download + delete buttons
   setTimeout(function(){
@@ -11090,59 +11090,65 @@ function salBuildLogSection(logMap, logKeys){
 // ANNUAL SALARY STATEMENT TAB
 // ════════════════════════════════════════════════════════════════════════
 
-function empAnnualHTML(){
-  if(!SALARY_RECORDS.length) salLoadRecords();
+async function empAnnualHTMLAsync(){
+  // Always reload salary records from DB to get all FYs
+  await salLoadRecords();
 
   var now = new Date();
   var curFYStart = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear()-1;
   var curFYEnd   = curFYStart + 1;
 
-  // Build list of available FY options from SALARY_RECORDS
+  // Only show FYs that have actual salary records
   var fySet = {};
   SALARY_RECORDS.forEach(function(r){
     var fy = r.month >= 4 ? r.year : r.year - 1;
     fySet[fy] = true;
   });
-  var fyList = Object.keys(fySet).sort().reverse();
-  if(!fyList.length) fyList = [curFYStart];
+  var fyList = Object.keys(fySet).map(Number).sort().reverse();
 
-  var fyOpts = fyList.map(function(fy){
-    var label = 'FY '+fy+'-'+(parseInt(fy)+1).toString().slice(-2);
-    var sel = (parseInt(fy)===curFYStart) ? ' selected' : '';
-    return '<option value="'+fy+'"'+sel+'>'+label+'</option>';
-  }).join('');
+  var fyOpts = fyList.length
+    ? fyList.map(function(fy){
+        var label = 'FY '+fy+'-'+(fy+1).toString().slice(-2);
+        var sel = (fy === curFYStart) ? ' selected' : '';
+        return '<option value="'+fy+'"'+sel+'>'+label+'</option>';
+      }).join('')
+    : '<option value="">— No salary records found —</option>';
 
-  return '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
+  var html =
+    '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
     '<div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:10px;">&#128200; Annual Salary Statement</div>'+
-
-    // Filter row
     '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-bottom:10px;">'+
       '<div>'+
         '<label class="flbl">Financial Year</label>'+
         '<select id="ann-fy" class="fsel" onchange="annToggleDates()">'+
           fyOpts+
-          '<option value="custom">Custom Date Range</option>'+
+          '<option value="custom">&#128197; Custom Date Range</option>'+
         '</select>'+
       '</div>'+
       '<button onclick="annGenerate()" style="padding:10px 16px;background:#1565C0;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#128200; Generate</button>'+
     '</div>'+
-
-    // Custom date range (hidden by default)
     '<div id="ann-custom" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
       '<div><label class="flbl">From Date</label><input id="ann-from" class="finp" type="date" value="'+curFYStart+'-04-01"></div>'+
       '<div><label class="flbl">To Date</label><input id="ann-to" class="finp" type="date" value="'+curFYEnd+'-03-31"></div>'+
     '</div>'+
-
-  '</div>'+
-
-  // Results area
-  '<div id="ann-results">'+
-    '<div style="text-align:center;padding:40px;color:var(--text3);">'+
-      '<div style="font-size:36px;margin-bottom:10px;">&#128200;</div>'+
-      '<div style="font-weight:700;">Select a period and click Generate</div>'+
-      '<div style="font-size:11px;margin-top:6px;">Annual statement aggregates all finalised salary months</div>'+
     '</div>'+
-  '</div>';
+    '<div id="ann-results">'+
+      '<div style="text-align:center;padding:40px;color:var(--text3);">'+
+        '<div style="font-size:36px;margin-bottom:10px;">&#128200;</div>'+
+        '<div style="font-weight:700;">Select a period and click Generate</div>'+
+        '<div style="font-size:11px;margin-top:6px;">'+fyList.length+' financial year(s) with data found</div>'+
+      '</div>'+
+    '</div>';
+
+  var el = document.getElementById('emp-content');
+  if(el) el.innerHTML = html;
+}
+
+function empAnnualHTML(){
+  var el = document.getElementById('emp-content');
+  if(el) el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading salary data...</div>';
+  empAnnualHTMLAsync();
+  return ''; // content set async above
 }
 
 function annToggleDates(){
@@ -11151,9 +11157,15 @@ function annToggleDates(){
   if(custom) custom.style.display = (fy==='custom') ? 'grid' : 'none';
 }
 
-function annGenerate(){
+async function annGenerate(){
   var fy = (document.getElementById('ann-fy')||{}).value||'';
   var fromDate, toDate, label;
+
+  // Always reload salary records to ensure fresh data
+  if(!SALARY_RECORDS.length){
+    toast('Loading salary data...','info');
+    await salLoadRecords();
+  }
 
   if(fy==='custom'){
     fromDate = (document.getElementById('ann-from')||{}).value||'';
@@ -11168,8 +11180,7 @@ function annGenerate(){
     annBuildStatement(filtered, label);
   } else {
     var fyYear = parseInt(fy);
-    label = 'FY '+fyYear+'-'+(fyYear+1).toString().slice(-2)+' (Apr '+fyYear+' – Mar '+(fyYear+1)+')';
-    // FY = Apr of fyYear to Mar of fyYear+1
+    label = 'FY '+fyYear+'-'+(fyYear+1).toString().slice(-2)+' (Apr '+fyYear+' \u2013 Mar '+(fyYear+1)+')';
     var filtered = SALARY_RECORDS.filter(function(r){
       if(r.month >= 4 && r.year === fyYear) return true;
       if(r.month <= 3 && r.year === fyYear+1) return true;
