@@ -2336,6 +2336,10 @@ async function saveNewPassword(){
 }
 
 function doLogout(){
+  // Clear all in-memory caches
+  EMP_LIST=[]; EMP_PAY=[]; EMP_ORDERS=[]; SALARY_RECORDS=[];
+  USERS=[]; PROJ_DATA=[]; VENDORS=[]; MATERIALS=[]; SUBCONTRACTORS=[];
+  currentUser=null; currentSession=null;
   document.querySelectorAll('.app-screen').forEach(function(s){s.classList.remove('on');});
   document.getElementById('app-nav').style.display='none';
   showScreen('scr-login');
@@ -5410,6 +5414,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
   <div style="background:#1B5E20;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
     <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128101; Employee Management</div>
+    <button class="tb-btn" id="emp-refresh-btn" title="Refresh" onclick="EMP_LIST=[];EMP_PAY=[];EMP_ORDERS=[];SALARY_RECORDS=[];initEmpMgmt();" style="font-size:16px;">&#8635;</button>
     <button class="tb-btn" id="emp-add-btn" onclick="empOpenForm(null)" style="font-size:20px;">&#43;</button>
   </div>
   <!-- Tab Bar -->
@@ -5481,20 +5486,38 @@ function fmtDate(d){
 }
 
 async function initEmpMgmt(){
-  hrLoadOrders();
-  salLoadRecords();
-  // SALARY_RECORDS loaded above, available for annual statement
   var el=document.getElementById('emp-content');
   if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>';
+
   try{
-    var r=await Promise.all([
-      sbFetch('employees',{select:'*',order:'created_at.desc'}),
-      sbFetch('employee_pay',{select:'*',order:'effective_date.desc'})
-    ]);
-    EMP_LIST=Array.isArray(r[0])?r[0]:[];
-    EMP_PAY=Array.isArray(r[1])?r[1]:[];
-  }catch(e){EMP_LIST=[];console.error(e);}
-  empTab('active',document.getElementById('emp-t-active'));
+    // Smart caching — skip DB fetch if already loaded
+    var needEmps = !EMP_LIST.length;
+    var needPay  = !EMP_PAY.length;
+
+    if(needEmps || needPay){
+      var fetches = [
+        needEmps
+          ? sbFetch('employees',{
+              select:'id,emp_id,employee_code,first_name,middle_name,last_name,email,phone,phone2,status,designation,role,department,work_location,date_of_joining,date_of_birth,gender,blood_group,profile_photo,photo_url,resignation_date,last_working_day,resignation_reason,aadhar,pan,pf_no,esic_no,bank_name,account_no,ifsc,account_holder,emergency_name,emergency_relation,emergency_phone,address,permanent_address',
+              order:'first_name.asc'
+            })
+          : Promise.resolve(null),
+        needPay
+          ? sbFetch('employee_pay',{select:'*',order:'effective_date.desc'})
+          : Promise.resolve(null)
+      ];
+      var r = await Promise.all(fetches);
+      if(r[0]!==null) EMP_LIST = Array.isArray(r[0]) ? r[0] : [];
+      if(r[1]!==null) EMP_PAY  = Array.isArray(r[1]) ? r[1] : [];
+    }
+
+    // Load orders + salary records in background (non-blocking)
+    if(!EMP_ORDERS.length)     hrLoadOrders();
+    if(!SALARY_RECORDS.length) salLoadRecords();
+
+  }catch(e){ EMP_LIST=[]; console.error(e); }
+
+  empTab('active', document.getElementById('emp-t-active'));
 }
 
 function empTab(tab,btn){
