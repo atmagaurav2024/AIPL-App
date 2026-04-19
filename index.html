@@ -9236,20 +9236,58 @@ function accGstTab(){
 }
 
 // ════ ACCESS CONTROL ════════════════════════════════════
-var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};
-var AC_MODS=[
-  {key:'projects',label:'Projects',icon:'&#127959;',params:['view','edit','delete']},
-  {key:'boq',label:'BOQ Items',icon:'&#128203;',params:['view','edit','delete']},
-  {key:'jm',label:'Joint Measurements',icon:'&#128208;',params:['view','edit','delete']},
-  {key:'planning',label:'Planning',icon:'&#128230;',params:['view','edit','delete']},
-  {key:'execution',label:'Work Allotment',icon:'&#128221;',params:['view','edit','delete']},
-  {key:'petty-cash',label:'Petty Cash',icon:'&#128181;',params:['view','cash_in','expense']},
-  {key:'registry',label:'Master Registry',icon:'&#128218;',params:['view','edit','delete']},
-  {key:'attendance',label:'Attendance',icon:'&#128203;',params:['view','mark']},
-  {key:'accounts',label:'Accounts',icon:'&#128176;',params:['view','edit','delete']}
-];
-var AC_PCOL={view:'#1565C0',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',mark:'#00838F'};
+var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};var AC_PCOL={view:'#1565C0',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',mark:'#00838F'};
 var AC_PLBL={view:'View',edit:'Edit',delete:'Delete',cash_in:'Cash In',expense:'Expense',mark:'Mark Att.'};
+
+var AC_MODS=[
+  {key:'dashboard',  label:'Dashboard',          icon:'&#127968;',group:'Dashboard',     params:['view']},
+  {key:'projects',   label:'Projects',            icon:'&#127959;',group:'Project Module',params:['view','edit','delete']},
+  {key:'boq',        label:'BOQ Items',           icon:'&#128203;',group:'Project Module',params:['view','edit','delete']},
+  {key:'jm',         label:'Joint Measurements',  icon:'&#128208;',group:'Project Module',params:['view','edit','delete']},
+  {key:'planning',   label:'Planning',            icon:'&#128230;',group:'Project Module',params:['view','edit','delete']},
+  {key:'execution',  label:'Work Allotment',      icon:'&#128221;',group:'Project Module',params:['view','edit','delete']},
+  {key:'employees',  label:'Employee Management', icon:'&#128101;',group:'Employee',      params:['view','edit','delete']},
+  {key:'attendance', label:'Attendance',          icon:'&#9200;',  group:'Employee',      params:['view','mark']},
+  {key:'accounts',   label:'Accounts',            icon:'&#128176;',group:'Accounting',    params:['view','edit','delete']},
+  {key:'petty-cash', label:'Petty Cash',          icon:'&#128181;',group:'Accounting',    params:['view','cash_in','expense']},
+  {key:'access',     label:'Access Control',      icon:'&#128274;',group:'Settings',      params:['view','edit']},
+  {key:'company',    label:'Company Details',     icon:'&#127963;',group:'Settings',      params:['view','edit']},
+  {key:'registry',   label:'Master Registry',     icon:'&#128218;',group:'Other',         params:['view','edit','delete']}
+];
+
+function acRenderMods(){
+  var el=document.getElementById('ac-modules-list');if(!el)return;
+  var groups={},groupOrder=[];
+  AC_MODS.forEach(function(mod){
+    var g=mod.group||'Other';
+    if(!groups[g]){groups[g]=[];groupOrder.push(g);}
+    groups[g].push(mod);
+  });
+  var gCol={'Dashboard':'#1565C0','Project Module':'#2E7D32','Employee':'#E65100','Accounting':'#880E4F','Settings':'#4A148C','Other':'#37474F'};
+  el.innerHTML=groupOrder.map(function(grp){
+    var col=gCol[grp]||'#37474F';
+    var modsHTML=groups[grp].map(function(mod){
+      var mp=AC_PERMISSIONS[mod.key]||{};
+      var pBoxes=mod.params.map(function(p){
+        var chk=mp[p]===true;var pc=AC_PCOL[p]||'#37474F';
+        return '<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;cursor:pointer;border:1.5px solid '+(chk?pc:'var(--border)')+';background:'+(chk?pc+'15':'transparent')+';margin-bottom:4px;">'+
+          '<input type="checkbox" '+(chk?'checked':'')+' onchange="acToggle(\''+mod.key+'\',\''+p+'\',this)" style="width:16px;height:16px;accent-color:'+pc+';">'+
+          '<span style="font-size:12px;font-weight:700;color:'+(chk?pc:'var(--text3)')+';">'+AC_PLBL[p]+'</span></label>';
+      }).join('');
+      return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;">'+
+        '<div style="padding:10px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
+          '<span style="font-size:16px;">'+mod.icon+'</span>'+
+          '<span style="font-size:13px;font-weight:800;color:var(--navy);">'+mod.label+'</span></div>'+
+        '<div style="padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px;">'+pBoxes+'</div></div>';
+    }).join('');
+    return '<div style="margin-bottom:14px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'+
+        '<div style="width:4px;height:20px;background:'+col+';border-radius:2px;"></div>'+
+        '<span style="font-size:11px;font-weight:900;color:'+col+';text-transform:uppercase;letter-spacing:1px;">'+grp+'</span>'+
+        '<div style="flex:1;height:1px;background:'+col+'25;"></div></div>'+
+      modsHTML+'</div>';
+  }).join('');
+}
 
 async function initAccess(){
   if(!currentUser||(currentUser.role!=='admin')){
@@ -9308,25 +9346,9 @@ async function acLoadPerms(){
   try{var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;var rows=await sbFetch('access_permissions',{select:'*',filter:filter});AC_PERMISSIONS={};if(Array.isArray(rows))rows.forEach(function(r){if(!AC_PERMISSIONS[r.module])AC_PERMISSIONS[r.module]={};AC_PERMISSIONS[r.module][r.permission]=r.granted;});}catch(e){AC_PERMISSIONS={};}
   acRenderMods();
 }
+
 function acLoadPermissions(){acLoadPerms();}
-function acRenderMods(){
-  var el=document.getElementById('ac-modules-list');if(!el)return;
-  el.innerHTML=AC_MODS.map(function(mod){
-    var mp=AC_PERMISSIONS[mod.key]||{};
-    var pBoxes=mod.params.map(function(p){var checked=mp[p]===true;var col=AC_PCOL[p]||'#37474F';
-      return '<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;cursor:pointer;border:1.5px solid '+(checked?col:'var(--border)')+';background:'+(checked?col+'15':'transparent')+';margin-bottom:4px;">'+
-        '<input type="checkbox" id="ac-'+mod.key+'-'+p+'" '+(checked?'checked':'')+' onchange="acToggle(\''+mod.key+'\',\''+p+'\',this)" style="width:16px;height:16px;accent-color:'+col+';">'+
-        '<span style="font-size:12px;font-weight:700;color:'+(checked?col:'var(--text3)')+';">'+AC_PLBL[p]+'</span>'+
-      '</label>';
-    }).join('');
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
-      '<div style="padding:12px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
-        '<span style="font-size:18px;">'+mod.icon+'</span><span style="font-size:14px;font-weight:800;color:var(--navy);">'+mod.label+'</span>'+
-      '</div>'+
-      '<div style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;">'+pBoxes+'</div>'+
-    '</div>';
-  }).join('');
-}
+
 function acToggle(modKey,param,chk){if(!AC_PERMISSIONS[modKey])AC_PERMISSIONS[modKey]={};AC_PERMISSIONS[modKey][param]=chk.checked;}
 async function acSavePermissions(){
   if(!AC_TARGET){toast('Select employee or role first','warning');return;}
@@ -20659,19 +20681,7 @@ function accGstTab(){
 }
 
 // ════ ACCESS CONTROL ════════════════════════════════════
-var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};
-var AC_MODS=[
-  {key:'projects',label:'Projects',icon:'&#127959;',params:['view','edit','delete']},
-  {key:'boq',label:'BOQ Items',icon:'&#128203;',params:['view','edit','delete']},
-  {key:'jm',label:'Joint Measurements',icon:'&#128208;',params:['view','edit','delete']},
-  {key:'planning',label:'Planning',icon:'&#128230;',params:['view','edit','delete']},
-  {key:'execution',label:'Work Allotment',icon:'&#128221;',params:['view','edit','delete']},
-  {key:'petty-cash',label:'Petty Cash',icon:'&#128181;',params:['view','cash_in','expense']},
-  {key:'registry',label:'Master Registry',icon:'&#128218;',params:['view','edit','delete']},
-  {key:'attendance',label:'Attendance',icon:'&#128203;',params:['view','mark']},
-  {key:'accounts',label:'Accounts',icon:'&#128176;',params:['view','edit','delete']}
-];
-var AC_PCOL={view:'#1565C0',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',mark:'#00838F'};
+var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};var AC_PCOL={view:'#1565C0',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',mark:'#00838F'};
 var AC_PLBL={view:'View',edit:'Edit',delete:'Delete',cash_in:'Cash In',expense:'Expense',mark:'Mark Att.'};
 
 async function initAccess(){
@@ -20763,24 +20773,6 @@ async function acLoadPerms(){
   acRenderMods();
 }
 function acLoadPermissions(){acLoadPerms();}
-function acRenderMods(){
-  var el=document.getElementById('ac-modules-list');if(!el)return;
-  el.innerHTML=AC_MODS.map(function(mod){
-    var mp=AC_PERMISSIONS[mod.key]||{};
-    var pBoxes=mod.params.map(function(p){var checked=mp[p]===true;var col=AC_PCOL[p]||'#37474F';
-      return '<label style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;cursor:pointer;border:1.5px solid '+(checked?col:'var(--border)')+';background:'+(checked?col+'15':'transparent')+';margin-bottom:4px;">'+
-        '<input type="checkbox" id="ac-'+mod.key+'-'+p+'" '+(checked?'checked':'')+' onchange="acToggle(\''+mod.key+'\',\''+p+'\',this)" style="width:16px;height:16px;accent-color:'+col+';">'+
-        '<span style="font-size:12px;font-weight:700;color:'+(checked?col:'var(--text3)')+';">'+AC_PLBL[p]+'</span>'+
-      '</label>';
-    }).join('');
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
-      '<div style="padding:12px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
-        '<span style="font-size:18px;">'+mod.icon+'</span><span style="font-size:14px;font-weight:800;color:var(--navy);">'+mod.label+'</span>'+
-      '</div>'+
-      '<div style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px;">'+pBoxes+'</div>'+
-    '</div>';
-  }).join('');
-}
 function acToggle(modKey,param,chk){if(!AC_PERMISSIONS[modKey])AC_PERMISSIONS[modKey]={};AC_PERMISSIONS[modKey][param]=chk.checked;}
 async function acSavePermissions(){
   if(!AC_TARGET){toast('Select employee or role first','warning');return;}
