@@ -992,7 +992,10 @@ body {
 .topbar,.bot-nav,.scroll{visibility:hidden;pointer-events:none;}
 body[data-app="attendance"] .topbar,
 body[data-app="attendance"] .bot-nav,
-body[data-app="attendance"] .scroll{visibility:visible;pointer-events:auto;}
+body[data-app="attendance"] .scroll,
+body[data-app="registry"] .topbar,
+body[data-app="registry"] .bot-nav,
+body[data-app="registry"] .scroll{visibility:visible;pointer-events:auto;}
 #app-attendance .topbar{position:sticky;top:0;z-index:200;}
 
 /* ═══════════════════════════════════════════
@@ -3303,8 +3306,6 @@ function initRegistry(){
     renderCatSection('material','material-cats');
     renderCatSection('sc','sc-cats');
     renderCatSection('uom','uom-cats');
-renderCatSection('role','role-cats');
-renderCatSection('dept','dept-cats');
     renderCatSection('role','role-cats');
     renderCatSection('dept','dept-cats');
     loadAllData();
