@@ -9338,101 +9338,92 @@ function acRenderMods(){
   }).join('');
 }
 
-async function acInitModule(){
-  // Guard: admin only
-  if(!currentUser || currentUser.role!=='admin'){
-    var ml = document.getElementById('ac-modules-list');
-    if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:40px;">&#128274;</div><div style="font-weight:800;color:var(--navy);margin-top:10px;">Admin Only</div></div>';
-    return;
-  }
-  // Always start on employee tab and load employees
-  AC_TAB='emp'; AC_TARGET=null; AC_PERMISSIONS={};
-  // Reset tab button styles
-  var eb=document.getElementById('ac-tab-emp'), rb=document.getElementById('ac-tab-role');
-  if(eb){eb.style.background='var(--navy)';eb.style.color='white';eb.style.border='none';}
-  if(rb){rb.style.background='white';rb.style.color='var(--text2)';rb.style.border='1.5px solid var(--border)';}
-  // Load employees into dropdown
-  await initAccess();
-  var ml = document.getElementById('ac-modules-list');
-  if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee to manage permissions</div>';
-}
-
-async function initAccess(){
-  if(!currentUser||(currentUser.role!=='admin')){
-    document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:40px;">&#128274;</div><div style="font-weight:800;color:var(--navy);margin-top:10px;">Admin Only</div></div>';
-    return;
-  }
+async function acEmpLoad(){
+  // Fetch active employees directly from DB and populate dropdown
   var sel = document.getElementById('ac-emp-sel');
   if(!sel) return;
-  sel.innerHTML='<option value="">&#9203; Loading...</option>';
+  sel.innerHTML = '<option value="">&#9203; Loading employees...</option>';
   try{
-    // Fetch same way as employee management active tab
     var rows = await sbFetch('employees',{
-      select:'*',
+      select:'id,first_name,middle_name,last_name,emp_id,employee_code',
       filter:'status=eq.active',
-      order:'created_at.desc'
+      order:'first_name.asc'
     });
-    var emps = Array.isArray(rows) ? rows : [];
-    if(!emps.length){
-      sel.innerHTML='<option value="">— No active employees —</option>';
-    } else {
-      sel.innerHTML = '<option value="">— Select Employee —</option>'+
-        emps.map(function(e){
-          var n=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
-          var code=e.employee_code||e.emp_id||'';
-          return '<option value="'+e.id+'">'+n+(code?' ('+code+')':'')+'</option>';
-        }).join('');
+    if(!Array.isArray(rows)||!rows.length){
+      sel.innerHTML='<option value="">— No active employees found —</option>';
+      return;
     }
+    sel.innerHTML='<option value="">— Select Employee —</option>'+
+      rows.map(function(e){
+        var n=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim()||'Unknown';
+        var code=e.employee_code||e.emp_id||'';
+        return '<option value="'+e.id+'">'+n+(code?' ('+code+')':'')+'</option>';
+      }).join('');
   }catch(err){
-    console.error('initAccess error:',err);
-    sel.innerHTML='<option value="">— Error loading —</option>';
+    console.error('acEmpLoad:',err);
+    sel.innerHTML='<option value="">— Error: '+err.message+'—</option>';
   }
 }
 
-
-async function acBuildRoleDropdown(){
+async function acRoleLoad(){
   var sel = document.getElementById('ac-role-sel');
-  if(sel) sel.innerHTML = '<option value="">&#9203; Loading roles...</option>';
+  if(!sel) return;
+  sel.innerHTML='<option value="">&#9203; Loading roles...</option>';
   try{
-    // Fetch roles from categories table
     var rows = await sbFetch('categories',{select:'name',filter:'type=eq.role&active=eq.true',order:'name.asc'});
     var roles = Array.isArray(rows) ? rows.map(function(r){return r.name;}) : [];
-    // Fallback: distinct designations from employees if categories empty
     if(!roles.length){
       var emps = await sbFetch('employees',{select:'designation',filter:'status=eq.active'});
-      if(Array.isArray(emps)){
-        var seen={};
-        emps.forEach(function(e){ if(e.designation) seen[e.designation]=true; });
-        roles = Object.keys(seen).sort();
-      }
+      if(Array.isArray(emps)){var seen={};emps.forEach(function(e){if(e.designation)seen[e.designation]=true;});roles=Object.keys(seen).sort();}
     }
-    if(sel){
-      sel.innerHTML = roles.length
-        ? '<option value="">— Select Role —</option>'+roles.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')
-        : '<option value="">— No roles found —</option>';
-    }
+    sel.innerHTML = roles.length
+      ? '<option value="">— Select Role —</option>'+roles.map(function(r){return '<option value="'+r+'">'+r+'</option>';}).join('')
+      : '<option value="">— No roles found —</option>';
   }catch(err){
-    console.error('acBuildRoleDropdown error:',err);
-    if(sel) sel.innerHTML='<option value="">— Error loading roles —</option>';
+    console.error('acRoleLoad:',err);
+    sel.innerHTML='<option value="">— Error loading roles —</option>';
   }
 }
 
+async function acInitModule(){
+  if(!currentUser||currentUser.role!=='admin'){
+    var ml=document.getElementById('ac-modules-list');
+    if(ml)ml.innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:40px;">&#128274;</div><div style="font-weight:800;color:var(--navy);margin-top:10px;">Admin Only</div></div>';
+    return;
+  }
+  AC_TAB='emp'; AC_TARGET=null; AC_PERMISSIONS={};
+  var eb=document.getElementById('ac-tab-emp'),rb=document.getElementById('ac-tab-role');
+  if(eb){eb.style.background='var(--navy)';eb.style.color='white';eb.style.border='none';}
+  if(rb){rb.style.background='white';rb.style.color='var(--text2)';rb.style.border='1.5px solid var(--border)';}
+  // Restore employee selector in case it was swapped
+  var sd=document.getElementById('ac-selector');
+  if(sd) sd.innerHTML='<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading employees...</option></select>';
+  var ml=document.getElementById('ac-modules-list');
+  if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee to manage permissions</div>';
+  await acEmpLoad();
+}
+
+function initAccess(){ acInitModule(); }
+
 async function acSwitchTab(tab){
-  AC_TAB=tab;AC_TARGET=null;AC_PERMISSIONS={};
+  AC_TAB=tab; AC_TARGET=null; AC_PERMISSIONS={};
   var eb=document.getElementById('ac-tab-emp'),rb=document.getElementById('ac-tab-role'),sd=document.getElementById('ac-selector');
+  var ml=document.getElementById('ac-modules-list');
   if(tab==='emp'){
     if(eb){eb.style.background='var(--navy)';eb.style.color='white';eb.style.border='none';}
     if(rb){rb.style.background='white';rb.style.color='var(--text2)';rb.style.border='1.5px solid var(--border)';}
-    if(sd){sd.innerHTML='<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading...</option></select>';}
-    await initAccess();
+    if(sd) sd.innerHTML='<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading employees...</option></select>';
+    if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee to manage permissions</div>';
+    await acEmpLoad();
   } else {
     if(rb){rb.style.background='var(--navy)';rb.style.color='white';rb.style.border='none';}
     if(eb){eb.style.background='white';eb.style.color='var(--text2)';eb.style.border='1.5px solid var(--border)';}
-    if(sd){sd.innerHTML='<select id="ac-role-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading roles...</option></select>';}
-    await acBuildRoleDropdown();
+    if(sd) sd.innerHTML='<select id="ac-role-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading roles...</option></select>';
+    if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a role to manage permissions</div>';
+    await acRoleLoad();
   }
-  document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div>';
 }
+
 async function acLoadPerms(){
   var selId=AC_TAB==='emp'?'ac-emp-sel':'ac-role-sel';var sel=document.getElementById(selId);
   if(!sel||!sel.value){document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div>';return;}
