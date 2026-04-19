@@ -2243,7 +2243,7 @@ function showApp(name){
   else if(name==='execution'){initExecution();}
   else if(name==='petty-cash'){initPettyCash();}
   else if(name==='accounts'){initAccounts();}
-  else if(name==='access'){initAccess();}
+  else if(name==='access'){acInitModule();}
   else if(name==='company'){initCompany();}
   else{stopSync();}
 }
@@ -9336,6 +9336,25 @@ function acRenderMods(){
         '<div style="flex:1;height:1px;background:'+col+'25;"></div></div>'+
       modsHTML+'</div>';
   }).join('');
+}
+
+async function acInitModule(){
+  // Guard: admin only
+  if(!currentUser || currentUser.role!=='admin'){
+    var ml = document.getElementById('ac-modules-list');
+    if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;"><div style="font-size:40px;">&#128274;</div><div style="font-weight:800;color:var(--navy);margin-top:10px;">Admin Only</div></div>';
+    return;
+  }
+  // Always start on employee tab and load employees
+  AC_TAB='emp'; AC_TARGET=null; AC_PERMISSIONS={};
+  // Reset tab button styles
+  var eb=document.getElementById('ac-tab-emp'), rb=document.getElementById('ac-tab-role');
+  if(eb){eb.style.background='var(--navy)';eb.style.color='white';eb.style.border='none';}
+  if(rb){rb.style.background='white';rb.style.color='var(--text2)';rb.style.border='1.5px solid var(--border)';}
+  // Load employees into dropdown
+  await initAccess();
+  var ml = document.getElementById('ac-modules-list');
+  if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee to manage permissions</div>';
 }
 
 async function initAccess(){
