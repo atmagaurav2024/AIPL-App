@@ -5542,7 +5542,7 @@ function empRender(){
   else if(EMP_TAB==='pending') el.innerHTML=empListHTML('pending');
   else if(EMP_TAB==='pay')       el.innerHTML=empPayHTML();
   else if(EMP_TAB==='resigned')  el.innerHTML=empListHTML('resigned');
-  else if(EMP_TAB==='salary'){el.innerHTML=empSalaryHTML();salWireLogButtons();}
+  else if(EMP_TAB==='salary'){el.innerHTML=empSalaryHTML();salWireLogButtons();setTimeout(salWireInputs,100);}
   else if(EMP_TAB==='increment') el.innerHTML=empIncrementHTML();
   else if(EMP_TAB==='transfer'){el.innerHTML=empTransferHTML();hrWireOrderButtons();}
   // Wire pay fixation delete buttons
@@ -5784,29 +5784,47 @@ function salRecalc(empId){
   var adv  = parseFloat((document.getElementById('sal-ded-adv-'+empId)||{value:0}).value)||0;
   var extraD=0; document.querySelectorAll('[data-extra-ded-emp="'+empId+'"]').forEach(function(el){extraD+=parseFloat(el.value)||0;});
   var extraE=0; document.querySelectorAll('[data-extra-earn-emp="'+empId+'"]').forEach(function(el){extraE+=parseFloat(el.value)||0;});
-  var net = Math.max(0, earned+otPay+extraE-pf-esic-tds-pt-adv-extraD);
-  var pel = document.getElementById('sal-payable-'+empId);
-  if(pel) pel.textContent = '₹'+net.toLocaleString('en-IN');
+  var totalEarned = earned+otPay+extraE;
+  var totalDed    = pf+esic+tds+pt+adv+extraD;
+  var net = Math.max(0, totalEarned-totalDed);
+  var inr = function(n){return '₹'+Number(n||0).toLocaleString('en-IN');};
+  var pel = document.getElementById('sal-payable-'+empId);    if(pel) pel.textContent = inr(net);
+  var eel = document.getElementById('sal-earned-'+empId);     if(eel) eel.textContent = inr(totalEarned);
+  var del = document.getElementById('sal-deducted-'+empId);   if(del) del.textContent = inr(totalDed);
 }
 
 function salAddExtraRow(empId, type){
-  // type = 'earn' or 'ded'
   var containerId = 'sal-extra-'+type+'-'+empId;
   var container = document.getElementById(containerId);
   if(!container) return;
-  var idx = container.children.length;
   var row = document.createElement('div');
-  row.style.cssText='display:grid;grid-template-columns:1fr auto auto;gap:4px;margin-top:4px;align-items:center;';
-  var col = type==='earn'?'#1B5E20':'#C62828';
-  row.innerHTML=
-    '<input class="finp" placeholder="Label (e.g. Bonus)" style="margin-bottom:0;font-size:11px;" '+
-      'data-extra-'+type+'-emp="'+empId+'" data-extra-'+type+'-label="" '+
-      'oninput="this.setAttribute(\'data-extra-'+type+'-label\',this.value)" style="grid-column:1;">'+
-    '<input class="finp" type="number" placeholder="Amount" min="0" style="margin-bottom:0;font-size:11px;" '+
-      'data-extra-'+type+'-emp="'+empId+'" data-extra-'+type+'-label="Custom" '+
-      'oninput="salRecalc(\''+empId+'\')">'+
-    '<button onclick="this.parentElement.remove();salRecalc(\''+empId+'\')" '+
-      'style="background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;">✕</button>';
+  row.style.cssText = 'display:grid;grid-template-columns:1fr 80px auto;gap:4px;margin-top:4px;align-items:center;';
+  // Label input
+  var lblEl = document.createElement('input');
+  lblEl.className = 'finp';
+  lblEl.placeholder = type==='earn' ? 'e.g. Bonus, Arrears' : 'e.g. Loan, Fine';
+  lblEl.style.cssText = 'margin-bottom:0;font-size:11px;';
+  lblEl.setAttribute('data-extra-'+type+'-emp', empId);
+  lblEl.setAttribute('data-extra-'+type+'-label', '');
+  lblEl.addEventListener('input', function(){ lblEl.setAttribute('data-extra-'+type+'-label', lblEl.value); });
+  // Amount input
+  var amtEl = document.createElement('input');
+  amtEl.className = 'finp';
+  amtEl.type = 'number';
+  amtEl.min = '0';
+  amtEl.placeholder = '0';
+  amtEl.style.cssText = 'margin-bottom:0;font-size:11px;text-align:right;';
+  amtEl.setAttribute('data-extra-'+type+'-emp', empId);
+  amtEl.setAttribute('data-extra-'+type+'-label', 'Custom');
+  amtEl.addEventListener('input', function(){ salRecalc(empId); });
+  // Delete button
+  var delBtn = document.createElement('button');
+  delBtn.textContent = '✕';
+  delBtn.style.cssText = 'background:#F5F5F5;color:#555;border:1px solid #DDD;border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer;';
+  delBtn.addEventListener('click', function(){ row.remove(); salRecalc(empId); });
+  row.appendChild(lblEl);
+  row.appendChild(amtEl);
+  row.appendChild(delBtn);
   container.appendChild(row);
 }
 
@@ -5875,48 +5893,62 @@ function empSalaryHTML(){
             '</div>'+
           '</div>'+
 
-          // ── Attendance inputs ──────────────────────────────────────────
-          '<div style="padding:10px 14px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-bottom:1px solid #F0F0F0;">'+
-            '<div><label class="flbl" style="margin-bottom:2px;">LWP Days (0–26)</label>'+
-              '<input id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="26" value="0" style="margin-bottom:0;" oninput="salRecalc(\''+e.id+'\')"></div>'+
-            '<div><label class="flbl" style="margin-bottom:2px;">OT Hours</label>'+
-              '<input id="sal-ot-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;" oninput="salRecalc(\''+e.id+'\')"></div>'+
+          // attendance + earnings/deductions - payslip style
+          '<div style="padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-bottom:1px solid #EEE;background:#FAFAFA;">'+
+            '<div><label style="font-size:9px;font-weight:700;color:#555;display:block;margin-bottom:2px;">LWP Days</label>'+
+              '<input data-sal="days" data-eid="'+e.id+'" id="sal-days-'+e.id+'" class="finp" type="number" min="0" max="26" value="0" style="margin-bottom:0;"></div>'+
+            '<div><label style="font-size:9px;font-weight:700;color:#555;display:block;margin-bottom:2px;">OT Hours</label>'+
+              '<input data-sal="ot" data-eid="'+e.id+'" id="sal-ot-'+e.id+'" class="finp" type="number" min="0" value="0" style="margin-bottom:0;"></div>'+
           '</div>'+
-
-          // ── Earnings ──────────────────────────────────────────────────
-          '<div style="padding:10px 14px;border-bottom:1px solid #F0F0F0;">'+
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
-              '<span style="font-size:10px;font-weight:800;color:#1B5E20;text-transform:uppercase;letter-spacing:.5px;">&#128178; Earnings</span>'+
-              '<button onclick="salAddExtraRow(\''+e.id+'\',\'earn\')" style="background:#E8F5E9;color:#1B5E20;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Add</button>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;min-height:160px;">'+
+            '<div style="padding:8px 10px;border-right:1px solid #EEE;">'+
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;padding-bottom:4px;border-bottom:1.5px solid #333;">'+
+              '<span style="font-size:9px;font-weight:900;color:#333;text-transform:uppercase;letter-spacing:.5px;">Earnings</span>'+
+              '<button data-addearn="'+e.id+'" style="background:#F0F0F0;color:#333;border:1px solid #CCC;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;">+ Add</button>'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">Basic</span>'+
+                '<input data-sal="earn-basic" data-eid="'+e.id+'" id="sal-earn-basic-'+e.id+'" type="number" value="'+b+'" style="width:75px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">Gross</span>'+
+                '<input data-sal="earn-gross" data-eid="'+e.id+'" id="sal-earn-gross-'+e.id+'" type="number" value="'+g+'" style="width:75px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div id="sal-extra-earn-'+e.id+'"></div>'+
+              '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px;font-weight:800;border-top:1.5px solid #333;margin-top:4px;">'+
+                '<span>Total Earned</span><span id="sal-earned-'+e.id+'">&#8377;'+Number(net).toLocaleString('en-IN')+'</span>'+
+              '</div>'+
             '</div>'+
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'+
-              '<div style="font-size:10px;color:var(--text3);">Basic</div>'+
-              '<input id="sal-earn-basic-'+e.id+'" class="finp" type="number" value="'+b+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
-              '<div style="font-size:10px;color:var(--text3);">Gross (full month)</div>'+
-              '<input id="sal-earn-gross-'+e.id+'" class="finp" type="number" value="'+g+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
+            '<div style="padding:8px 10px;">'+
+              '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;padding-bottom:4px;border-bottom:1.5px solid #333;">'+
+              '<span style="font-size:9px;font-weight:900;color:#333;text-transform:uppercase;letter-spacing:.5px;">Deductions</span>'+
+              '<button data-addded="'+e.id+'" style="background:#F0F0F0;color:#333;border:1px solid #CCC;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;">+ Add</button>'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">PF (Emp)</span>'+
+                '<input data-sal="ded-pf" data-eid="'+e.id+'" id="sal-ded-pf-'+e.id+'" type="number" value="'+pf+'" style="width:65px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">ESIC (Emp)</span>'+
+                '<input data-sal="ded-esic" data-eid="'+e.id+'" id="sal-ded-esic-'+e.id+'" type="number" value="'+es+'" style="width:65px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">TDS</span>'+
+                '<input data-sal="ded-tds" data-eid="'+e.id+'" id="sal-ded-tds-'+e.id+'" type="number" value="'+td+'" style="width:65px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">Prof. Tax</span>'+
+                '<input data-sal="ded-pt" data-eid="'+e.id+'" id="sal-ded-pt-'+e.id+'" type="number" value="'+pt+'" style="width:65px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                '<span style="color:#444;">Advance</span>'+
+                '<input data-sal="ded-adv" data-eid="'+e.id+'" id="sal-ded-adv-'+e.id+'" type="number" value="0" style="width:65px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+              '</div>'+
+              '<div id="sal-extra-ded-'+e.id+'"></div>'+
+              '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px;font-weight:800;border-top:1.5px solid #333;margin-top:4px;">'+
+                '<span>Total Deducted</span><span id="sal-deducted-'+e.id+'">&#8377;'+Number(pf+es+td+pt).toLocaleString('en-IN')+'</span>'+
+              '</div>'+
             '</div>'+
-            '<div id="sal-extra-earn-'+e.id+'"></div>'+
-          '</div>'+
-
-          // ── Deductions ────────────────────────────────────────────────
-          '<div style="padding:10px 14px;">'+
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">'+
-              '<span style="font-size:10px;font-weight:800;color:#C62828;text-transform:uppercase;letter-spacing:.5px;">&#128683; Deductions</span>'+
-              '<button onclick="salAddExtraRow(\''+e.id+'\',\'ded\')" style="background:#FFEBEE;color:#C62828;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Add</button>'+
-            '</div>'+
-            '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;">'+
-              '<div style="font-size:10px;color:var(--text3);">PF (Employee)</div>'+
-              '<input id="sal-ded-pf-'+e.id+'" class="finp" type="number" value="'+pf+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
-              '<div style="font-size:10px;color:var(--text3);">ESIC (Employee)</div>'+
-              '<input id="sal-ded-esic-'+e.id+'" class="finp" type="number" value="'+es+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
-              '<div style="font-size:10px;color:var(--text3);">TDS</div>'+
-              '<input id="sal-ded-tds-'+e.id+'" class="finp" type="number" value="'+td+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
-              '<div style="font-size:10px;color:var(--text3);">Profession Tax</div>'+
-              '<input id="sal-ded-pt-'+e.id+'" class="finp" type="number" value="'+pt+'" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
-              '<div style="font-size:10px;color:var(--text3);">Advance Recovery</div>'+
-              '<input id="sal-ded-adv-'+e.id+'" class="finp" type="number" value="0" style="margin-bottom:0;font-size:11px;" oninput="salRecalc(\''+e.id+'\')">'+
-            '</div>'+
-            '<div id="sal-extra-ded-'+e.id+'"></div>'+
           '</div>'+
 
         '</div>'
@@ -5940,6 +5972,27 @@ function salSelectAll(checked){
   EMP_LIST.filter(function(e){return e.status==='active';}).forEach(function(e){
     var chk=document.getElementById('sal-sel-'+e.id);
     if(chk) chk.checked=checked;
+  });
+}
+
+function salWireInputs(){
+  // Wire all salary inputs to salRecalc via data-eid
+  document.querySelectorAll('[data-sal][data-eid]').forEach(function(el){
+    el.addEventListener('input',function(){
+      salRecalc(el.getAttribute('data-eid'));
+    });
+  });
+  // Wire + Add Earning buttons
+  document.querySelectorAll('[data-addearn]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      salAddExtraRow(btn.getAttribute('data-addearn'),'earn');
+    });
+  });
+  // Wire + Add Deduction buttons
+  document.querySelectorAll('[data-addded]').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      salAddExtraRow(btn.getAttribute('data-addded'),'ded');
+    });
   });
 }
 
