@@ -5702,12 +5702,16 @@ async function salFinalise(){
     var ot   = parseFloat((document.getElementById('sal-ot-'+e.id)||{value:0}).value)||0;
     var ratio = days/26;
 
-    // Read earnings from DOM (editable)
-    var basic   = parseFloat((document.getElementById('sal-earn-basic-'+e.id)||{value:pay.basic||0}).value)||0;
-    var grossEl = document.getElementById('sal-earn-gross-'+e.id);
-    var gross   = grossEl ? parseFloat(grossEl.value)||0 : parseFloat(pay.gross||0);
-    var earned  = Math.round(gross * ratio);
-    var otPay   = Math.round(gross/26/8*1.5*ot);
+    // Sum all visible earning component inputs (same logic as salRecalc)
+    var compTotal = 0;
+    document.querySelectorAll('[data-sal^="earn-"][data-eid="'+e.id+'"]').forEach(function(el){
+      if(el.type==='hidden') return;
+      compTotal += parseFloat(el.value)||0;
+    });
+    var basic  = parseFloat((document.getElementById('sal-earn-basic-'+e.id)||{value:pay.basic||0}).value)||0;
+    var gross  = parseFloat((document.getElementById('sal-earn-gross-'+e.id)||{value:pay.gross||0}).value)||pay.gross||0;
+    var earned = Math.round(compTotal * ratio);
+    var otPay  = Math.round(gross/26/8*1.5*ot);
 
     // Read deductions from DOM (editable)
     var pfEmp = parseFloat((document.getElementById('sal-ded-pf-'+e.id)||{value:0}).value)||0;
@@ -5772,25 +5776,50 @@ async function salFinalise(){
 
 function salRecalc(empId){
   var lwp   = parseFloat((document.getElementById('sal-days-'+empId)||{value:0}).value)||0;
-  var days  = Math.max(0,26-lwp); var ratio=days/26;
-  var gross = parseFloat((document.getElementById('sal-earn-gross-'+empId)||{value:0}).value)||0;
+  var days  = Math.max(0, 26-lwp);
+  var ratio = days / 26;
   var ot    = parseFloat((document.getElementById('sal-ot-'+empId)||{value:0}).value)||0;
-  var earned = Math.round(gross*ratio);
-  var otPay  = Math.round(gross/26/8*1.5*ot);
-  var pf   = parseFloat((document.getElementById('sal-ded-pf-'+empId)||{value:0}).value)||0;
+
+  // Sum all visible earning component inputs (exclude hidden gross field)
+  var compTotal = 0;
+  document.querySelectorAll('[data-sal^="earn-"][data-eid="'+empId+'"]').forEach(function(el){
+    if(el.type === 'hidden') return; // skip hidden gross
+    compTotal += parseFloat(el.value)||0;
+  });
+
+  // Pro-rate by days worked
+  var earned = Math.round(compTotal * ratio);
+
+  // OT pay — based on gross (full month) / 26 / 8 * 1.5
+  var grossEl = document.getElementById('sal-earn-gross-'+empId);
+  var gross   = parseFloat(grossEl ? grossEl.value : compTotal) || compTotal;
+  var otPay   = ot > 0 ? Math.round(gross / 26 / 8 * 1.5 * ot) : 0;
+
+  // Custom extra earnings (added via + Add button)
+  var extraE = 0;
+  document.querySelectorAll('[data-extra-earn-emp="'+empId+'"]').forEach(function(el){
+    extraE += parseFloat(el.value)||0;
+  });
+
+  var totalEarned = earned + otPay + extraE;
+
+  // Deductions
+  var pf   = parseFloat((document.getElementById('sal-ded-pf-'+empId)  ||{value:0}).value)||0;
   var esic = parseFloat((document.getElementById('sal-ded-esic-'+empId)||{value:0}).value)||0;
-  var tds  = parseFloat((document.getElementById('sal-ded-tds-'+empId)||{value:0}).value)||0;
-  var pt   = parseFloat((document.getElementById('sal-ded-pt-'+empId)||{value:0}).value)||0;
-  var adv  = parseFloat((document.getElementById('sal-ded-adv-'+empId)||{value:0}).value)||0;
-  var extraD=0; document.querySelectorAll('[data-extra-ded-emp="'+empId+'"]').forEach(function(el){extraD+=parseFloat(el.value)||0;});
-  var extraE=0; document.querySelectorAll('[data-extra-earn-emp="'+empId+'"]').forEach(function(el){extraE+=parseFloat(el.value)||0;});
-  var totalEarned = earned+otPay+extraE;
-  var totalDed    = pf+esic+tds+pt+adv+extraD;
-  var net = Math.max(0, totalEarned-totalDed);
-  var inr = function(n){return '₹'+Number(n||0).toLocaleString('en-IN');};
-  var pel = document.getElementById('sal-payable-'+empId);    if(pel) pel.textContent = inr(net);
-  var eel = document.getElementById('sal-earned-'+empId);     if(eel) eel.textContent = inr(totalEarned);
-  var del = document.getElementById('sal-deducted-'+empId);   if(del) del.textContent = inr(totalDed);
+  var tds  = parseFloat((document.getElementById('sal-ded-tds-'+empId) ||{value:0}).value)||0;
+  var pt   = parseFloat((document.getElementById('sal-ded-pt-'+empId)  ||{value:0}).value)||0;
+  var adv  = parseFloat((document.getElementById('sal-ded-adv-'+empId) ||{value:0}).value)||0;
+  var extraD = 0;
+  document.querySelectorAll('[data-extra-ded-emp="'+empId+'"]').forEach(function(el){
+    extraD += parseFloat(el.value)||0;
+  });
+  var totalDed = pf + esic + tds + pt + adv + extraD;
+  var net = Math.max(0, totalEarned - totalDed);
+
+  var inr = function(n){ return '₹' + Math.round(n||0).toLocaleString('en-IN'); };
+  var pel  = document.getElementById('sal-payable-'+empId);   if(pel)  pel.textContent  = inr(net);
+  var eel  = document.getElementById('sal-earned-'+empId);    if(eel)  eel.textContent  = inr(totalEarned);
+  var del2 = document.getElementById('sal-deducted-'+empId);  if(del2) del2.textContent = inr(totalDed);
 }
 
 function salAddExtraRow(empId, type){
@@ -5906,17 +5935,39 @@ function empSalaryHTML(){
               '<span style="font-size:9px;font-weight:900;color:#333;text-transform:uppercase;letter-spacing:.5px;">Earnings</span>'+
               '<button data-addearn="'+e.id+'" style="background:#F0F0F0;color:#333;border:1px solid #CCC;border-radius:4px;padding:1px 6px;font-size:9px;font-weight:700;cursor:pointer;">+ Add</button>'+
               '</div>'+
+              // Basic
               '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
                 '<span style="color:#444;">Basic</span>'+
-                '<input data-sal="earn-basic" data-eid="'+e.id+'" id="sal-earn-basic-'+e.id+'" type="number" value="'+b+'" style="width:75px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+                '<input data-sal="earn-basic" data-eid="'+e.id+'" id="sal-earn-basic-'+e.id+'" type="number" value="'+b+'" style="width:70px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
               '</div>'+
-              '<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
-                '<span style="color:#444;">Gross</span>'+
-                '<input data-sal="earn-gross" data-eid="'+e.id+'" id="sal-earn-gross-'+e.id+'" type="number" value="'+g+'" style="width:75px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
-              '</div>'+
+              // All pay components - read from extra_earnings JSON (same as pay fixation stores)
+              (function(){
+                var xhtml='';
+                var comps=[];
+                try{comps=pay.extra_earnings?JSON.parse(pay.extra_earnings):[];}catch(ex){}
+                // If extra_earnings empty, build from individual columns
+                if(!comps.length){
+                  if(pay.da)         comps.push({label:'DA',amount:pay.da});
+                  if(pay.hra)        comps.push({label:'HRA',amount:pay.hra});
+                  if(pay.conveyance) comps.push({label:'Conveyance',amount:pay.conveyance});
+                  if(pay.special_allowance) comps.push({label:'Special Allowance',amount:pay.special_allowance});
+                  if(pay.medical_allowance) comps.push({label:'Medical Allowance',amount:pay.medical_allowance});
+                  if(pay.other_allowance)   comps.push({label:'Other Allowance',amount:pay.other_allowance});
+                }
+                comps.forEach(function(c,ci){
+                  if(!c.label||!c.amount) return;
+                  xhtml+='<div style="font-size:10px;display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #F0F0F0;">'+
+                    '<span style="color:#444;">'+c.label+'</span>'+
+                    '<input data-sal="earn-c'+ci+'" data-eid="'+e.id+'" id="sal-earn-c'+ci+'-'+e.id+'" type="number" value="'+(c.amount||0)+'" style="width:70px;border:1px solid #DDD;border-radius:4px;padding:2px 4px;font-size:10px;text-align:right;font-family:Nunito,sans-serif;">'+
+                  '</div>';
+                });
+                return xhtml;
+              })()+
+              // Gross (hidden, auto-calc)
+              '<input data-sal="earn-gross" data-eid="'+e.id+'" id="sal-earn-gross-'+e.id+'" type="hidden" value="'+g+'">'+
               '<div id="sal-extra-earn-'+e.id+'"></div>'+
               '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:10px;font-weight:800;border-top:1.5px solid #333;margin-top:4px;">'+
-                '<span>Total Earned</span><span id="sal-earned-'+e.id+'">&#8377;'+Number(net).toLocaleString('en-IN')+'</span>'+
+                '<span>Total Earned</span><span id="sal-earned-'+e.id+'">&#8377;'+Number(g).toLocaleString('en-IN')+'</span>'+
               '</div>'+
             '</div>'+
             '<div style="padding:8px 10px;">'+
