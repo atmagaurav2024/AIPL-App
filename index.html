@@ -5497,10 +5497,7 @@ async function initEmpMgmt(){
     if(needEmps || needPay){
       var fetches = [
         needEmps
-          ? sbFetch('employees',{
-              select:'id,emp_id,employee_code,first_name,middle_name,last_name,email,phone,phone2,status,designation,role,department,work_location,date_of_joining,date_of_birth,gender,blood_group,profile_photo,photo_url,resignation_date,last_working_day,resignation_reason,aadhar,pan,pf_no,esic_no,bank_name,account_no,ifsc,account_holder,emergency_name,emergency_relation,emergency_phone,address,permanent_address',
-              order:'first_name.asc'
-            })
+          ? sbFetch('employees',{select:'*', order:'created_at.desc'})
           : Promise.resolve(null),
         needPay
           ? sbFetch('employee_pay',{select:'*',order:'effective_date.desc'})
