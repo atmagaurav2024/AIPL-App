@@ -1450,9 +1450,9 @@ input,select,textarea{font-size:16px !important;}
       <div class="mod-item" onclick="window.location.href='AIPL_Documents.html'"><div class="mod-ic">&#128193;</div><div class="mod-name">Documents</div></div>
     </div>
     <div class="sec-hdr"><div class="sec-title">&#128276; Recent Notifications</div><span style="font-size:12px;font-weight:700;color:var(--blue);cursor:pointer;">See all</span></div>
-    <div class="notif-item"><div class="ni-dot" style="background:#C62828;"></div><div><div class="ni-text">3 Safety violations reported at NH-48 Bypass</div><div class="ni-time">2 mins ago</div></div></div>
+    <div id="dash-activity-feed"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No recent activity</div></div>
     <div class="notif-item"><div class="ni-dot" style="background:#F57F17;"></div><div><div class="ni-text">NCR-NH48-003 overdue — compaction failure</div><div class="ni-time">1 hour ago</div></div></div>
-    <div class="notif-item"><div class="ni-dot" style="background:#2E7D32;"></div><div><div class="ni-text">RA Bill #8 approved by client — ₹38.4L</div><div class="ni-time">Yesterday</div></div></div>
+
     <div style="text-align:center;padding:16px 0 8px;">
       <button style="background:transparent;border:1.5px solid var(--border);border-radius:12px;padding:10px 24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);" onclick="toast('Logging out...','info');setTimeout(function(){showScreen('scr-login')},1000)">&#128275; Sign Out</button>
     </div>
@@ -1540,8 +1540,8 @@ input,select,textarea{font-size:16px !important;}
     </div>
 
     <div class="sec-title">&#128276; Recent Activity</div>
-    <div class="notif-item"><div class="ni-dot" style="background:#C62828;"></div><div><div class="ni-text">3 Safety violations reported at NH-48 Bypass</div><div class="ni-time">2 mins ago</div></div></div>
-    <div class="notif-item"><div class="ni-dot" style="background:#F57F17;"></div><div><div class="ni-text">NCR-NH48-003 overdue — compaction failure at CH 12+750</div><div class="ni-time">1 hour ago</div></div></div>
+    <div id="dash-activity-feed"><div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No recent activity</div></div>
+
     <div class="notif-item"><div class="ni-dot" style="background:#2E7D32;"></div><div><div class="ni-text">RA Bill #8 approved by client — &#8377;38.4L</div><div class="ni-time">Yesterday</div></div></div>
     <div style="text-align:center;padding:20px 0 8px;">
       <button style="background:transparent;border:1.5px solid #E2E8F0;border-radius:12px;padding:10px 24px;font-family:'Nunito',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#475569;" onclick="doLogout()">&#128275; Sign Out</button>
@@ -1559,9 +1559,9 @@ input,select,textarea{font-size:16px !important;}
   <div class="topbar-logo">AIPL<span>.</span></div>
   <div class="topbar-sep">›</div>
   <div class="topbar-title">Attendance Module</div>
-  <div class="topbar-project">📍 NH-48 Bypass Road · AIPL-PRJ-001</div>
+  <div class="topbar-project">—</div>
   <div class="topbar-right">
-    <div class="topbar-date" id="topbar-date">Mon, 23 Feb 2026</div>
+    <div class="topbar-date" id="topbar-date">—</div>
     <button class="btn btn-outline" style="color:#FFF;border-color:rgba(255,255,255,0.2);" onclick="openLeaveModal()">+ Apply Leave</button>
     <button class="btn btn-outline" style="color:#FFF;border-color:rgba(255,255,255,0.2);" onclick="showToast('Attendance exported to Excel','success')">📥 Export</button>
   </div>
@@ -1574,7 +1574,7 @@ input,select,textarea{font-size:16px !important;}
     <!-- LEFT: Clock -->
     <div class="punch-clock">
       <div class="clock-time" id="hero-clock">--:--:--</div>
-      <div class="clock-date" id="hero-date">Monday · 23 February 2026</div>
+      <div class="clock-date" id="hero-date">—</div>
       <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 6px; align-items: center;">
         <div class="gps-strip gps-checking" id="gps-strip" onclick="refreshGPS()">
           <div class="gps-dot"></div>
@@ -1605,14 +1605,14 @@ input,select,textarea{font-size:16px !important;}
         <div class="pstat-icon">✅</div>
         <div>
           <div class="pstat-label">Present Today</div>
-          <div class="pstat-value" id="stat-present">18 / 21</div>
+          <div class="pstat-value" id="stat-present">— / —</div>
         </div>
       </div>
       <div class="pstat">
         <div class="pstat-icon">❌</div>
         <div>
           <div class="pstat-label">Absent Today</div>
-          <div class="pstat-value" style="color:#EF9A9A;" id="stat-absent">3</div>
+          <div class="pstat-value" style="color:#EF9A9A;" id="stat-absent">—</div>
         </div>
       </div>
       <div class="pstat">
@@ -1626,7 +1626,7 @@ input,select,textarea{font-size:16px !important;}
         <div class="pstat-icon">📅</div>
         <div>
           <div class="pstat-label">This Month %</div>
-          <div class="pstat-value" style="color:#A5D6A7;">92.3%</div>
+          <div class="pstat-value" style="color:#A5D6A7;">—</div>
         </div>
       </div>
     </div>
@@ -1658,23 +1658,23 @@ input,select,textarea{font-size:16px !important;}
       <span class="scard-icon">✅</span>
       <div class="scard-val" id="card-present">0</div>
       <div class="scard-label">Present Today</div>
-      <div class="scard-sub">85.7% attendance</div>
+      <div class="scard-sub">Updated daily</div>
     </div>
     <div class="scard" style="--scard-color:#C62828;">
       <span class="scard-icon">❌</span>
       <div class="scard-val" id="card-absent">0</div>
       <div class="scard-label">Absent Today</div>
-      <div class="scard-sub">Alert sent to PM</div>
+      <div class="scard-sub">Updated daily</div>
     </div>
     <div class="scard" style="--scard-color:#F57F17;">
       <span class="scard-icon">⏰</span>
-      <div class="scard-val">2</div>
+      <div class="scard-val" id="scard-leave">—</div>
       <div class="scard-label">On Leave</div>
       <div class="scard-sub">Approved leaves</div>
     </div>
     <div class="scard" style="--scard-color:#E65100;">
       <span class="scard-icon">🔱</span>
-      <div class="scard-val">4.5h</div>
+      <div class="scard-val" id="scard-ot">—</div>
       <div class="scard-label">Total Overtime</div>
       <div class="scard-sub">Today all employees</div>
     </div>
@@ -1692,13 +1692,9 @@ input,select,textarea{font-size:16px !important;}
   <div id="tab-daily">
     <div class="table-card">
       <div class="table-card-header">
-        <div class="tch-title">📅 Today's Attendance — 23 Feb 2026 (Monday)</div>
+        <div class="tch-title">📅 Today's Attendance</div>
         <div class="tch-actions">
-          <select class="btn btn-outline" style="font-size:12px;padding:6px 10px;cursor:pointer;" onchange="showToast('Date changed','info')">
-            <option>23 Feb 2026 (Today)</option>
-            <option>22 Feb 2026</option>
-            <option>21 Feb 2026</option>
-          </select>
+          <input type="date" id="att-date-sel" class="btn btn-outline" style="font-size:12px;padding:6px 10px;cursor:pointer;" onchange="showToast('Date changed','info')">
           <button class="btn btn-outline btn-sm" onclick="markAllPresent()">✅ Mark All Present</button>
           <button class="btn btn-green btn-sm" onclick="showToast('Attendance saved successfully!','success')">💾 Save All</button>
         </div>
@@ -1729,12 +1725,10 @@ input,select,textarea{font-size:16px !important;}
     <div style="display:grid;grid-template-columns:1fr 340px;gap:20px;">
       <div class="table-card">
         <div class="table-card-header">
-          <div class="tch-title">📊 Monthly Summary — February 2026</div>
+          <div class="tch-title">📊 Monthly Summary</div>
           <div class="tch-actions">
-            <select class="btn btn-outline" style="font-size:12px;cursor:pointer;">
+            <select class="btn btn-outline" style="font-size:12px;cursor:pointer;" id="att-emp-sel">
               <option>All Employees</option>
-              <option>Rajesh Kumar</option>
-              <option>Priya Sharma</option>
             </select>
             <button class="btn btn-outline btn-sm" onclick="showToast('Monthly report downloaded','success')">📥 Report</button>
           </div>
@@ -1765,43 +1759,35 @@ input,select,textarea{font-size:16px !important;}
           <div class="tch-title" style="margin-bottom:14px;">📈 My Month Stats</div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
             <div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;">
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--green);">20</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--green);" id="my-days-present">—</div>
               <div style="font-size:11px;color:var(--text2);">Days Present</div>
             </div>
             <div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;">
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--red2);">1</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--red2);" id="my-days-absent">—</div>
               <div style="font-size:11px;color:var(--text2);">Days Absent</div>
             </div>
             <div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;">
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--amber);">2</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--amber);" id="my-leave-taken">—</div>
               <div style="font-size:11px;color:var(--text2);">Leave Taken</div>
             </div>
             <div style="padding:12px;background:var(--bg3);border-radius:8px;text-align:center;">
-              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--blue);">12h</div>
+              <div style="font-family:'Barlow Condensed',sans-serif;font-size:28px;font-weight:700;color:var(--blue);" id="my-ot-hours">—</div>
               <div style="font-size:11px;color:var(--text2);">Overtime (hrs)</div>
             </div>
           </div>
           <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px;">
               <span style="color:var(--text2);">Attendance %</span>
-              <span style="font-weight:700;color:var(--green);">92.3%</span>
+              <span style="font-weight:700;color:var(--green);" id="my-att-pct">—</span>
             </div>
             <div style="height:8px;background:var(--bg3);border-radius:8px;overflow:hidden;">
-              <div style="width:92.3%;height:100%;background:linear-gradient(90deg,var(--green2),var(--green));border-radius:8px;"></div>
+              <div style="width:0%;height:100%;background:linear-gradient(90deg,var(--green2),var(--green));border-radius:8px;" id="my-att-bar"></div>
             </div>
           </div>
         </div>
         <div class="table-card" style="padding:20px;">
           <div class="tch-title" style="margin-bottom:12px;">💰 Salary Impact</div>
-          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Basic Salary</span><span style="font-weight:600;">₹45,000</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Per Day Rate</span><span>₹1,500</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Days Present (20)</span><span style="color:var(--green);font-weight:600;">+₹30,000</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Leave (2 days)</span><span style="color:var(--amber);">₹3,000 adj.</span></div>
-            <div style="display:flex;justify-content:space-between;"><span style="color:var(--text2);">Overtime (12h)</span><span style="color:var(--amber);font-weight:600;">+₹2,250</span></div>
-            <div style="height:1px;background:var(--border);"></div>
-            <div style="display:flex;justify-content:space-between;font-weight:700;"><span>Net Payable</span><span style="color:var(--green);font-size:15px;">₹32,250</span></div>
-          </div>
+          <div id="my-salary-impact" style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Select an employee to view salary impact</div>
         </div>
       </div>
     </div>
@@ -1809,27 +1795,8 @@ input,select,textarea{font-size:16px !important;}
 
   <!-- ─── LEAVE TAB ─── -->
   <div id="tab-leaves" style="display:none;">
-    <div class="leave-balances">
-      <div class="lb-card">
-        <div class="lb-type">Casual Leave (CL)</div>
-        <div class="lb-bar"><div class="lb-fill" style="width:50%;background:#1565C0;"></div></div>
-        <div class="lb-counts"><span class="lb-used">Used: 3</span><span class="lb-avail">Available: 3</span></div>
-      </div>
-      <div class="lb-card">
-        <div class="lb-type">Sick Leave (SL)</div>
-        <div class="lb-bar"><div class="lb-fill" style="width:25%;background:#00838F;"></div></div>
-        <div class="lb-counts"><span class="lb-used">Used: 2</span><span class="lb-avail">Available: 6</span></div>
-      </div>
-      <div class="lb-card">
-        <div class="lb-type">Earned Leave (EL)</div>
-        <div class="lb-bar"><div class="lb-fill" style="width:13%;background:#2E7D32;"></div></div>
-        <div class="lb-counts"><span class="lb-used">Used: 2</span><span class="lb-avail">Available: 13</span></div>
-      </div>
-      <div class="lb-card">
-        <div class="lb-type">Comp Off</div>
-        <div class="lb-bar"><div class="lb-fill" style="width:0%;background:#6A1B9A;"></div></div>
-        <div class="lb-counts"><span class="lb-used">Used: 0</span><span class="lb-avail">Available: 2</span></div>
-      </div>
+    <div class="leave-balances" id="leave-balances-wrap">
+      <div style="text-align:center;padding:16px;color:var(--text3);font-size:12px;width:100%;">Leave balances load when employee is selected</div>
     </div>
 
     <div class="table-card">
@@ -1885,53 +1852,10 @@ input,select,textarea{font-size:16px !important;}
           </tr>
         </thead>
         <tbody>
-          <tr class="anim">
-            <td><div class="emp-cell"><div class="emp-avatar" style="background:#1565C0;">RK</div><div><div class="emp-name">Rajesh Kumar</div><div class="emp-desig">Site Engineer</div></div></div></td>
-            <td><span style="color:var(--green);font-weight:700;">▶ PUNCH IN</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);">08:42:15</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);">18.5204°N, 73.8567°E</span></td>
-            <td><span style="font-size:11px;color:var(--green);">±4m</span></td>
-            <td><span class="att-badge b-present">✅ Yes (58m)</span></td>
-            <td><span style="font-size:11px;color:var(--text3);">Mobile App</span></td>
-            <td><span style="font-size:16px;cursor:pointer;" onclick="showToast('Selfie photo preview','info')">📸</span></td>
-          </tr>
-          <tr class="anim" style="animation-delay:0.05s">
-            <td><div class="emp-cell"><div class="emp-avatar" style="background:#2E7D32;">SP</div><div><div class="emp-name">Suresh Patil</div><div class="emp-desig">Supervisor</div></div></div></td>
-            <td><span style="color:var(--green);font-weight:700;">▶ PUNCH IN</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green);">08:55:02</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);">18.5198°N, 73.8571°E</span></td>
-            <td><span style="font-size:11px;color:var(--green);">±6m</span></td>
-            <td><span class="att-badge b-present">✅ Yes (23m)</span></td>
-            <td><span style="font-size:11px;color:var(--text3);">Mobile App</span></td>
-            <td><span style="font-size:16px;cursor:pointer;" onclick="showToast('Selfie photo preview','info')">📸</span></td>
-          </tr>
-          <tr class="anim" style="animation-delay:0.1s">
-            <td><div class="emp-cell"><div class="emp-avatar" style="background:#E65100;">AM</div><div><div class="emp-name">Amit Mehta</div><div class="emp-desig">Store Keeper</div></div></div></td>
-            <td><span style="color:var(--red2);font-weight:700;">⏹ PUNCH OUT</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--red2);">13:02:44</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue);">18.5201°N, 73.8569°E</span></td>
-            <td><span style="font-size:11px;color:var(--green);">±8m</span></td>
-            <td><span class="att-badge b-present">✅ Yes (41m)</span></td>
-            <td><span style="font-size:11px;color:var(--text3);">Mobile App</span></td>
-            <td><span style="font-size:16px;cursor:pointer;" onclick="showToast('Selfie photo preview','info')">📸</span></td>
-          </tr>
-          <tr class="anim" style="animation-delay:0.15s">
-            <td><div class="emp-cell"><div class="emp-avatar" style="background:#7B1FA2;">KD</div><div><div class="emp-name">Kiran Deshmukh</div><div class="emp-desig">Labour Supervisor</div></div></div></td>
-            <td><span style="color:var(--green);font-weight:700;">▶ PUNCH IN</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--amber);">09:18:33</span></td>
-            <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--orange);">18.4850°N, 73.8120°E</span></td>
-            <td><span style="font-size:11px;color:var(--amber);">±42m</span></td>
-            <td><span class="att-badge b-absent">❌ No (4.2km)</span></td>
-            <td><span style="font-size:11px;color:var(--text3);">Mobile App</span></td>
-            <td><span style="font-size:16px;color:var(--text3);">—</span></td>
-          </tr>
+          <!-- Punch logs rendered dynamically -->
         </tbody>
       </table>
-      <div style="padding:14px 20px;border-top:1px solid var(--border);background:#FFFDE7;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--amber);">
-        <span>⚠️</span>
-        <span><strong>Kiran Deshmukh</strong> attempted punch from 4.2km away — Outside allowed 300m radius. Attendance blocked. Please regularize if required.</span>
-        <button class="btn btn-outline btn-sm" onclick="showToast('Regularization request sent to Manager','info')" style="margin-left:auto;">Regularize</button>
-      </div>
+      
     </div>
   </div>
 
@@ -1987,10 +1911,8 @@ input,select,textarea{font-size:16px !important;}
     <div class="modal-body">
       <div class="fgrp">
         <label class="flabel">Employee</label>
-        <select class="fselect">
-          <option selected>Rajesh Kumar (Self)</option>
-          <option>Suresh Patil</option>
-          <option>Amit Desai</option>
+        <select class="fselect" id="leave-emp-sel">
+          <option value="">— Select Employee —</option>
         </select>
       </div>
       <div class="frow">
@@ -2016,11 +1938,11 @@ input,select,textarea{font-size:16px !important;}
       <div class="frow">
         <div class="fgrp">
           <label class="flabel">From Date</label>
-          <input type="date" class="finput" value="2026-02-24">
+          <input type="date" class="finput">
         </div>
         <div class="fgrp">
           <label class="flabel">To Date</label>
-          <input type="date" class="finput" value="2026-02-24">
+          <input type="date" class="finput">
         </div>
       </div>
       <div class="fgrp">
@@ -2029,14 +1951,12 @@ input,select,textarea{font-size:16px !important;}
       </div>
       <div class="fgrp">
         <label class="flabel">Handover to (During Absence)</label>
-        <select class="fselect">
-          <option>-- Select Employee --</option>
-          <option>Suresh Patil (Supervisor)</option>
-          <option>Amit Desai (Store Keeper)</option>
+        <select class="fselect" id="leave-handover-sel">
+          <option value="">-- Select Employee --</option>
         </select>
       </div>
-      <div style="padding:12px;background:#E3F2FD;border-radius:8px;font-size:12px;color:var(--blue);border:1px solid #BBDEFB;">
-        ℹ️ <strong>Balance:</strong> CL: 3 remaining · SL: 6 remaining · EL: 13 remaining
+      <div style="padding:12px;background:#E3F2FD;border-radius:8px;font-size:12px;color:var(--blue);border:1px solid #BBDEFB;" id="leave-balance-info">
+        ℹ️ Select employee to see leave balance
       </div>
     </div>
     <div class="modal-foot">
@@ -3003,25 +2923,9 @@ function renderEmployeeSelfView(){
 }
 
 // ── DATA ──
-const employees = [
-  { id:'E001', name:'Rajesh Kumar',   initials:'RK', desig:'Site Engineer',    color:'#1565C0', status:'present', in:'08:42', out:'',     ot:'1.5h', gps:'site' },
-  { id:'E002', name:'Suresh Patil',   initials:'SP', desig:'Supervisor',       color:'#2E7D32', status:'present', in:'08:55', out:'',     ot:'0h',   gps:'site' },
-  { id:'E003', name:'Kavita Joshi',   initials:'KJ', desig:'Project Manager',  color:'#7B1FA2', status:'present', in:'09:10', out:'',     ot:'0h',   gps:'remote' },
-  { id:'E004', name:'Amit Desai',     initials:'AD', desig:'Store Keeper',     color:'#E65100', status:'present', in:'08:30', out:'13:02', ot:'0h',   gps:'site' },
-  { id:'E005', name:'Priya Sharma',   initials:'PS', desig:'Accountant',       color:'#00838F', status:'present', in:'09:05', out:'',     ot:'0h',   gps:'remote' },
-  { id:'E006', name:'Mahesh Borse',   initials:'MB', desig:'Labour Supervisor',color:'#C62828', status:'absent',  in:'',      out:'',     ot:'0h',   gps:'manual' },
-  { id:'E007', name:'Dinesh Rane',    initials:'DR', desig:'Bar Bender',       color:'#37474F', status:'present', in:'08:40', out:'',     ot:'2.0h', gps:'site' },
-  { id:'E008', name:'Sanjay More',    initials:'SM', desig:'Carpenter',        color:'#558B2F', status:'leave',   in:'',      out:'',     ot:'0h',   gps:'manual' },
-  { id:'E009', name:'Kiran Deshmukh', initials:'KD', desig:'Mason',            color:'#4527A0', status:'half',    in:'09:18', out:'13:00', ot:'0h',   gps:'site' },
-  { id:'E010', name:'Ravi Thakur',    initials:'RT', desig:'Electrician',      color:'#F57F17', status:'present', in:'08:50', out:'',     ot:'1.0h', gps:'site' },
-];
+const employees = []; // Loaded dynamically from Supabase
 
-const leaveData = [
-  { emp:'Sanjay More',   type:'Sick Leave',  from:'22 Feb',  to:'23 Feb',  days:2, reason:'Fever',         applied:'20 Feb 2026', status:'approved' },
-  { emp:'Mahesh Borse',  type:'Casual Leave',from:'23 Feb',  to:'23 Feb',  days:1, reason:'Personal work', applied:'21 Feb 2026', status:'approved' },
-  { emp:'Priya Sharma',  type:'Earned Leave', from:'26 Feb', to:'28 Feb',  days:3, reason:'Family event',  applied:'18 Feb 2026', status:'pending' },
-  { emp:'Dinesh Rane',   type:'Comp Off',    from:'01 Mar',  to:'01 Mar',  days:1, reason:'Worked Sunday', applied:'22 Feb 2026', status:'pending' },
-];
+const leaveData = []; // Loaded dynamically from Supabase
 
 // Calendar data for Feb 2026
 const calData = {};
@@ -3336,13 +3240,28 @@ function approveLeave(i) {
 }
 
 function openLeaveModal() {
+  // Populate employee dropdowns from live EMP_LIST
+  var activeEmps = EMP_LIST.filter(function(e){return e.status==='active';});
+  var empOpts = '<option value="">— Select Employee —</option>'+
+    activeEmps.map(function(e){
+      var name=((e.first_name||'')+(e.middle_name?' '+e.middle_name:'')+(e.last_name?' '+e.last_name:'')).trim();
+      return '<option value="'+name+'">'+name+'</option>';
+    }).join('');
+  var sel = document.getElementById('leave-emp-sel');
+  var ho  = document.getElementById('leave-handover-sel');
+  if(sel) sel.innerHTML = empOpts;
+  if(ho)  ho.innerHTML  = '<option value="">-- Select Employee --</option>'+empOpts;
+  // Set today's date
+  var today = new Date().toISOString().slice(0,10);
+  document.querySelectorAll('#leave-modal input[type=date]').forEach(function(el){el.value=today;});
   document.getElementById('leave-modal').classList.add('open');
 }
 
 function submitLeave() {
   document.getElementById('leave-modal').classList.remove('open');
   showToast('Leave application submitted! Manager notified via email & app.', 'success');
-  const newLeave = { emp:'Rajesh Kumar', type:'Casual Leave', from:'24 Feb', to:'24 Feb', days:1, reason:'Personal work', applied:'23 Feb 2026', status:'pending' };
+  const empName = (document.getElementById('leave-emp-sel')||{}).value||currentUser&&currentUser.name||'Employee';
+  const newLeave = { emp:empName, type:'Casual Leave', from:'24 Feb', to:'24 Feb', days:1, reason:'Personal work', applied:'23 Feb 2026', status:'pending' };
   leaveData.push(newLeave);
   renderLeave();
 }
