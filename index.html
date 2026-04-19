@@ -8423,12 +8423,12 @@ async function empSavePay(){
 <div class="sheet" id="sh-acc" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
 
 <!-- ACCESS CONTROL -->
-<div class="app-screen" id="app-access">
+<div class="app-screen" id="app-access" style="display:flex;flex-direction:column;">
   <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
     <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128274; Access Control</div>
   </div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;">
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 12px;">
     <div style="display:flex;gap:8px;margin-bottom:14px;">
       <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
       <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
@@ -8436,8 +8436,8 @@ async function empSavePay(){
     <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select></div>
     <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
   </div>
-  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);">
-    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:var(--navy);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
+  <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);flex-shrink:0;padding-bottom:calc(12px + 60px);">
+    <button onclick="acSavePermissions()" style="width:100%;padding:14px;background:#4A148C;color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;">&#128190; Save Permissions</button>
   </div>
 </div>
 
