@@ -5314,23 +5314,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
     <div class="drawer-section" style="color:#2E7D32;">&#127959; Project Module</div>
     <div class="drawer-item" onclick="showApp('projects');closeDrawer();">
       <div class="drawer-item-ic" style="background:#E8F5E9;">&#127959;</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Projects</div><div class="drawer-item-sub">Manage project details</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('boq');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#EDE7F6;">&#128203;</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">BOQ Items</div><div class="drawer-item-sub">Bill of Quantities</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('jm');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E8EAF6;">&#128208;</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Joint Measurements</div><div class="drawer-item-sub">JM entry against BOQ</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('planning');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#E3F2FD;">&#128230;</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Planning</div><div class="drawer-item-sub">Resources per BOQ item</div></div>
-    </div>
-    <div class="drawer-item" onclick="showApp('execution');closeDrawer();">
-      <div class="drawer-item-ic" style="background:#FFF3E0;">&#128221;</div>
-      <div class="drawer-item-info"><div class="drawer-item-title">Work Allotment</div><div class="drawer-item-sub">Assign work to SC / Labour</div></div>
+      <div class="drawer-item-info"><div class="drawer-item-title">Project Module</div><div class="drawer-item-sub">Projects, BOQ, JM, Planning, Work Allotment</div></div>
     </div>
 
     <!-- EMPLOYEE -->
@@ -9521,11 +9505,7 @@ var AC_PLBL={view:'View',edit:'Edit',delete:'Delete',cash_in:'Cash In',expense:'
 
 var AC_MODS=[
   {key:'dashboard',  label:'Dashboard',          icon:'&#127968;',group:'Dashboard',     params:['view']},
-  {key:'projects',   label:'Projects',            icon:'&#127959;',group:'Project Module',params:['view','edit','delete']},
-  {key:'boq',        label:'BOQ Items',           icon:'&#128203;',group:'Project Module',params:['view','edit','delete']},
-  {key:'jm',         label:'Joint Measurements',  icon:'&#128208;',group:'Project Module',params:['view','edit','delete']},
-  {key:'planning',   label:'Planning',            icon:'&#128230;',group:'Project Module',params:['view','edit','delete']},
-  {key:'execution',  label:'Work Allotment',      icon:'&#128221;',group:'Project Module',params:['view','edit','delete']},
+  {key:'projects',   label:'Project Module',      icon:'&#127959;',group:'Project Module',params:['view','edit','delete']},
   {key:'employees',  label:'Employee Management', icon:'&#128101;',group:'Employee',      params:['view','edit','delete']},
   {key:'attendance', label:'Attendance',          icon:'&#9200;',  group:'Employee',      params:['view','mark']},
   {key:'accounts',   label:'Accounts',            icon:'&#128176;',group:'Accounting',    params:['view','edit','delete']},
