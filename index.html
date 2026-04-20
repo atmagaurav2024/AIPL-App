@@ -3769,7 +3769,7 @@ async function saveLabour(editId){
       if(res&&res[0]) LABOURERS.unshift(mapLabour(res[0]));
       toast('Labourer added!','success');
     }
-    closeAdd(); renderLabour();
+    closeSheet('ov-add','sh-add'); renderLabour();
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
