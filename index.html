@@ -4452,6 +4452,19 @@ function uomOptions(){
 var currentPage='vendors';
 function openAdd(){
   var html='';
+  if(currentPage==='labour'){
+    var af2=document.getElementById('add-foot');
+    document.getElementById('add-title').textContent='New Labour Registration';
+    document.getElementById('add-body').innerHTML=buildLabourForm(null);
+    af2.innerHTML='';
+    var cb2=document.createElement('button');cb2.className='btn btn-outline';cb2.textContent='Cancel';
+    cb2.onclick=function(){closeSheet('ov-add','sh-add');};
+    var sb2=document.createElement('button');sb2.className='btn btn-navy';sb2.innerHTML='&#10003; Save Labour';
+    sb2.onclick=function(){saveLabour('');};
+    af2.appendChild(cb2);af2.appendChild(sb2);
+    openSheet('ov-add','sh-add');
+    return;
+  }
   if(currentPage==='vendors'){
     html='<div class="section-title">&#127968; New Vendor Registration</div>'+
       '<div class="g2"><div><label class="flbl">Company Name</label><input id="f-vname" class="finp" placeholder="e.g. JSW Steel Ltd."></div><div><label class="flbl">Vendor ID</label><input class="finp" placeholder="Auto: VND-'+String(VENDORS.length+1).padStart(3,'0')+'" disabled style="opacity:.5;"></div></div>'+
