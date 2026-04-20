@@ -1053,12 +1053,12 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 /* Sheet */
 .sh-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(3px);}
 .sh-overlay.on{opacity:1;pointer-events:all;}
-.sheet{position:fixed;left:0;right:0;bottom:0;background:white;border-radius:24px 24px 0 0;z-index:600;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:93vh;overflow-y:hidden;display:flex;flex-direction:column;}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:white;border-radius:24px 24px 0 0;z-index:600;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:hidden;display:flex;flex-direction:column;}
 .sheet.on{transform:translateY(0);}
 .sh-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:12px auto 0;}
 .sh-head{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
 .sh-title{font-size:17px;font-weight:800;}.sh-close{font-size:22px;cursor:pointer;color:var(--text3);}
-.sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:601;position:relative;}
+.sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:601;position:relative;}
 .flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:5px;margin-top:2px;}
 .finp,.fsel,.ftxt{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s;box-sizing:border-box;}
 *{touch-action:pan-x pan-y;}
@@ -2188,6 +2188,18 @@ input,select,textarea{font-size:16px !important;}
         <button class="btn btn-indigo btn-sm" onclick="addCategory('dept')">+ Add</button>
       </div>
       <div id="dept-cats"></div>
+    </div>
+
+    <!-- Labour Types -->
+    <div style="background:white;border-radius:14px;padding:14px;margin-bottom:10px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div>
+          <div style="font-size:14px;font-weight:800;">&#128373; Labour Types / Skills</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">Used in labour registration &amp; filter</div>
+        </div>
+        <button class="btn btn-indigo btn-sm" onclick="addCategory('labour')">+ Add</button>
+      </div>
+      <div id="labour-cats"></div>
     </div>
 
     <div style="height:10px"></div>
@@ -3338,9 +3350,11 @@ function initRegistry(){
     rebuildPills('vendor','vendor-cat-pills','var(--teal)',filterVendors);
     rebuildPills('material','mat-cat-pills','var(--green)',filterMaterials);
     rebuildPills('sc','sc-cat-pills','var(--purple)',filterSC);
+    rebuildPills('labour','lab-cat-pills','#E65100',filterLabour);
     renderCatSection('vendor','vendor-cats');
     renderCatSection('material','material-cats');
     renderCatSection('sc','sc-cats');
+    renderCatSection('labour','labour-cats');
     renderCatSection('uom','uom-cats');
     renderCatSection('role','role-cats');
     renderCatSection('dept','dept-cats');
@@ -3671,47 +3685,74 @@ function filterLabour(cat,el){
 }
 
 function openAddLabour(){
-  openAddGeneric('labour',null);
+  var af = document.getElementById('add-foot');
+  document.getElementById('add-title').textContent = 'New Labour Registration';
+  document.getElementById('add-body').innerHTML = buildLabourForm(null);
+  af.innerHTML = '';
+  var cb = document.createElement('button');
+  cb.className='btn btn-outline'; cb.textContent='Cancel';
+  cb.onclick = function(){ closeSheet('ov-add','sh-add'); };
+  var sb = document.createElement('button');
+  sb.className='btn btn-navy'; sb.innerHTML='&#10003; Save Labour';
+  sb.onclick = function(){ saveLabour(''); };
+  af.appendChild(cb); af.appendChild(sb);
+  openSheet('ov-add','sh-add');
 }
 
 function buildLabourForm(l){
   l = l||{};
-  return '<label class="flbl">Full Name *</label><input id="e-labname" class="finp" value="'+esc(l.name||'')+'">'+
+  var labTypes = catOptions('labour')||
+    '<option value="skilled"'+(l.type==='skilled'?' selected':'')+'>Skilled</option>'+
+    '<option value="semi-skilled"'+(l.type==='semi-skilled'?' selected':'')+'>Semi-Skilled</option>'+
+    '<option value="unskilled"'+(!l.type||l.type==='unskilled'?' selected':'')+'>Unskilled</option>';
+  return (
+    '<label class="flbl">Full Name *</label>'+
+    '<input id="e-labname" class="finp" value="'+esc(l.name||'')+'" placeholder="e.g. Ramesh Kumar">'+
     '<div class="g2">'+
-      '<div><label class="flbl">Skill / Trade</label><input id="e-labskill" class="finp" placeholder="e.g. Mason, Carpenter" value="'+esc(l.skill||'')+'"></div>'+
-      '<div><label class="flbl">Type</label><select id="e-labtype" class="fsel">'+
-        '<option value="skilled"'+(l.type==='skilled'?' selected':'')+'>Skilled</option>'+
-        '<option value="semi-skilled"'+(l.type==='semi-skilled'?' selected':'')+'>Semi-Skilled</option>'+
-        '<option value="unskilled"'+(!l.type||l.type==='unskilled'?' selected':'')+'>Unskilled</option>'+
-      '</select></div>'+
+      '<div><label class="flbl">Skill / Trade</label>'+
+        '<input id="e-labskill" class="finp" placeholder="Mason, Carpenter, Helper..." value="'+esc(l.skill||'')+'"></div>'+
+      '<div><label class="flbl">Labour Type</label>'+
+        '<select id="e-labtype" class="fsel">'+labTypes+'</select></div>'+
     '</div>'+
     '<div class="g2">'+
-      '<div><label class="flbl">Phone</label><input id="e-labphone" class="finp" type="tel" value="'+esc(l.phone||'')+'"></div>'+
-      '<div><label class="flbl">Daily Rate (₹)</label><input id="e-labrate" class="finp" type="number" value="'+(l.dailyRate||'')+'"></div>'+
+      '<div><label class="flbl">Phone</label>'+
+        '<input id="e-labphone" class="finp" type="tel" value="'+esc(l.phone||'')+'" placeholder="Mobile"></div>'+
+      '<div><label class="flbl">Daily Rate (₹)</label>'+
+        '<input id="e-labrate" class="finp" type="number" value="'+(l.dailyRate||'')+'" placeholder="0"></div>'+
     '</div>'+
     '<div class="g2">'+
-      '<div><label class="flbl">Source</label><select id="e-labsource" class="fsel">'+
-        '<option value="direct"'+(l.source==='direct'||!l.source?' selected':'')+'>Direct</option>'+
-        '<option value="contractor"'+(l.source==='contractor'?' selected':'')+'>Via Contractor</option>'+
-      '</select></div>'+
-      '<div><label class="flbl">Contractor Name</label><input id="e-labcontractor" class="finp" value="'+esc(l.contractor||'')+'"></div>'+
+      '<div><label class="flbl">Source</label>'+
+        '<select id="e-labsource" class="fsel">'+
+          '<option value="direct"'+(l.source==='direct'||!l.source?' selected':'')+'>Direct Hire</option>'+
+          '<option value="contractor"'+(l.source==='contractor'?' selected':'')+'>Via Contractor</option>'+
+        '</select></div>'+
+      '<div><label class="flbl">Contractor Name</label>'+
+        '<input id="e-labcontractor" class="finp" value="'+esc(l.contractor||'')+'" placeholder="If via contractor"></div>'+
     '</div>'+
     '<div class="g2">'+
-      '<div><label class="flbl">Aadhar No.</label><input id="e-labaadhar" class="finp" value="'+esc(l.aadhar||'')+'"></div>'+
-      '<div><label class="flbl">Blood Group</label><input id="e-labblood" class="finp" placeholder="e.g. B+" value="'+esc(l.bloodGroup||'')+'"></div>'+
+      '<div><label class="flbl">Aadhar No.</label>'+
+        '<input id="e-labaadhar" class="finp" value="'+esc(l.aadhar||'')+'" placeholder="XXXX XXXX XXXX"></div>'+
+      '<div><label class="flbl">Blood Group</label>'+
+        '<input id="e-labblood" class="finp" placeholder="e.g. B+" value="'+esc(l.bloodGroup||'')+'"></div>'+
     '</div>'+
     '<div class="g2">'+
-      '<div><label class="flbl">Date of Joining</label><input id="e-labjoined" class="finp" type="date" value="'+esc(l.joined||'')+'"></div>'+
-      '<div><label class="flbl">Status</label><select id="e-labstatus" class="fsel">'+
-        '<option value="active"'+(l.status==='active'||!l.status?' selected':'')+'>Active</option>'+
-        '<option value="inactive"'+(l.status==='inactive'?' selected':'')+'>Inactive</option>'+
-      '</select></div>'+
+      '<div><label class="flbl">Date of Joining</label>'+
+        '<input id="e-labjoined" class="finp" type="date" value="'+esc(l.joined||'')+'"></div>'+
+      '<div><label class="flbl">Status</label>'+
+        '<select id="e-labstatus" class="fsel">'+
+          '<option value="active"'+(l.status==='active'||!l.status?' selected':'')+'>Active</option>'+
+          '<option value="inactive"'+(l.status==='inactive'?' selected':'')+'>Inactive</option>'+
+        '</select></div>'+
     '</div>'+
-    '<label class="flbl">Project / Site</label><input id="e-labproject" class="finp" value="'+esc(l.project||'')+'">'+
-    '<label class="flbl">Address</label><textarea id="e-labaddress" class="ftxt">'+esc(l.address||'')+'</textarea>'+
-    '<label class="flbl">Remarks</label><input id="e-labremarks" class="finp" value="'+esc(l.remarks||'')+'">'+
-    '<button class="btn" style="width:100%;margin-top:8px;" onclick="saveLabour(\''+esc(l.id||'')+'\')" >&#128190; Save Labourer</button>';
+    '<label class="flbl">Project / Site</label>'+
+    '<input id="e-labproject" class="finp" value="'+esc(l.project||'')+'" placeholder="Current project">'+
+    '<label class="flbl">Address</label>'+
+    '<textarea id="e-labaddress" class="ftxt" placeholder="Residential address...">'+esc(l.address||'')+'</textarea>'+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="e-labremarks" class="finp" value="'+esc(l.remarks||'')+'" placeholder="Any notes...">'
+  );
 }
+
 
 async function saveLabour(editId){
   var name = gv('e-labname');
@@ -4265,6 +4306,19 @@ function editRecord(type,id){
     saveCall='updateUser(\''+id+'\')'; 
 
   }
+  if(currentPage==='labour'){
+    var af2=document.getElementById('add-foot');
+    document.getElementById('add-title').textContent='New Labour Registration';
+    document.getElementById('add-body').innerHTML=buildLabourForm(null);
+    af2.innerHTML='';
+    var cb2=document.createElement('button');cb2.className='btn btn-outline';cb2.textContent='Cancel';
+    cb2.onclick=function(){closeSheet('ov-add','sh-add');};
+    var sb2=document.createElement('button');sb2.className='btn btn-navy';sb2.innerHTML='&#10003; Save Labour';
+    sb2.onclick=function(){saveLabour('');};
+    af2.appendChild(cb2);af2.appendChild(sb2);
+    openSheet('ov-add','sh-add');
+    return;
+  }
   document.getElementById('add-title').textContent=title;
   document.getElementById('add-body').innerHTML=html;
   document.getElementById('add-foot').innerHTML=
@@ -4690,7 +4744,7 @@ function switchPage(p){
   if(p==='vendors'){vendorCatFilter='all';rebuildPills('vendor','vendor-cat-pills','var(--teal)',filterVendors);renderVendors();}
   if(p==='materials'){matCatFilter='all';rebuildPills('material','mat-cat-pills','var(--green)',filterMaterials);renderMaterials();}
   if(p==='subcontractors'){scCatFilter='all';rebuildPills('sc','sc-cat-pills','var(--purple)',filterSC);renderSC();}
-  if(p==='labour'){labCatFilter='all';renderLabour();}
+  if(p==='labour'){labCatFilter='all';rebuildPills('labour','lab-cat-pills','#E65100',filterLabour);renderLabour();}
   if(p==='users'){showApp('employees');return;}
 }
 // toast: shared above
@@ -4768,6 +4822,18 @@ var CAT_DATA={
     {id:'u-9',icon:'&#128203;',name:'Rolls',desc:'Rolls — waterproof membrane, mesh',color:'#E65100',count:0,active:true},
     {id:'u-10',icon:'&#128203;',name:'LS',desc:'Lump Sum — contract items',color:'#37474F',count:0,active:true},
     {id:'u-11',icon:'&#128203;',name:'Sets',desc:'Sets — door frames, fixtures',color:'#880E4F',count:0,active:true},
+  ],
+  labour:[
+    {id:'lab-1',icon:'&#129521;',name:'Mason',desc:'Brickwork, plastering, finishing',color:'#E65100',count:0,active:true},
+    {id:'lab-2',icon:'&#128296;',name:'Carpenter',desc:'Shuttering, formwork, woodwork',color:'#795548',count:0,active:true},
+    {id:'lab-3',icon:'&#128736;',name:'Bar Bender',desc:'Steel reinforcement binding and placing',color:'#C62828',count:0,active:true},
+    {id:'lab-4',icon:'&#9889;',name:'Electrician',desc:'Electrical wiring and fitting',color:'#F57F17',count:0,active:true},
+    {id:'lab-5',icon:'&#128167;',name:'Plumber',desc:'Plumbing and sanitation work',color:'#1565C0',count:0,active:true},
+    {id:'lab-6',icon:'&#127912;',name:'Painter',desc:'Painting and surface finishing',color:'#7B1FA2',count:0,active:true},
+    {id:'lab-7',icon:'&#128373;',name:'Helper',desc:'General unskilled helper',color:'#37474F',count:0,active:true},
+    {id:'lab-8',icon:'&#128267;',name:'Welder',desc:'Welding and fabrication',color:'#37474F',count:0,active:true},
+    {id:'lab-9',icon:'&#9917;',name:'Operator',desc:'Machine / equipment operator',color:'#2E7D32',count:0,active:true},
+    {id:'lab-10',icon:'&#128697;',name:'Driver',desc:'Vehicle and equipment driver',color:'#00838F',count:0,active:true},
   ]
 };
 
