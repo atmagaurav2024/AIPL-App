@@ -6164,18 +6164,20 @@ function empSalaryHTML(){
       return (
         '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;" id="sal-row-'+e.id+'">'+
 
-          // ── Header row with checkbox ──────────────────────────────────
-          '<div style="padding:10px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">'+
-            '<input type="checkbox" id="sal-sel-'+e.id+'" checked style="width:18px;height:18px;accent-color:#1B5E20;cursor:pointer;flex-shrink:0;">'+
-            '<label for="sal-sel-'+e.id+'" style="flex:1;cursor:pointer;">'+
+          // ── Header row with checkbox + collapse toggle ────────────────
+          '<div style="padding:10px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="salToggleRow(\''+e.id+'\',event)">'+
+            '<input type="checkbox" id="sal-sel-'+e.id+'" checked style="width:18px;height:18px;accent-color:#1B5E20;cursor:pointer;flex-shrink:0;" onclick="event.stopPropagation()">'+
+            '<div style="flex:1;">'+
               '<div style="font-size:13px;font-weight:800;">'+name+'</div>'+
               '<div style="font-size:11px;color:var(--text3);">'+(e.employee_code||e.emp_id||'—')+' &bull; '+(e.designation||e.role||'—')+'</div>'+
-            '</label>'+
+            '</div>'+
             '<div style="text-align:right;">'+
               '<div id="sal-payable-'+e.id+'" style="font-size:15px;font-weight:900;color:#1B5E20;">&#8377;'+Number(net).toLocaleString('en-IN')+'</div>'+
               '<div style="font-size:9px;color:var(--text3);">Net Payable</div>'+
             '</div>'+
+            '<div id="sal-arr-'+e.id+'" style="font-size:16px;color:var(--text3);margin-left:6px;transition:transform .2s;">&#8250;</div>'+
           '</div>'+
+          '<div id="sal-body-'+e.id+'" style="display:none;">'+
 
           // attendance + earnings/deductions - payslip style
           '<div style="padding:8px 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px;border-bottom:1px solid #EEE;background:#FAFAFA;">'+
@@ -6257,6 +6259,7 @@ function empSalaryHTML(){
             '</div>'+
           '</div>'+
 
+          '</div>'+
         '</div>'
       );
     }).join('');
@@ -6272,6 +6275,15 @@ function empSalaryHTML(){
   var logSection=salBuildLogSection(logMap,logKeys);
 
   return header+rows+logSection;
+}
+
+function salToggleRow(empId, event){
+  var body = document.getElementById('sal-body-'+empId);
+  var arr  = document.getElementById('sal-arr-'+empId);
+  if(!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  if(arr) arr.style.transform = open ? '' : 'rotate(90deg)';
 }
 
 function salSelectAll(checked){
