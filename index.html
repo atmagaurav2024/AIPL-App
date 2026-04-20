@@ -1053,12 +1053,12 @@ html,body{height:100%;font-family:'Nunito',sans-serif;background:var(--bg);color
 /* Sheet */
 .sh-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;opacity:0;pointer-events:none;transition:opacity .3s;backdrop-filter:blur(3px);}
 .sh-overlay.on{opacity:1;pointer-events:all;}
-.sheet{position:fixed;left:0;right:0;bottom:0;background:white;border-radius:24px 24px 0 0;z-index:600;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:90vh;overflow-y:hidden;display:flex;flex-direction:column;}
+.sheet{position:fixed;left:0;right:0;bottom:0;background:white;border-radius:24px 24px 0 0;z-index:600;transform:translateY(100%);transition:transform .35s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:hidden;display:flex;flex-direction:column;}
 .sheet.on{transform:translateY(0);}
 .sh-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:12px auto 0;}
 .sh-head{padding:14px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;}
 .sh-title{font-size:17px;font-weight:800;}.sh-close{font-size:22px;cursor:pointer;color:var(--text3);}
-.sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:12px 20px;padding-bottom:max(12px,env(safe-area-inset-bottom));border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:601;position:relative;}
+.sh-body{padding:16px 20px;flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}.sh-foot{padding:14px 20px;padding-bottom:max(80px,calc(env(safe-area-inset-bottom,0px) + 70px));border-top:1px solid var(--border);display:flex;gap:10px;flex-shrink:0;background:white;z-index:601;position:relative;}
 .flbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);display:block;margin-bottom:5px;margin-top:2px;}
 .finp,.fsel,.ftxt{width:100%;padding:11px 14px;background:var(--bg);border:1.5px solid var(--border);border-radius:12px;font-size:16px;font-family:'Nunito',sans-serif;color:var(--text);outline:none;margin-bottom:12px;transition:border-color .2s;box-sizing:border-box;}
 *{touch-action:pan-x pan-y;}
@@ -4299,19 +4299,6 @@ function editRecord(type,id){
       '';
     saveCall='updateUser(\''+id+'\')'; 
 
-  }
-  if(currentPage==='labour'){
-    var af2=document.getElementById('add-foot');
-    document.getElementById('add-title').textContent='New Labour Registration';
-    document.getElementById('add-body').innerHTML=buildLabourForm(null);
-    af2.innerHTML='';
-    var cb2=document.createElement('button');cb2.className='btn btn-outline';cb2.textContent='Cancel';
-    cb2.onclick=function(){closeSheet('ov-add','sh-add');};
-    var sb2=document.createElement('button');sb2.className='btn btn-navy';sb2.innerHTML='&#10003; Save Labour';
-    sb2.onclick=function(){saveLabour('');};
-    af2.appendChild(cb2);af2.appendChild(sb2);
-    openSheet('ov-add','sh-add');
-    return;
   }
   document.getElementById('add-title').textContent=title;
   document.getElementById('add-body').innerHTML=html;
