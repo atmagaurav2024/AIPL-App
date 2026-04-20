@@ -2063,13 +2063,6 @@ input,select,textarea{font-size:16px !important;}
     <div class="search-bar"><span style="font-size:16px;color:var(--text3)">&#128269;</span><input type="text" placeholder="Search by name, skill, ID..." oninput="searchList('labour',this.value)"></div>
     <div class="pill-row" id="lab-cat-pills">
       <div class="pill on" style="background:#E65100;border-color:#E65100;color:white" onclick="filterLabour('all',this)">All</div>
-      <div class="pill" onclick="filterLabour('mason',this)">&#129521; Mason</div>
-      <div class="pill" onclick="filterLabour('carpenter',this)">&#128296; Carpenter</div>
-      <div class="pill" onclick="filterLabour('bar bender',this)">&#128736; Bar Bender</div>
-      <div class="pill" onclick="filterLabour('electrician',this)">&#9889; Electrician</div>
-      <div class="pill" onclick="filterLabour('plumber',this)">&#128167; Plumber</div>
-      <div class="pill" onclick="filterLabour('helper',this)">&#129521; Helper</div>
-      <div class="pill" onclick="filterLabour('painter',this)">&#127912; Painter</div>
     </div>
     <div id="labour-list"></div>
     <div style="height:10px"></div>
@@ -4823,24 +4816,16 @@ var CAT_DATA={
     {id:'u-10',icon:'&#128203;',name:'LS',desc:'Lump Sum — contract items',color:'#37474F',count:0,active:true},
     {id:'u-11',icon:'&#128203;',name:'Sets',desc:'Sets — door frames, fixtures',color:'#880E4F',count:0,active:true},
   ],
-  labour:[
-    {id:'lab-1',icon:'&#129521;',name:'Mason',desc:'Brickwork, plastering, finishing',color:'#E65100',count:0,active:true},
-    {id:'lab-2',icon:'&#128296;',name:'Carpenter',desc:'Shuttering, formwork, woodwork',color:'#795548',count:0,active:true},
-    {id:'lab-3',icon:'&#128736;',name:'Bar Bender',desc:'Steel reinforcement binding and placing',color:'#C62828',count:0,active:true},
-    {id:'lab-4',icon:'&#9889;',name:'Electrician',desc:'Electrical wiring and fitting',color:'#F57F17',count:0,active:true},
-    {id:'lab-5',icon:'&#128167;',name:'Plumber',desc:'Plumbing and sanitation work',color:'#1565C0',count:0,active:true},
-    {id:'lab-6',icon:'&#127912;',name:'Painter',desc:'Painting and surface finishing',color:'#7B1FA2',count:0,active:true},
-    {id:'lab-7',icon:'&#128373;',name:'Helper',desc:'General unskilled helper',color:'#37474F',count:0,active:true},
-    {id:'lab-8',icon:'&#128267;',name:'Welder',desc:'Welding and fabrication',color:'#37474F',count:0,active:true},
-    {id:'lab-9',icon:'&#9917;',name:'Operator',desc:'Machine / equipment operator',color:'#2E7D32',count:0,active:true},
-    {id:'lab-10',icon:'&#128697;',name:'Driver',desc:'Vehicle and equipment driver',color:'#00838F',count:0,active:true},
-  ]
+  labour:[]
 };
 
 function renderCatSection(type,containerId){
-  var cats=CAT_DATA[type]||[];
-  document.getElementById(containerId).innerHTML=cats.map(function(c,i){
-    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);'+(i===cats.length-1?'border-bottom:none;':'')+'">' +
+  if(!containerId) return;
+  var cats=(CAT_DATA[type])||[];
+  var el=document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML=cats.map(function(c,i){
+    return '<div style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--border);'+(i===cats.length-1?'border-bottom:none;':'')+'">'+
       '<div style="width:38px;height:38px;border-radius:10px;background:'+c.color+'20;border:1px solid '+c.color+'40;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">'+c.icon+'</div>'+
       '<div style="flex:1;min-width:0;">'+
         '<div style="font-size:13px;font-weight:800;">'+c.name+'</div>'+
@@ -4920,7 +4905,7 @@ async function deleteCat(type,i){
 }
 
 function addCategory(type){
-  var typeNames={vendor:'Vendor',material:'Material',sc:'Subcontractor Trade',uom:'Unit of Measure'};
+  var typeNames={vendor:'Vendor',material:'Material',sc:'Subcontractor Trade',uom:'Unit of Measure',role:'Role',dept:'Department',labour:'Labour Type/Skill'};
   document.getElementById('add-title').textContent='Add '+typeNames[type]+' Category';
   document.getElementById('add-body').innerHTML=
     '<label class="flbl">Category Name</label><input class="finp" id="new-cat-name" placeholder="e.g. Precast Concrete">'+
@@ -4954,15 +4939,22 @@ async function saveNewCat(type){
   var desc=document.getElementById('new-cat-desc').value.trim()||'';
   var newCat={id:type+'-new-'+Date.now(),icon:icon,name:n,desc:desc,color:selectedColour||'#37474F',count:0,active:true};
   CAT_DATA[type].push(newCat);
+  // Refresh category section in settings (null-safe — only updates if settings page visible)
   renderCatSection(type,catSectionMap[type]);
+  // Rebuild filter pills for this type
+  var pillMap={vendor:'vendor-cat-pills',material:'mat-cat-pills',sc:'sc-cat-pills',labour:'lab-cat-pills'};
+  var filterFnMap={vendor:filterVendors,material:filterMaterials,sc:filterSC,labour:filterLabour};
+  var colMap={vendor:'var(--teal)',material:'var(--green)',sc:'var(--purple)',labour:'#E65100'};
+  if(pillMap[type]) rebuildPills(type,pillMap[type],colMap[type]||'#37474F',filterFnMap[type]||function(){});
   closeSheet('ov-add','sh-add');
-  toast(n+' category added!','success');
+  toast(n+' added!','success');
   await syncCategoryAdd(type, newCat);
 }
 
 // Rebuild filter pills from live CAT_DATA
 function rebuildPills(type, containerId, activeColor, filterFn){
-  var cats = CAT_DATA[type].filter(function(c){ return c.active; });
+  if(!containerId) return;
+  var cats = (CAT_DATA[type]||[]).filter(function(c){ return c.active; });
   var el = document.getElementById(containerId);
   if(!el) return;
   el.innerHTML = '<div class="pill on" style="background:'+activeColor+';border-color:'+activeColor+';color:white" onclick="'+filterFn.name+'(\'all\',this)">All</div>' +
@@ -5307,24 +5299,23 @@ async function getNextAIPLId(){
 
 
 // ── CATEGORY SYNC ──
-var catSectionMap={vendor:'vendor-cats',material:'material-cats',sc:'sc-cats',uom:'uom-cats',role:'role-cats',dept:'dept-cats'};
+var catSectionMap={vendor:'vendor-cats',material:'material-cats',sc:'sc-cats',uom:'uom-cats',role:'role-cats',dept:'dept-cats',labour:'labour-cats'};
 
 async function loadCategories(){
   try{
     var data = await sbFetch('categories',{select:'*',order:'created_at.asc'});
     if(!data||!data.length) return; // keep defaults if no DB cats yet
     // Merge DB categories into CAT_DATA
-    var types=['vendor','material','sc','uom','role','dept'];
+    var types=['vendor','material','sc','uom','role','dept','labour'];
     types.forEach(function(type){
       var dbCats = data.filter(function(c){return c.type===type;});
       if(dbCats.length){
-        // Replace with DB version
         CAT_DATA[type] = dbCats.map(function(c){
           return {id:c.id,icon:c.icon||'📦',name:c.name,desc:c.description||'',color:c.color||'#37474F',count:0,active:c.active};
         });
       }
     });
-    // Re-render all category sections
+    // Re-render all category sections (null-safe)
     Object.keys(catSectionMap).forEach(function(type){
       renderCatSection(type,catSectionMap[type]);
     });
