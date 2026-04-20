@@ -2227,27 +2227,27 @@ function showApp(name){
   // Hide all login/splash screens first
   document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('on');});
   document.querySelectorAll('.app-screen').forEach(function(s){s.classList.remove('on');});
-  var target=document.getElementById('app-'+name);
+  // Project sub-modules all live inside app-projects now
+  var projTabs = {projects:'projects', boq:'boq', jm:'jm', planning:'planning', execution:'execution'};
+  var isProjectTab = projTabs[name];
+  var target = isProjectTab
+    ? document.getElementById('app-projects')
+    : document.getElementById('app-'+name);
   if(!target){toast('Module coming soon','info');return;}
   target.classList.add('on');
-  // Set body class so CSS can scope attendance-only fixed elements
-  document.body.setAttribute('data-app', name);
-  currentApp=name;
+  document.body.setAttribute('data-app', isProjectTab ? 'projects' : name);
+  currentApp = isProjectTab ? 'projects' : name;
   var nav=document.getElementById('app-nav');
   if(nav) nav.style.display='flex';
   ['home','attendance','registry','profile'].forEach(function(n){
     var el=document.getElementById('an-'+n);
-    if(el) el.classList.toggle('on', n===name||(n==='home'&&name==='dashboard'));
+    if(el) el.classList.toggle('on', n===name||(n==='home'&&(name==='dashboard'||isProjectTab)));
   });
   if(name==='attendance'&&!window._attInit){window._attInit=true;initAttendance();}
   if(name==='dashboard'&&!window._coLoaded){window._coLoaded=true;preloadCompanyData();}
   if(name==='registry'){initRegistry();startSync();}
   else if(name==='employees'){initEmpMgmt();}
-  else if(name==='projects'){initProjects();}
-  else if(name==='boq'){initBOQ();}
-  else if(name==='jm'){initJM();}
-  else if(name==='planning'){initPlanning();}
-  else if(name==='execution'){initExecution();}
+  else if(isProjectTab){ projModTab(name, document.getElementById('pmt-'+name)); }
   else if(name==='petty-cash'){initPettyCash();}
   else if(name==='accounts'){initAccounts();}
   else if(name==='access'){acInitModule();}
@@ -8545,66 +8545,41 @@ async function empSavePay(){
 
 
 <!-- PROJECTS -->
+<!-- PROJECT MODULE (unified) -->
 <div class="app-screen" id="app-projects">
+  <!-- Header -->
   <div style="background:#1B5E20;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
     <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127959; Projects</div>
-    <button class="tb-btn" onclick="openProjForm(null)" style="font-size:20px;">&#43;</button>
+    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#127959; Project Module</div>
+    <button class="tb-btn" id="proj-mod-add-btn" onclick="projModAdd()" style="font-size:20px;">&#43;</button>
   </div>
-  <div style="padding:10px 14px 6px;flex-shrink:0;"><div class="search-bar"><span style="font-size:16px;color:var(--text3);">&#128269;</span><input type="text" id="proj-search" placeholder="Search projects..." oninput="searchProj(this.value)"></div></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 14px 90px;" id="proj-list"><div style="text-align:center;padding:40px;color:var(--text3);">Loading...</div></div>
+  <!-- Tab Bar -->
+  <div style="display:flex;overflow-x:auto;background:#1B5E20;padding:0 14px 10px;flex-shrink:0;scrollbar-width:none;gap:4px;">
+    <button onclick="projModTab('projects',this)" id="pmt-projects" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:rgba(255,255,255,.2);color:white;">&#127959; Projects</button>
+    <button onclick="projModTab('boq',this)"      id="pmt-boq"      style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128203; BOQ</button>
+    <button onclick="projModTab('jm',this)"       id="pmt-jm"       style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128208; JM</button>
+    <button onclick="projModTab('planning',this)" id="pmt-planning"  style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Planning</button>
+    <button onclick="projModTab('execution',this)" id="pmt-execution" style="padding:7px 14px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128221; Work Allotment</button>
+  </div>
+  <!-- Content area -->
+  <div id="proj-mod-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;"></div>
 </div>
-<div class="sh-overlay" id="ov-proj" onclick="closeProjSheet()"></div>
-<div class="sheet" id="sh-proj" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
 
-<!-- BOQ -->
-<div class="app-screen" id="app-boq">
-  <div style="background:#4A148C;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128203; BOQ Items</div>
-    <button class="tb-btn" onclick="boqOpenAddItem(null)" style="font-size:20px;">&#43;</button>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="boq-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-boq" onclick="closeBOQSheet()"></div>
-<div class="sheet" id="sh-boq" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
+<!-- Sheets for all project sub-modules (kept as-is, just combined) -->
+<div class="sh-overlay" id="ov-proj"  onclick="closeProjSheet()"></div>
+<div class="sheet" id="sh-proj"  style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
 
-<!-- JM -->
-<div class="app-screen" id="app-jm">
-  <div style="background:#283593;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128208; Joint Measurements</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="jm-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-jm" onclick="closeSheet('ov-jm','sh-jm')"></div>
-<div class="sheet" id="sh-jm" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
+<div class="sh-overlay" id="ov-boq"   onclick="closeBOQSheet()"></div>
+<div class="sheet" id="sh-boq"   style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
 
-<!-- PLANNING -->
-<div class="app-screen" id="app-planning">
-  <div style="background:#1565C0;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128230; Planning</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="plan-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-plan" onclick="closeSheet('ov-plan','sh-plan')"></div>
-<div class="sheet" id="sh-plan" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
+<div class="sh-overlay" id="ov-jm"    onclick="closeSheet('ov-jm','sh-jm')"></div>
+<div class="sheet" id="sh-jm"    style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
 
-<!-- WORK ALLOTMENT -->
-<div class="app-screen" id="app-execution">
-  <div style="background:#E65100;height:52px;display:flex;align-items:center;padding:0 14px;gap:10px;flex-shrink:0;">
-    <button class="tb-btn" onclick="showApp('dashboard')">&#8592;</button>
-    <div style="font-size:16px;font-weight:800;color:white;flex:1;">&#128221; Work Allotment</div>
-  </div>
-  <div style="padding:10px 14px 6px;background:white;border-bottom:1px solid var(--border);flex-shrink:0;"><select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select></div>
-  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;" id="exec-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>
-</div>
-<div class="sh-overlay" id="ov-exec" onclick="closeSheet('ov-exec','sh-exec')"></div>
-<div class="sheet" id="sh-exec" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
+<div class="sh-overlay" id="ov-plan"  onclick="closeSheet('ov-plan','sh-plan')"></div>
+<div class="sheet" id="sh-plan"  style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
+
+<div class="sh-overlay" id="ov-exec"  onclick="closeSheet('ov-exec','sh-exec')"></div>
+<div class="sheet" id="sh-exec"  style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
 
 <!-- PETTY CASH -->
 <div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;overflow:hidden;">
@@ -8678,6 +8653,43 @@ function fmtA(n){return '\u20b9'+Math.abs(Number(n||0)).toLocaleString('en-IN',{
 // ════ PROJECTS ════════════════════════════════════════════
 var PROJ_DATA=[],PROJ_EDIT_ID=null;
 function initProjects(){loadProjData();}
+var PROJ_MOD_TAB = 'projects';
+
+function projModTab(tab, btn){
+  PROJ_MOD_TAB = tab;
+  // Update tab button styles
+  ['projects','boq','jm','planning','execution'].forEach(function(t){
+    var b = document.getElementById('pmt-'+t);
+    if(b){ b.style.background = t===tab ? 'rgba(255,255,255,.2)' : 'transparent'; b.style.color = t===tab ? 'white' : 'rgba(255,255,255,.6)'; }
+  });
+  // Show/hide add button
+  var addBtn = document.getElementById('proj-mod-add-btn');
+  if(addBtn) addBtn.style.display = (tab==='projects'||tab==='boq') ? '' : 'none';
+  // Render tab content into proj-mod-content
+  var el = document.getElementById('proj-mod-content');
+  if(!el) return;
+  if(tab==='projects'){
+    el.innerHTML = '<div style="padding:0 0 6px;"><div class="search-bar"><span style="font-size:16px;color:var(--text3);">&#128269;</span><input type="text" id="proj-search" placeholder="Search projects..." oninput="searchProj(this.value)"></div></div><div id="proj-list"><div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div></div>';
+    loadProjData();
+  } else if(tab==='boq'){
+    el.innerHTML = '<div style="margin-bottom:10px;"><select id="boq-proj-sel" class="fsel" style="width:100%;" onchange="boqLoadItems()"><option value="">— Select Project —</option></select></div><div id="boq-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>';
+    boqLoadProjs();
+  } else if(tab==='jm'){
+    el.innerHTML = '<div style="margin-bottom:10px;"><select id="jm-proj-sel" class="fsel" style="width:100%;" onchange="jmLoadItems()"><option value="">— Select Project —</option></select></div><div id="jm-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>';
+    jmLoadProjs();
+  } else if(tab==='planning'){
+    el.innerHTML = '<div style="margin-bottom:10px;"><select id="plan-proj-sel" class="fsel" style="width:100%;" onchange="planLoadItems()"><option value="">— Select Project —</option></select></div><div id="plan-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>';
+    planLoadProjs();
+  } else if(tab==='execution'){
+    el.innerHTML = '<div style="margin-bottom:10px;"><select id="exec-proj-sel" class="fsel" style="width:100%;" onchange="execLoadItems()"><option value="">— Select Project —</option></select></div><div id="exec-content"><div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div></div>';
+    execLoadProjs();
+  }
+}
+
+function projModAdd(){
+  if(PROJ_MOD_TAB==='projects') openProjForm(null);
+  else if(PROJ_MOD_TAB==='boq') boqOpenAddItem(null);
+}
 function openProjSheet(){openSheet('ov-proj','sh-proj');}
 function closeProjSheet(){closeSheet('ov-proj','sh-proj');}
 async function loadProjData(){
