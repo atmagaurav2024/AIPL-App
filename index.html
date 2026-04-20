@@ -9000,8 +9000,141 @@ function initProjects(){
   projModLoadProjects();
 }
 
+// ── PROJECT LIST ──────────────────────────────────────────────────────
+async function loadProjData(){
+  var el = document.getElementById('proj-list'); if(!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>';
+  try{
+    var rows = await sbFetch('projects',{select:'*',order:'name.asc'});
+    PROJ_DATA = Array.isArray(rows) ? rows : [];
+    renderProjList();
+    // Also refresh shared selector
+    projModLoadProjects();
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Error loading projects</div>';
+    console.error(e);
+  }
+}
 
-function initBOQ(){boqLoadProjs();}
+function renderProjList(list){
+  var el = document.getElementById('proj-list'); if(!el) return;
+  list = list || PROJ_DATA;
+  if(!list.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:36px;">&#127959;</div><div style="font-weight:700;margin-top:10px;">No projects yet</div><div style="font-size:12px;margin-top:6px;">Tap + to add</div></div>';
+    return;
+  }
+  var statusMap = {
+    'in-progress':{label:'In Progress',col:'#1565C0'},
+    'under-dlp':{label:'Under DLP',col:'#F57F17'},
+    'fully-completed':{label:'Completed',col:'#2E7D32'},
+    'planning':{label:'Planning',col:'#6A1B9A'},
+    'active':{label:'Active',col:'#1565C0'}
+  };
+  el.innerHTML = list.map(function(p){
+    var st = statusMap[p.status]||{label:p.status||'Active',col:'#1565C0'};
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;cursor:pointer;" onclick="openProjForm(\''+p.id+'\')">'+
+      '<div style="padding:12px 14px;display:flex;align-items:center;gap:12px;">'+
+        '<div style="width:44px;height:44px;border-radius:12px;background:'+st.col+'20;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">&#127959;</div>'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:14px;font-weight:800;color:var(--navy);">'+esc(p.name||'Unnamed')+'</div>'+
+          '<div style="font-size:11px;color:var(--text3);margin-top:2px;">'+(p.code||'—')+' &bull; '+(p.client||'—')+'</div>'+
+        '</div>'+
+        '<span style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:6px;background:'+st.col+'15;color:'+st.col+';">'+st.label+'</span>'+
+      '</div>'+
+      (p.location?'<div style="padding:0 14px 10px;font-size:11px;color:var(--text3);">&#128205; '+esc(p.location)+'</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+function searchProj(q){
+  if(!q.trim()){renderProjList();return;}
+  q=q.toLowerCase();
+  renderProjList(PROJ_DATA.filter(function(p){
+    return (p.name||'').toLowerCase().includes(q)||
+           (p.client||'').toLowerCase().includes(q)||
+           (p.code||'').toLowerCase().includes(q)||
+           (p.location||'').toLowerCase().includes(q);
+  }));
+}
+
+function openProjForm(id){
+  var p = id ? (PROJ_DATA.find(function(x){return x.id===id;})||{}) : {};
+  var statusOpts = ['in-progress','under-dlp','fully-completed','planning','active'].map(function(s){
+    var labels={'in-progress':'In Progress','under-dlp':'Under DLP','fully-completed':'Completed','planning':'Planning','active':'Active'};
+    return '<option value="'+s+'"'+(p.status===s?' selected':'')+'>'+labels[s]+'</option>';
+  }).join('');
+  var html =
+    '<div class="g2"><div><label class="flbl">Project Name *</label><input id="pf-name" class="finp" value="'+esc(p.name||'')+'"></div>'+
+    '<div><label class="flbl">Project Code</label><input id="pf-code" class="finp" value="'+esc(p.code||'')+'"></div></div>'+
+    '<div class="g2"><div><label class="flbl">Client / Owner</label><input id="pf-client" class="finp" value="'+esc(p.client||'')+'"></div>'+
+    '<div><label class="flbl">Status</label><select id="pf-status" class="fsel">'+statusOpts+'</select></div></div>'+
+    '<label class="flbl">Location / Site</label><input id="pf-location" class="finp" value="'+esc(p.location||'')+'">'+
+    '<div class="g2"><div><label class="flbl">Start Date</label><input id="pf-start" class="finp" type="date" value="'+esc(p.start_date||'')+'"></div>'+
+    '<div><label class="flbl">End Date</label><input id="pf-end" class="finp" type="date" value="'+esc(p.end_date||'')+'"></div></div>'+
+    '<label class="flbl">Contract Value (₹)</label><input id="pf-value" class="finp" type="number" value="'+(p.contract_value||'')+'">'+
+    '<label class="flbl">Description</label><textarea id="pf-desc" class="ftxt">'+esc(p.description||'')+'</textarea>';
+  document.getElementById('proj-sheet-title').textContent = id ? 'Edit Project' : 'New Project';
+  document.getElementById('proj-sheet-body').innerHTML = html;
+  var foot = document.getElementById('proj-sheet-foot');
+  foot.innerHTML = '';
+  if(id){
+    var delBtn = document.createElement('button');
+    delBtn.className='btn btn-outline'; delBtn.style.color='#C62828'; delBtn.textContent='Delete';
+    delBtn.onclick = function(){ if(confirm('Delete this project?')) deleteProjItem(id); };
+    foot.appendChild(delBtn);
+  }
+  var saveBtn = document.createElement('button');
+  saveBtn.className='btn btn-navy'; saveBtn.innerHTML='&#10003; Save Project';
+  saveBtn.onclick = function(){ saveProjForm(id||null); };
+  foot.appendChild(saveBtn);
+  openSheet('ov-proj','sh-proj');
+}
+
+function closeProjSheet(){ closeSheet('ov-proj','sh-proj'); }
+
+async function saveProjForm(editId){
+  var name = (document.getElementById('pf-name')||{value:''}).value.trim();
+  if(!name){toast('Project name required','warning');return;}
+  var data = {
+    name:name,
+    code:(document.getElementById('pf-code')||{value:''}).value.trim()||null,
+    client:(document.getElementById('pf-client')||{value:''}).value.trim()||null,
+    status:(document.getElementById('pf-status')||{value:'active'}).value||'active',
+    location:(document.getElementById('pf-location')||{value:''}).value.trim()||null,
+    start_date:(document.getElementById('pf-start')||{value:''}).value||null,
+    end_date:(document.getElementById('pf-end')||{value:''}).value||null,
+    contract_value:parseFloat((document.getElementById('pf-value')||{value:''}).value)||null,
+    description:(document.getElementById('pf-desc')||{value:''}).value.trim()||null
+  };
+  try{
+    if(editId){
+      await sbUpdate('projects',editId,data);
+      var idx=PROJ_DATA.findIndex(function(p){return p.id===editId;});
+      if(idx>-1) PROJ_DATA[idx]=Object.assign(PROJ_DATA[idx],data);
+      toast('Project updated!','success');
+    } else {
+      var res=await sbInsert('projects',data);
+      if(res&&res[0]) PROJ_DATA.push(res[0]);
+      toast('Project added!','success');
+    }
+    closeProjSheet();
+    renderProjList();
+    projModLoadProjects();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+async function deleteProjItem(id){
+  try{
+    await sbDelete('projects',id);
+    PROJ_DATA=PROJ_DATA.filter(function(p){return p.id!==id;});
+    closeProjSheet();
+    renderProjList();
+    projModLoadProjects();
+    toast('Project deleted','success');
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+
 function openBOQSheet(){openSheet('ov-boq','sh-boq');}
 function closeBOQSheet(){closeSheet('ov-boq','sh-boq');}
 async function boqLoadProjs(){var sel=document.getElementById('boq-proj-sel');if(!sel)return;try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}}
