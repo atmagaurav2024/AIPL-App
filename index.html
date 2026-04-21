@@ -5532,7 +5532,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
 
 <!-- PENDING APPROVALS SHEET -->
 <div class="sh-overlay" id="ov-pending" onclick="closeSheet('ov-pending','sh-pending')"></div>
-<div class="sheet" id="sh-pending" style="max-height:95vh;">
+<div class="sheet" id="sh-pending">
   <div class="sh-head">
     <div class="sh-title">&#9203; Pending Approvals</div>
     <span class="sh-close" onclick="closeSheet('ov-pending','sh-pending')">&#10005;</span>
@@ -5544,7 +5544,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
 
 <!-- EMPLOYEE APPROVAL DETAIL SHEET -->
 <div class="sh-overlay" id="ov-approval-det" onclick="closeSheet('ov-approval-det','sh-approval-det')"></div>
-<div class="sheet" id="sh-approval-det" style="max-height:95vh;">
+<div class="sheet" id="sh-approval-det">
   <div class="sh-head">
     <div class="sh-title">&#128101; Employee Profile</div>
     <span class="sh-close" onclick="closeSheet('ov-approval-det','sh-approval-det')">&#10005;</span>
@@ -5555,7 +5555,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
 
 <!-- PROFILE SHEET -->
 <div class="sh-overlay" id="ov-profile" onclick="closeSheet('ov-profile','sh-profile')"></div>
-<div class="sheet" id="sh-profile" style="max-height:95vh;">
+<div class="sheet" id="sh-profile">
   <div class="sh-head">
     <div class="sh-title">&#128100; My Profile</div>
     <span class="sh-close" onclick="closeSheet('ov-profile','sh-profile')">&#10005;</span>
@@ -5700,7 +5700,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
 
 <!-- Employee Form Sheet -->
 <div class="sh-overlay" id="ov-emp" onclick="closeEmpSheet()"></div>
-<div class="sheet" id="sh-emp" style="max-height:96vh;">
+<div class="sheet" id="sh-emp">
   <div class="sh-handle"></div>
   <div class="sh-head"><div class="sh-title" id="emp-sheet-title">New Employee</div><span class="sh-close" onclick="closeEmpSheet()">&#10005;</span></div>
   <div class="sh-body" id="emp-sheet-body"></div>
@@ -5709,7 +5709,7 @@ function safeN(x){var s=String(x||'');var r='';for(var i=0;i<s.length;i++){r+=s[
 
 <!-- Pay Fixation Sheet -->
 <div class="sh-overlay" id="ov-pay" onclick="closeSheet('ov-pay','sh-pay')"></div>
-<div class="sheet" id="sh-pay" style="max-height:96vh;">
+<div class="sheet" id="sh-pay">
   <div class="sh-handle"></div>
   <div class="sh-head"><div class="sh-title" id="pay-sheet-title">Pay Fixation</div><span class="sh-close" onclick="closeSheet('ov-pay','sh-pay')">&#10005;</span></div>
   <div class="sh-body" id="pay-sheet-body"></div>
@@ -8840,19 +8840,19 @@ async function empSavePay(){
 
 <!-- Sheets for all project sub-modules (kept as-is, just combined) -->
 <div class="sh-overlay" id="ov-proj"  onclick="closeProjSheet()"></div>
-<div class="sheet" id="sh-proj"  style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
+<div class="sheet" id="sh-proj" ><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="proj-sheet-title">New Project</div><span class="sh-close" onclick="closeProjSheet()">&#10005;</span></div><div class="sh-body" id="proj-sheet-body"></div><div class="sh-foot" id="proj-sheet-foot"></div></div>
 
 <div class="sh-overlay" id="ov-boq"   onclick="closeBOQSheet()"></div>
-<div class="sheet" id="sh-boq"   style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
+<div class="sheet" id="sh-boq"  ><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="boq-sheet-title">New BOQ Item</div><span class="sh-close" onclick="closeBOQSheet()">&#10005;</span></div><div class="sh-body" id="boq-sheet-body"></div><div class="sh-foot" id="boq-sheet-foot"></div></div>
 
 <div class="sh-overlay" id="ov-jm"    onclick="closeSheet('ov-jm','sh-jm')"></div>
-<div class="sheet" id="sh-jm"    style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
+<div class="sheet" id="sh-jm"   ><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="jm-sheet-title">Add JM</div><span class="sh-close" onclick="closeSheet('ov-jm','sh-jm')">&#10005;</span></div><div class="sh-body" id="jm-sheet-body"></div><div class="sh-foot" id="jm-sheet-foot"></div></div>
 
 <div class="sh-overlay" id="ov-plan"  onclick="closeSheet('ov-plan','sh-plan')"></div>
-<div class="sheet" id="sh-plan"  style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
+<div class="sheet" id="sh-plan" ><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="plan-sheet-title">Add Plan</div><span class="sh-close" onclick="closeSheet('ov-plan','sh-plan')">&#10005;</span></div><div class="sh-body" id="plan-sheet-body"></div><div class="sh-foot" id="plan-sheet-foot"></div></div>
 
 <div class="sh-overlay" id="ov-exec"  onclick="closeSheet('ov-exec','sh-exec')"></div>
-<div class="sheet" id="sh-exec"  style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
+<div class="sheet" id="sh-exec" ><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="exec-sheet-title">Work Allotment</div><span class="sh-close" onclick="closeSheet('ov-exec','sh-exec')">&#10005;</span></div><div class="sh-body" id="exec-sheet-body"></div><div class="sh-foot" id="exec-sheet-foot"></div></div>
 
 <!-- PETTY CASH -->
 <div class="app-screen" id="app-petty-cash" style="background:#EFEBE4;overflow:hidden;">
@@ -8865,7 +8865,7 @@ async function empSavePay(){
   <button onclick="pcOpenExpense()" id="pc-fab" style="position:fixed;bottom:28px;left:50%;transform:translateX(-50%);width:62px;height:62px;background:#E07820;border-radius:50%;border:4px solid #fff;font-size:34px;color:#fff;cursor:pointer;box-shadow:0 6px 28px rgba(224,120,32,.7);z-index:400;line-height:1;display:none;">+</button>
 </div>
 <div class="sh-overlay" id="ov-pc" onclick="closeSheet('ov-pc','sh-pc')"></div>
-<div class="sheet" id="sh-pc" style="max-height:92vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div><div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div><div class="sh-foot" id="pc-sheet-foot"></div></div>
+<div class="sheet" id="sh-pc"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="pc-sheet-title">Entry</div><span class="sh-close" onclick="closeSheet('ov-pc','sh-pc')">&#10005;</span></div><div class="sh-body" id="pc-sheet-body" style="padding:0 16px 16px;"></div><div class="sh-foot" id="pc-sheet-foot"></div></div>
 
 <!-- ACCOUNTS -->
 <div class="app-screen" id="app-accounts">
@@ -8878,7 +8878,7 @@ async function empSavePay(){
   <div id="acc-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 14px 80px;background:#F0F4F8;"><div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div></div>
 </div>
 <div class="sh-overlay" id="ov-acc" onclick="closeAccSheet()"></div>
-<div class="sheet" id="sh-acc" style="max-height:95vh;"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
+<div class="sheet" id="sh-acc"><div class="sh-handle"></div><div class="sh-head"><div class="sh-title" id="acc-sheet-title">New Voucher</div><span class="sh-close" onclick="closeAccSheet()">&#10005;</span></div><div class="sh-body" id="acc-sheet-body"></div><div class="sh-foot" id="acc-sheet-foot"></div></div>
 
 <!-- ACCESS CONTROL -->
 <div class="app-screen" id="app-access">
