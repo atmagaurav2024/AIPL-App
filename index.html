@@ -5540,8 +5540,44 @@ function openDrawer(){
     pendingItem.style.display = count>0 ? 'flex' : 'none';
     if(pendingBadge) pendingBadge.textContent = count;
   }
+  // Hide drawer items user has no access to
+  applyDrawerPermissions();
   document.getElementById('app-drawer').classList.add('on');
   document.getElementById('drawer-overlay').classList.add('on');
+}
+
+function applyDrawerPermissions(){
+  if(!currentUser || currentUser.role==='admin' || !Object.keys(USER_PERMISSIONS).length) return;
+  // Module → check function
+  var checks = {
+    'dashboard':    function(){ return canAccess('dashboard','view'); },
+    'projects':     function(){ return ['projects','boq','jm','planning','execution'].some(function(t){return canAccess('proj-'+t,'view');}); },
+    'employees':    function(){ return Object.keys(EMP_TAB_KEYS).some(function(t){return canAccess(EMP_TAB_KEYS[t],'view');}); },
+    'attendance':   function(){ return canAccess('attendance','view'); },
+    'accounts':     function(){ return canAccess('accounts','view'); },
+    'petty-cash':   function(){ return canAccess('petty-cash','view'); },
+    'access':       function(){ return canAccess('access','view'); },
+    'company':      function(){ return canAccess('company','view'); },
+    'registry':     function(){ return canAccess('registry','view'); }
+  };
+  // Find all drawer items and show/hide based on their showApp target
+  document.querySelectorAll('.drawer-item[onclick]').forEach(function(item){
+    var match = (item.getAttribute('onclick')||'').match(/showApp\('([^']+)'\)/);
+    if(!match) return;
+    var mod = match[1];
+    var checkFn = checks[mod];
+    if(checkFn) item.style.display = checkFn() ? '' : 'none';
+  });
+  // Also hide section headers if all items under them are hidden
+  document.querySelectorAll('.drawer-section').forEach(function(sec){
+    var next = sec.nextElementSibling;
+    var hasVisible = false;
+    while(next && !next.classList.contains('drawer-section')){
+      if(next.classList.contains('drawer-item') && next.style.display !== 'none') hasVisible = true;
+      next = next.nextElementSibling;
+    }
+    sec.style.display = hasVisible ? '' : 'none';
+  });
 }
 
 function closeDrawer(){
@@ -9401,7 +9437,7 @@ function pcRefresh(){
   var bal=totalIn-totalOut;
   var txns=pEx.map(function(r){return Object.assign({},r,{_type:'out'});}).concat(pIn.map(function(r){return Object.assign({},r,{_type:'in'});})).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,20);
     var txnHtml=txns.map(function(t){var isIn=t._type==='in';var cfg=PC_CAT[t.category]||{e:'&#128230;',c:'#9CA3AF'};var n=pcEmpName(t.employee_id);
-    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+'<div style="width:38px;height:38px;border-radius:10px;background:'+(isIn?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(isIn?'&#128176;':cfg.e)+'</div>'+'<div style="flex:1;min-width:0;">'+'<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(isIn?(n||'Cash In'):(t.party_name||t.purpose||'\u2014'))+'</div>'+'<div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(isIn?'Payment In':t.category)+(n&&!isIn?' \u2022 '+n:'')+'</div>'+'<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div>'+'</div>'+'<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'+'<div style="font-size:15px;font-weight:900;color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'\u2212')+pcFmt(t.amount)+'</div>'+'<button onclick="pcDeleteEntry(\''+t._type+'\',\''+t.id+'\')" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">&#128465; Delete</button>'+'</div>'+'</div>';
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+'<div style="width:38px;height:38px;border-radius:10px;background:'+(isIn?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(isIn?'&#128176;':cfg.e)+'</div>'+'<div style="flex:1;min-width:0;">'+'<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(isIn?(n||'Cash In'):(t.party_name||t.purpose||'\u2014'))+'</div>'+'<div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(isIn?'Payment In':t.category)+(n&&!isIn?' \u2022 '+n:'')+'</div>'+'<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div>'+'</div>'+'<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'+'<div style="font-size:15px;font-weight:900;color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'\u2212')+pcFmt(t.amount)+'</div>'+(canAccess('petty-cash','delete')?'<button onclick="pcDeleteEntry(\''+t._type+'\',\''+t.id+'\')" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">&#128465; Delete</button>':'')+'</div>'+'</div>';
   }).join('')||'<div style="text-align:center;padding:30px;color:#9CA3AF;">No transactions yet</div>';
   el.innerHTML='<div style="margin:0 18px 16px;background:#1E2547;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:6px;">'+p.name+' \u2014 Balance</div><div style="font-size:36px;font-weight:900;color:#fff;">'+pcFmt(bal)+'</div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px;"><div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Received</div><div style="font-size:20px;font-weight:900;color:#2DAE6A;margin-top:5px;">'+pcFmt(totalIn)+'</div></div><div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Spent</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(totalOut)+'</div></div></div>'+
@@ -9410,6 +9446,7 @@ function pcRefresh(){
     '<div style="background:#fff;border-radius:18px;margin:0 18px 16px;padding:4px 16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">'+txnHtml+'</div>';
 }
 async function pcDeleteEntry(type, id){
+  if(!canAccess('petty-cash','delete')){toast('Access denied — no delete permission','warning');return;}
   if(!confirm('Delete this '+(type==='in'?'cash-in':'expense')+' entry? This cannot be undone.')) return;
   try{
     var table = type==='in' ? 'petty_cash_in' : 'petty_cash_expense';
@@ -10248,6 +10285,8 @@ async function loadUserPermissions(){
     USER_PERMISSIONS = {};
     console.warn('loadUserPermissions: table may not exist yet',e);
   }
+  // Apply permissions to drawer immediately after load
+  if(typeof applyDrawerPermissions === 'function') applyDrawerPermissions();
 }
 
 function canAccess(module, permission){
