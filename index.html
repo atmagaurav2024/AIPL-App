@@ -8891,7 +8891,7 @@ async function empSavePay(){
       <button id="ac-tab-emp" onclick="acSwitchTab('emp')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:none;font-family:'Nunito',sans-serif;background:var(--navy);color:white;">By Employee</button>
       <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
     </div>
-    <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPermissions()"><option value="">— Select Employee —</option></select></div>
+    <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading employees...</option></select></div>
     <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
   </div>
   <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);flex-shrink:0;padding-bottom:calc(12px + 60px);">
@@ -9923,19 +9923,41 @@ function accGstTab(){
 }
 
 // ════ ACCESS CONTROL ════════════════════════════════════
-var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};var AC_PCOL={view:'#1565C0',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',mark:'#00838F'};
-var AC_PLBL={view:'View',edit:'Edit',delete:'Delete',cash_in:'Cash In',expense:'Expense',mark:'Mark Att.'};
+var AC_TAB='emp',AC_TARGET=null,AC_PERMISSIONS={};
+var AC_PCOL={view:'#1565C0',add:'#2E7D32',edit:'#E65100',delete:'#C62828',cash_in:'#2E7D32',expense:'#E07820',mark:'#00838F'};
+var AC_PLBL={view:'View',add:'Add',edit:'Edit',delete:'Delete',cash_in:'Cash In',expense:'Expense',mark:'Mark Att.'};
 
 var AC_MODS=[
-  {key:'dashboard',  label:'Dashboard',          icon:'&#127968;',group:'Dashboard',     params:['view']},
-  {key:'projects',   label:'Project Module',      icon:'&#127959;',group:'Project Module',params:['view','edit','delete']},
-  {key:'employees',  label:'Employee Management', icon:'&#128101;',group:'Employee',      params:['view','edit','delete']},
-  {key:'attendance', label:'Attendance',          icon:'&#9200;',  group:'Employee',      params:['view','mark']},
-  {key:'accounts',   label:'Accounts',            icon:'&#128176;',group:'Accounting',    params:['view','edit','delete']},
-  {key:'petty-cash', label:'Petty Cash',          icon:'&#128181;',group:'Accounting',    params:['view','cash_in','expense']},
-  {key:'access',     label:'Access Control',      icon:'&#128274;',group:'Settings',      params:['view','edit']},
-  {key:'company',    label:'Company Details',     icon:'&#127963;',group:'Settings',      params:['view','edit']},
-  {key:'registry',   label:'Master Registry',     icon:'&#128218;',group:'Other',         params:['view','edit','delete']}
+  // Dashboard — view only
+  {key:'dashboard',        label:'Dashboard',          icon:'&#127968;',group:'Dashboard',     params:['view']},
+
+  // Project Module — each tab individual, with view/edit/add/delete
+  {key:'proj-projects',    label:'Projects',           icon:'&#127959;',group:'Project Module',params:['view','add','edit','delete']},
+  {key:'proj-boq',         label:'BOQ Items',          icon:'&#128203;',group:'Project Module',params:['view','add','edit','delete']},
+  {key:'proj-jm',          label:'Joint Measurements', icon:'&#128208;',group:'Project Module',params:['view','add','edit','delete']},
+  {key:'proj-planning',    label:'Planning',           icon:'&#128230;',group:'Project Module',params:['view','add','edit','delete']},
+  {key:'proj-execution',   label:'Work Allotment',     icon:'&#128221;',group:'Project Module',params:['view','add','edit','delete']},
+
+  // Employee — each tab individual, with view/edit/add/delete
+  {key:'emp-active',       label:'Active Employees',   icon:'&#128101;',group:'Employee',      params:['view','add','edit','delete']},
+  {key:'emp-pending',      label:'Pending Approvals',  icon:'&#9203;',  group:'Employee',      params:['view','edit','delete']},
+  {key:'emp-pay',          label:'Pay Fixation',       icon:'&#128178;',group:'Employee',      params:['view','add','edit','delete']},
+  {key:'emp-salary',       label:'Monthly Salary',     icon:'&#128200;',group:'Employee',      params:['view','add','edit','delete']},
+  {key:'emp-increment',    label:'Increment',          icon:'&#128308;',group:'Employee',      params:['view','add','edit','delete']},
+  {key:'emp-transfer',     label:'Transfer',           icon:'&#128260;',group:'Employee',      params:['view','add','edit','delete']},
+  {key:'emp-annual',       label:'Annual Statement',   icon:'&#128196;',group:'Employee',      params:['view','edit','delete']},
+  {key:'emp-downloads',    label:'Downloads',          icon:'&#128229;',group:'Employee',      params:['view']},
+  {key:'emp-resigned',     label:'Resigned Employees', icon:'&#128683;',group:'Employee',      params:['view','edit','delete']},
+  {key:'attendance',       label:'Attendance',         icon:'&#9200;',  group:'Employee',      params:['view','edit','delete']},
+
+  // Accounting — view/edit/delete
+  {key:'accounts',         label:'Accounts',           icon:'&#128176;',group:'Accounting',    params:['view','edit','delete']},
+  {key:'petty-cash',       label:'Petty Cash',         icon:'&#128181;',group:'Accounting',    params:['view','edit','delete']},
+
+  // Settings — view/edit/delete
+  {key:'access',           label:'Access Control',     icon:'&#128274;',group:'Settings',      params:['view','edit','delete']},
+  {key:'company',          label:'Company Details',    icon:'&#127963;',group:'Settings',      params:['view','edit','delete']},
+  {key:'registry',         label:'Master Registry',    icon:'&#128218;',group:'Settings',      params:['view','edit','delete']},
 ];
 
 function acRenderMods(){
@@ -10029,11 +10051,16 @@ async function acInitModule(){
   var eb=document.getElementById('ac-tab-emp'),rb=document.getElementById('ac-tab-role');
   if(eb){eb.style.background='var(--navy)';eb.style.color='white';eb.style.border='none';}
   if(rb){rb.style.background='white';rb.style.color='var(--text2)';rb.style.border='1.5px solid var(--border)';}
-  // Restore employee selector in case it was swapped
+  // Ensure employee selector exists and is in emp mode
   var sd=document.getElementById('ac-selector');
-  if(sd) sd.innerHTML='<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading employees...</option></select>';
+  var sel=document.getElementById('ac-emp-sel');
+  if(!sel && sd){
+    // Selector was swapped to role — restore employee selector
+    sd.innerHTML='<select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading employees...</option></select>';
+  }
   var ml=document.getElementById('ac-modules-list');
   if(ml) ml.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select an employee to manage permissions</div>';
+  // Always load fresh employee list
   await acEmpLoad();
 }
 
