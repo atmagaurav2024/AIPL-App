@@ -9323,8 +9323,8 @@ function pcRefresh(){
   var totalOut=pEx.reduce(function(s,r){return s+(parseFloat(r.amount)||0);},0);
   var bal=totalIn-totalOut;
   var txns=pEx.map(function(r){return Object.assign({},r,{_type:'out'});}).concat(pIn.map(function(r){return Object.assign({},r,{_type:'in'});})).sort(function(a,b){return new Date(b.date)-new Date(a.date);}).slice(0,20);
-  var txnHtml=txns.map(function(t){var isIn=t._type==='in';var cfg=PC_CAT[t.category]||{e:'&#128230;',c:'#9CA3AF'};var n=pcEmpName(t.employee_id);
-    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;"><div style="width:38px;height:38px;border-radius:10px;background:'+(isIn?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(isIn?'&#128176;':cfg.e)+'</div><div style="flex:1;min-width:0;"><div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(isIn?(n||'Cash In'):(t.party_name||t.purpose||'\u2014'))+'</div><div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(isIn?'Payment In':t.category)+(n&&!isIn?' \u2022 '+n:'')+'</div></div><div style="text-align:right;flex-shrink:0;"><div style="font-size:15px;font-weight:900;color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'\u2212')+pcFmt(t.amount)+'</div><div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div></div></div>';
+    var txnHtml=txns.map(function(t){var isIn=t._type==='in';var cfg=PC_CAT[t.category]||{e:'&#128230;',c:'#9CA3AF'};var n=pcEmpName(t.employee_id);
+    return '<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #E2DDD5;">'+'<div style="width:38px;height:38px;border-radius:10px;background:'+(isIn?'#DCFCE7':cfg.c+'22')+';display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">'+(isIn?'&#128176;':cfg.e)+'</div>'+'<div style="flex:1;min-width:0;">'+'<div style="font-size:14px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(isIn?(n||'Cash In'):(t.party_name||t.purpose||'\u2014'))+'</div>'+'<div style="font-size:12px;color:#6B7280;font-weight:600;margin-top:2px;">'+(isIn?'Payment In':t.category)+(n&&!isIn?' \u2022 '+n:'')+'</div>'+'<div style="font-size:11px;color:#9CA3AF;">'+pcFmtD(t.date)+'</div>'+'</div>'+'<div style="text-align:right;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;">'+'<div style="font-size:15px;font-weight:900;color:'+(isIn?'#2DAE6A':'#E53E3E')+'">'+(isIn?'+':'\u2212')+pcFmt(t.amount)+'</div>'+'<button onclick="pcDeleteEntry(\''+t._type+'\',\''+t.id+'\')" style="background:#FEE2E2;color:#C62828;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:700;cursor:pointer;">&#128465; Delete</button>'+'</div>'+'</div>';
   }).join('')||'<div style="text-align:center;padding:30px;color:#9CA3AF;">No transactions yet</div>';
   el.innerHTML='<div style="margin:0 18px 16px;background:#1E2547;border-radius:18px;padding:20px 22px;"><div style="font-size:13px;color:rgba(255,255,255,.6);margin-bottom:6px;">'+p.name+' \u2014 Balance</div><div style="font-size:36px;font-weight:900;color:#fff;">'+pcFmt(bal)+'</div></div>'+
     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 18px 16px;"><div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Received</div><div style="font-size:20px;font-weight:900;color:#2DAE6A;margin-top:5px;">'+pcFmt(totalIn)+'</div></div><div style="background:#fff;border-radius:18px;padding:16px;box-shadow:0 2px 12px rgba(0,0,0,.08);"><div style="font-size:12px;color:#6B7280;font-weight:600;">Total Spent</div><div style="font-size:20px;font-weight:900;color:#E07820;margin-top:5px;">'+pcFmt(totalOut)+'</div></div></div>'+
@@ -9332,6 +9332,21 @@ function pcRefresh(){
     '<div style="font-size:11px;font-weight:800;color:#E07820;text-transform:uppercase;letter-spacing:1.5px;padding:14px 18px 10px;">Recent Transactions</div>'+
     '<div style="background:#fff;border-radius:18px;margin:0 18px 16px;padding:4px 16px;box-shadow:0 2px 12px rgba(0,0,0,.08);">'+txnHtml+'</div>';
 }
+async function pcDeleteEntry(type, id){
+  if(!confirm('Delete this '+(type==='in'?'cash-in':'expense')+' entry? This cannot be undone.')) return;
+  try{
+    var table = type==='in' ? 'petty_cash_in' : 'petty_cash_expense';
+    await sbDelete(table, id);
+    if(type==='in'){
+      PC_IN = PC_IN.filter(function(r){return r.id!==id;});
+    } else {
+      PC_EXP = PC_EXP.filter(function(r){return r.id!==id;});
+    }
+    toast('Entry deleted','success');
+    pcRefresh();
+  }catch(e){ toast('Error: '+e.message,'error'); console.error(e); }
+}
+
 async function pcOpenCashIn(){
   var eOpts=PC_EMPS.map(function(e){return '<option value="'+e.id+'">'+pcEmpName(e.id)+'</option>';}).join('');
   document.getElementById('pc-sheet-title').textContent='Cash Received';
