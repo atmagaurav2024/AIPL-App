@@ -2247,7 +2247,31 @@ var appScreenIds = ['app-dashboard','app-attendance','app-registry'];
 function showApp(name){
   // Permission check (admins bypass, dashboard always allowed)
   if(name!=='dashboard' && currentUser && currentUser.role!=='admin'){
-    if(!canAccess(name,'view')){
+    // Map app name to AC_MODS key(s) for checking
+    var checkKey = name;
+    if(name==='employees'){
+      // Allow if any emp-* tab has view permission
+      var empTabs=['emp-active','emp-pending','emp-pay','emp-salary','emp-increment','emp-transfer','emp-annual','emp-downloads','emp-resigned'];
+      if(!empTabs.some(function(k){return canAccess(k,'view');})){
+        toast('Access denied — you do not have permission to view Employee Management','warning');
+        return;
+      }
+      checkKey = null; // already checked
+    } else if(name==='projects'||name==='boq'||name==='jm'||name==='planning'||name==='execution'){
+      // For project module entry point, check if any project tab is accessible
+      var projTabs2=['projects','boq','jm','planning','execution'];
+      if(name==='projects'){
+        // Opening the module — allow if any tab accessible
+        if(!projTabs2.some(function(t){return canAccess('proj-'+t,'view');})){
+          toast('Access denied — no permission for Project Module','warning');
+          return;
+        }
+        checkKey = null;
+      } else {
+        checkKey = 'proj-'+name;
+      }
+    }
+    if(checkKey && !canAccess(checkKey,'view')){
       toast('Access denied — you do not have permission to view this module','warning');
       return;
     }
@@ -8981,6 +9005,13 @@ function projModLoadTab(){
 }
 
 function projModTab(tab, btn){
+  // Permission check
+  if(currentUser && currentUser.role!=='admin'){
+    if(!canAccess('proj-'+tab,'view')){
+      toast('Access denied — no permission for '+tab,'warning');
+      return;
+    }
+  }
   PROJ_MOD_TAB = tab;
   ['projects','boq','jm','planning','execution'].forEach(function(t){
     var b = document.getElementById('pmt-'+t);
@@ -9000,7 +9031,23 @@ function projModAdd(){
 }
 
 function initProjects(){
-  projModTab('projects', document.getElementById('pmt-projects'));
+  // Hide tabs user has no access to
+  ['projects','boq','jm','planning','execution'].forEach(function(t){
+    var b = document.getElementById('pmt-'+t);
+    if(!b) return;
+    var hasAccess = (currentUser && currentUser.role==='admin') || 
+                    !Object.keys(USER_PERMISSIONS).length ||
+                    canAccess('proj-'+t,'view');
+    b.style.display = hasAccess ? '' : 'none';
+  });
+  // Start on first accessible tab
+  var tabs = ['projects','boq','jm','planning','execution'];
+  var firstTab = tabs.find(function(t){
+    return (currentUser && currentUser.role==='admin') ||
+           !Object.keys(USER_PERMISSIONS).length ||
+           canAccess('proj-'+t,'view');
+  }) || 'projects';
+  projModTab(firstTab, document.getElementById('pmt-'+firstTab));
   projModLoadProjects();
 }
 
@@ -10176,11 +10223,16 @@ async function loadUserPermissions(){
 function canAccess(module, permission){
   // Admins always have full access
   if(currentUser && currentUser.role==='admin') return true;
-  // If no permissions defined, default to allow (graceful degradation)
+  // If no permissions defined at all, default to allow (graceful degradation)
   if(!Object.keys(USER_PERMISSIONS).length) return true;
   var mp = USER_PERMISSIONS[module];
   if(!mp) return false;
   return mp[permission||'view'] === true;
+}
+
+// Helper: check if user can do action on a specific employee tab
+function canAccessEmpTab(tab, permission){
+  return canAccess('emp-'+tab, permission);
 }
 
 // ════ COMPANY DETAILS ═══════════════════════════════════════════════════
