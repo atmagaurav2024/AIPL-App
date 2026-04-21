@@ -5802,10 +5802,40 @@ async function initEmpMgmt(){
 
   }catch(e){ EMP_LIST=[]; console.error(e); }
 
-  empTab('active', document.getElementById('emp-t-active'));
+  // Hide tabs user cannot access
+  empHideForbiddenTabs();
+  // Open first accessible tab
+  var allTabs = ['active','pending','pay','salary','increment','transfer','annual','downloads','resigned'];
+  var firstTab = allTabs.find(function(t){ return empTabAllowed(t); }) || 'active';
+  empTab(firstTab, document.getElementById('emp-t-'+firstTab));
+}
+
+// Tab → AC_MODS key mapping
+var EMP_TAB_KEYS = {
+  active:'emp-active', pending:'emp-pending', pay:'emp-pay',
+  salary:'emp-salary', increment:'emp-increment', transfer:'emp-transfer',
+  annual:'emp-annual', downloads:'emp-downloads', resigned:'emp-resigned'
+};
+
+function empTabAllowed(tab){
+  if(!currentUser || currentUser.role==='admin') return true;
+  if(!Object.keys(USER_PERMISSIONS).length) return true;
+  var key = EMP_TAB_KEYS[tab];
+  return key ? canAccess(key,'view') : true;
+}
+
+function empHideForbiddenTabs(){
+  Object.keys(EMP_TAB_KEYS).forEach(function(tab){
+    var btn = document.getElementById('emp-t-'+tab);
+    if(btn) btn.style.display = empTabAllowed(tab) ? '' : 'none';
+  });
 }
 
 function empTab(tab,btn){
+  if(!empTabAllowed(tab)){
+    toast('Access denied — no permission for this tab','warning');
+    return;
+  }
   EMP_TAB=tab;
   var tb=document.getElementById('emp-tab-bar');
   if(tb)Array.from(tb.children).forEach(function(b){b.style.background='transparent';b.style.color='rgba(255,255,255,.6)';});
