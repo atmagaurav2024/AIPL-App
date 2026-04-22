@@ -7689,6 +7689,14 @@ function empListHTML(status){
     if(status==='pending') return e.status==='pending'||!e.status;
     return e.status===status;
   });
+
+  // Apply data scope filter
+  var scope = getEmpDataScope();
+  if(scope==='self' && currentUser){
+    list = list.filter(function(e){ return e.id===currentUser.id; });
+  } else if(scope==='department' && currentUser && currentUser.dept){
+    list = list.filter(function(e){ return (e.department||e.dept||'')===(currentUser.dept||''); });
+  }
   var col={active:'#2E7D32',pending:'#F57F17',resigned:'#C62828'}[status]||'#37474F';
 
   // Stats
@@ -8982,6 +8990,32 @@ async function empSavePay(){
       <button id="ac-tab-role" onclick="acSwitchTab('role')" style="flex:1;padding:10px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;border:1.5px solid var(--border);font-family:'Nunito',sans-serif;background:white;color:var(--text2);">By Role</button>
     </div>
     <div id="ac-selector" style="margin-bottom:14px;"><select id="ac-emp-sel" class="fsel" style="width:100%;" onchange="acLoadPerms()"><option value="">&#9203; Loading employees...</option></select></div>
+
+    <!-- Data Access Scope -->
+    <div id="ac-data-access" style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;">
+      <div style="padding:10px 14px;background:#F8FAFC;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+        <span style="font-size:16px;">&#128202;</span>
+        <span style="font-size:13px;font-weight:800;color:var(--navy);">Employee Data Visibility</span>
+      </div>
+      <div style="padding:10px 14px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Which employees can this person see?</div>
+        <div style="display:flex;flex-direction:column;gap:6px;" id="ac-scope-options">
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1.5px solid var(--border);">
+            <input type="radio" name="ac-emp-scope" value="all" style="width:16px;height:16px;accent-color:#4A148C;">
+            <div><div style="font-size:12px;font-weight:800;">All Employees</div><div style="font-size:10px;color:var(--text3);">Can see every employee's data</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1.5px solid var(--border);">
+            <input type="radio" name="ac-emp-scope" value="department" style="width:16px;height:16px;accent-color:#4A148C;">
+            <div><div style="font-size:12px;font-weight:800;">Department Only</div><div style="font-size:10px;color:var(--text3);">Can see only employees in same department</div></div>
+          </label>
+          <label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;border:1.5px solid var(--border);">
+            <input type="radio" name="ac-emp-scope" value="self" style="width:16px;height:16px;accent-color:#4A148C;">
+            <div><div style="font-size:12px;font-weight:800;">Self Only</div><div style="font-size:10px;color:var(--text3);">Can only see their own record</div></div>
+          </label>
+        </div>
+      </div>
+    </div>
+
     <div id="ac-modules-list"><div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div></div>
   </div>
   <div style="padding:12px 14px;background:white;border-top:1px solid var(--border);flex-shrink:0;padding-bottom:calc(12px + 60px);">
@@ -10201,9 +10235,33 @@ async function acSwitchTab(tab){
 
 async function acLoadPerms(){
   var selId=AC_TAB==='emp'?'ac-emp-sel':'ac-role-sel';var sel=document.getElementById(selId);
-  if(!sel||!sel.value){document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div>';return;}
+  if(!sel||!sel.value){
+    document.getElementById('ac-modules-list').innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select employee or role</div>';
+    // Reset scope to default
+    var defRadio = document.querySelector('input[name="ac-emp-scope"][value="all"]');
+    if(defRadio) defRadio.checked = true;
+    return;
+  }
   AC_TARGET=sel.value;
-  try{var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;var rows=await sbFetch('access_permissions',{select:'*',filter:filter});AC_PERMISSIONS={};if(Array.isArray(rows))rows.forEach(function(r){if(!AC_PERMISSIONS[r.module])AC_PERMISSIONS[r.module]={};AC_PERMISSIONS[r.module][r.permission]=r.granted;});}catch(e){AC_PERMISSIONS={};}
+  try{
+    var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;
+    var rows=await sbFetch('access_permissions',{select:'*',filter:filter});
+    AC_PERMISSIONS={};
+    if(Array.isArray(rows)) rows.forEach(function(r){
+      if(!AC_PERMISSIONS[r.module])AC_PERMISSIONS[r.module]={};
+      AC_PERMISSIONS[r.module][r.permission]=r.granted;
+      // Load data scope
+      if(r.module==='emp-data-scope'){
+        var radio=document.querySelector('input[name="ac-emp-scope"][value="'+r.permission+'"]');
+        if(radio) radio.checked=true;
+      }
+    });
+    // Default scope to 'all' if not set
+    if(!AC_PERMISSIONS['emp-data-scope']){
+      var defRadio=document.querySelector('input[name="ac-emp-scope"][value="all"]');
+      if(defRadio) defRadio.checked=true;
+    }
+  }catch(e){AC_PERMISSIONS={};}
   acRenderMods();
 }
 
@@ -10227,6 +10285,17 @@ async function acSavePermissions(){
           granted:mp[p]===true
         });
       });
+    });
+    // Save employee data scope
+    var scopeRadio = document.querySelector('input[name="ac-emp-scope"]:checked');
+    var scope = scopeRadio ? scopeRadio.value : 'all';
+    inserts.push({
+      target_type:AC_TAB,
+      employee_id:AC_TAB==='emp'?AC_TARGET:null,
+      role:AC_TAB==='role'?AC_TARGET:null,
+      module:'emp-data-scope',
+      permission:scope,
+      granted:true
     });
     var filter=AC_TAB==='emp'?'employee_id=eq.'+AC_TARGET:'role=eq.'+AC_TARGET;
     // Delete existing then insert fresh
@@ -10299,9 +10368,15 @@ function canAccess(module, permission){
   return mp[permission||'view'] === true;
 }
 
-// Helper: check if user can do action on a specific employee tab
-function canAccessEmpTab(tab, permission){
-  return canAccess('emp-'+tab, permission);
+// Returns 'all', 'department', or 'self'
+function getEmpDataScope(){
+  if(!currentUser || currentUser.role==='admin') return 'all';
+  if(!Object.keys(USER_PERMISSIONS).length) return 'all';
+  var mp = USER_PERMISSIONS['emp-data-scope'];
+  if(!mp) return 'all';
+  if(mp['self']===true) return 'self';
+  if(mp['department']===true) return 'department';
+  return 'all';
 }
 
 // ════ COMPANY DETAILS ═══════════════════════════════════════════════════
