@@ -9589,59 +9589,210 @@ async function planDelSub(id){if(!confirm('Delete activity?'))return;PLAN_SUBS=P
 async function planDelRes(id){if(!confirm('Delete?'))return;PLAN_RES=PLAN_RES.filter(function(r){return r.id!==id;});planRender();try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}}
 
 // ════ WORK ALLOTMENT ════════════════════════════════════
-var WA_ITEMS=[],WA_JMS=[],WA_ALLOT=[];
+var WA_ITEMS=[],WA_JMS=[],WA_SUBS=[],WA_PLANNED=[],WA_ALLOT=[];
 function initExecution(){execLoadProjs();}
 async function execLoadProjs(){var sel=document.getElementById('exec-proj-sel');if(!sel)return;try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}}
 async function execLoadItems(){
   var projId=(document.getElementById('exec-proj-sel')||{}).value||'';var el=document.getElementById('exec-content');
   if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';WA_ITEMS=[];return;}
   if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">&#9203; Loading...</div>';
-  try{var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId+'&exec_type=not.eq.planned',order:'created_at.asc'})]);WA_ITEMS=Array.isArray(r[0])?r[0]:[];WA_JMS=Array.isArray(r[1])?r[1]:[];WA_ALLOT=Array.isArray(r[2])?r[2]:[];}catch(e){WA_ITEMS=[];console.error(e);}
+  try{var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'}),sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'})]);WA_ITEMS=Array.isArray(r[0])?r[0]:[];WA_SUBS=Array.isArray(r[1])?r[1]:[];var allRes=Array.isArray(r[2])?r[2]:[];WA_PLANNED=allRes.filter(function(r){return r.exec_type==='planned';});WA_ALLOT=allRes.filter(function(r){return r.exec_type!=='planned';});}catch(e){WA_ITEMS=[];console.error(e);}
   execRender();
 }
 function execRender(){
   var el=document.getElementById('exec-content');if(!el)return;
   if(!WA_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No BOQ items</div>';return;}
-  var tc={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#2E7D32'};
-  var tl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour',labour:'Labour'};
+
+  var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+
+  // Wire allot buttons via event delegation
+  setTimeout(function(){
+    el.addEventListener('click',function(e){
+      var btn=e.target.closest('.wa-allot-btn');
+      if(btn) execOpenAllot(btn.getAttribute('data-res-id'),btn.getAttribute('data-plan-qty'),btn.getAttribute('data-unit'));
+      var delbtn=e.target.closest('.wa-del-btn');
+      if(delbtn) execDelAllot(delbtn.getAttribute('data-del-id'));
+    },{once:true});
+  },0);
   el.innerHTML=WA_ITEMS.map(function(item){
-    var iJMs=WA_JMS.filter(function(j){return j.boq_item_id===item.id;});
-    if(!iJMs.length)return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;padding:12px 14px;"><span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-weight:700;margin-left:8px;">'+(item.short_name||item.description)+'</span><div style="font-size:11px;color:var(--text3);margin-top:4px;">No JMs yet — add JMs first</div></div>';
-    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;"><div style="padding:10px 14px;background:#FFF3E0;"><span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span></div>'+
-      iJMs.map(function(jm){var jmA=WA_ALLOT.filter(function(a){return a.jm_id===jm.id;});
-        return '<div style="padding:10px 14px;border-bottom:1px solid var(--border);"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><div><span style="background:#E65100;color:white;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;">JM-'+jm.jm_number+'</span><span style="font-size:12px;font-weight:700;color:#E65100;margin-left:6px;">'+jm.jm_qty+' '+item.unit+'</span><span style="font-size:10px;color:var(--text3);margin-left:6px;">'+jm.date+'</span></div><button onclick="execOpenAllot(\''+jm.id+'\',\''+item.id+'\',\''+item.unit+'\',\''+jm.jm_qty+'\')" style="background:#E65100;color:white;border:none;border-radius:6px;padding:3px 10px;font-size:10px;font-weight:800;cursor:pointer;">+ Allot</button></div>'+(jmA.length?jmA.map(function(a){return '<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#FFF8F0;border-radius:8px;margin-bottom:4px;border:1px solid #FFE0B2;"><span style="background:'+(tc[a.exec_type]||'#37474F')+'20;color:'+(tc[a.exec_type]||'#37474F')+';border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;">'+(tl[a.exec_type]||a.exec_type)+'</span><div style="flex:1;font-size:12px;font-weight:700;">'+a.party_name+'</div><div style="font-size:11px;color:var(--text3);">'+a.qty+' '+(a.unit||'')+(a.rate?' @ \u20b9'+a.rate:'')+'</div><button onclick="execDelAllot(\''+a.id+'\')" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;">\u00d7</button></div>';}).join(''):'<div style="font-size:11px;color:var(--text3);padding:4px 0;">No allotments yet</div>')+'</div>';
-      }).join('')+'</div>';
+    var iSubs=WA_SUBS.filter(function(s){return s.boq_item_id===item.id;});
+    var iRes=WA_PLANNED.filter(function(r){return r.boq_item_id===item.id;});
+    if(!iRes.length) return (
+      '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;padding:12px 14px;">'+
+        '<span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
+        '<span style="font-weight:700;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
+        '<div style="font-size:11px;color:var(--text3);margin-top:4px;">No planned resources — add resources in Planning first</div>'+
+      '</div>'
+    );
+
+    // Group resources by activity (subitem)
+    var subsHtml = iSubs.map(function(sub){
+      var sRes=iRes.filter(function(r){return r.boq_subitem_id===sub.id;});
+      if(!sRes.length) return '';
+      return (
+        '<div style="margin-bottom:8px;">'+
+          '<div style="font-size:10px;font-weight:800;color:#1565C0;padding:5px 8px;background:#E3F2FD;border-radius:6px;margin-bottom:4px;">'+sub.name+'</div>'+
+          sRes.map(function(res){return resRow(res,item.unit,tCol,tLbl);}).join('')+
+        '</div>'
+      );
+    }).join('');
+
+    // Resources with no subitem
+    var noSubRes=iRes.filter(function(r){return !r.boq_subitem_id;});
+    var noSubHtml=noSubRes.map(function(res){return resRow(res,item.unit,tCol,tLbl);}).join('');
+
+    return (
+      '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+        '<div style="padding:10px 14px;background:#FFF3E0;">'+
+          '<span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
+          '<span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
+        '</div>'+
+        '<div style="padding:8px 14px;">'+(subsHtml+noSubHtml||'<div style="font-size:11px;color:var(--text3);">No planned resources</div>')+'</div>'+
+      '</div>'
+    );
   }).join('');
+
+  function resRow(res,itemUnit,tCol,tLbl){
+    var resUnit=res.unit||itemUnit;
+    var rAllot=WA_ALLOT.filter(function(a){return a.boq_exec_resource_id===res.id||a.party_name===res.party_name&&a.boq_item_id===res.boq_item_id;});
+    var totalAllotted=rAllot.reduce(function(s,a){return s+(parseFloat(a.qty)||0);},0);
+    var bal=Math.max(0,(parseFloat(res.qty)||0)-totalAllotted);
+    return (
+      '<div style="border:1px solid var(--border);border-radius:10px;margin-bottom:6px;overflow:hidden;">'+
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#FAFAFA;">'+
+          '<div style="flex:1;">'+
+            '<div style="font-size:12px;font-weight:800;">'+res.party_name+'</div>'+
+            '<div style="font-size:10px;color:var(--text3);">'+
+              'Planned: '+(res.qty||0)+' '+(res.unit||itemUnit)+
+              (res.rate?' @ ₹'+res.rate:'')+'  |  Allotted: '+totalAllotted+
+              '  |  <b style="color:'+(bal>0?'#E65100':'#2E7D32')+'">Bal: '+bal.toFixed(3).replace(/\.?0+$/,'')+'</b>'+
+            '</div>'+
+          '</div>'+
+          (bal>0?'<button data-res-id="'+res.id+'" data-plan-qty="'+res.qty+'" data-unit="'+resUnit+'" class="wa-allot-btn" style="background:#E65100;color:white;border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:800;cursor:pointer;">+ Allot</button>':          '<span style="font-size:10px;background:#E8F5E9;color:#2E7D32;padding:3px 8px;border-radius:5px;font-weight:700;">Done</span>')+
+        '</div>'+
+        (rAllot.length?
+          '<div style="padding:4px 12px 8px;">'+
+            rAllot.map(function(a){
+              var col=tCol[a.exec_type]||'#37474F';var lbl=tLbl[a.exec_type]||a.exec_type;
+              return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
+                '<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:'+col+'20;color:'+col+';">'+lbl+'</span>'+
+                '<div style="flex:1;font-size:11px;font-weight:700;">'+a.party_name+'</div>'+
+                '<div style="font-size:10px;color:var(--text3);">'+a.qty+' '+(a.unit||'')+(a.rate?' @ ₹'+a.rate:'')+'</div>'+
+                '<button data-del-id="'+a.id+'" class="wa-del-btn" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
+              '</div>';
+            }).join('')+
+          '</div>':'')+
+      '</div>'
+    );
+  }
 }
-async function execOpenAllot(jmId,itemId,unit,jmQty){
-  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
-  document.getElementById('exec-sheet-title').textContent='Work Allotment';
-    await loadUomIfNeeded();
+
+async function execOpenAllot(resId, planQty, unit){
+  await loadUomIfNeeded();
   var uomOpts=buildUomOpts(unit);
-    document.getElementById('exec-sheet-body').innerHTML=
-    '<div style="background:#FFF3E0;border-radius:12px;padding:10px 14px;margin-bottom:12px;"><div style="font-size:11px;font-weight:800;color:#E65100;">JM Qty: '+jmQty+' '+unit+'</div></div>'+
-    '<label class="flbl">Assign To *</label><select id="wa-type" class="fsel" style="margin-bottom:10px;"><option value="vendor">Vendor</option><option value="sc">Subcontractor</option><option value="labour_contractor">Labour Contractor</option><option value="labour">Labour</option></select>'+
-    '<label class="flbl">Party Name *</label><input id="wa-party" class="finp">'+
-    '<div class="g2"><div><label class="flbl">Qty</label><input id="wa-qty" class="finp" type="number" step="0.001"></div>'+
-    '<div><label class="flbl">Unit</label>'+
-      '<select id="wa-unit-sel" class="fsel">'+uomOpts+'</select>'+
-    '</div></div>'+
-    '<label class="flbl">Rate (\u20b9)</label><input id="wa-rate" class="finp" type="number" step="0.01">';
-  document.getElementById('exec-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-exec\',\'sh-exec\')">Cancel</button><button class="btn" style="background:#E65100;color:white;" onclick="execSaveAllot(\''+jmId+'\',\''+itemId+'\',\''+projId+'\')">&#128190; Save</button>';
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  document.getElementById('exec-sheet-title').textContent='Allot Work';
+  document.getElementById('exec-sheet-body').innerHTML=
+    '<div style="background:#FFF3E0;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;font-weight:700;color:#E65100;">Planned Qty: '+planQty+' '+unit+'</div>'+
+    '<label class="flbl">Party Type *</label>'+
+    '<select id="wa-type" class="fsel" onchange="waTypeChange()">'+
+      '<option value="">— Select Type —</option>'+
+      '<option value="sc">Subcontractor</option>'+
+      '<option value="vendor">Vendor</option>'+
+      '<option value="labour_contractor">Labour Contractor</option>'+
+      '<option value="labour">Labour</option>'+
+      '<option value="machinery">Machinery</option>'+
+    '</select>'+
+    '<label class="flbl" style="margin-top:8px;">Party Name *</label>'+
+    '<select id="wa-party-sel" class="fsel"><option value="">— Select party type first —</option></select>'+
+    '<div class="g2" style="margin-top:8px;">'+
+      '<div><label class="flbl">Qty *</label><input id="wa-qty" class="finp" type="number" step="0.001" max="'+planQty+'" placeholder="'+planQty+'"></div>'+
+      '<div><label class="flbl">Unit</label><select id="wa-unit-sel" class="fsel">'+uomOpts+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Rate (₹ / '+unit+')</label>'+
+    '<input id="wa-rate" class="finp" type="number" step="0.01" placeholder="0">';
+
+  var sf=document.getElementById('exec-sheet-foot');
+  sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-exec','sh-exec');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#E65100;color:white;';
+  sb.innerHTML='&#128190; Save Allotment';
+  sb.onclick=function(){execSaveAllot(resId,projId);};
+  sf.appendChild(cb);sf.appendChild(sb);
   openSheet('ov-exec','sh-exec');
 }
-async function execSaveAllot(jmId,itemId,projId){
-  var party=gv('wa-party'),type=gv('wa-type'),qty=parseFloat(gv('wa-qty'))||0;
-  if(!party){toast('Party name required','warning');return;}
+
+async function waTypeChange(){
+  var type = gv('wa-type');
+  var sel  = document.getElementById('wa-party-sel');
+  if(!sel||!type){ if(sel) sel.innerHTML='<option value="">— Select party type first —</option>'; return; }
+  sel.innerHTML='<option value="">&#9203; Loading...</option>';
+  try{
+    var rows=[];
+    if(type==='sc'){
+      rows = await sbFetch('subcontractors',{select:'id,name',filter:'status=eq.active',order:'name.asc'});
+    } else if(type==='vendor'){
+      rows = await sbFetch('vendors',{select:'id,name',filter:'status=eq.active',order:'name.asc'});
+    } else if(type==='labour_contractor'){
+      rows = await sbFetch('subcontractors',{select:'id,name',filter:'status=eq.active',order:'name.asc'});
+    } else if(type==='labour'){
+      rows = await sbFetch('labourers',{select:'id,name',filter:'status=eq.active',order:'name.asc'});
+    } else if(type==='machinery'){
+      try{ rows = await sbFetch('equipment',{select:'id,name',order:'name.asc'}); }catch(e){ rows=[]; }
+      if(!Array.isArray(rows)||!rows.length){
+        rows = await sbFetch('vendors',{select:'id,name',filter:'status=eq.active',order:'name.asc'});
+      }
+    }
+    var list = Array.isArray(rows)?rows:[];
+    if(!list.length){
+      sel.innerHTML='<option value="">— No '+type+' found in Registry —</option>';return;
+    }
+    sel.innerHTML='<option value="">— Select —</option>'+
+      list.map(function(r){return '<option value="'+r.name+'">'+r.name+'</option>';}).join('');
+  }catch(e){
+    console.error('waTypeChange:',e);
+    sel.innerHTML='<option value="">— Error loading —</option>';
+  }
+}
+
+
+async function execSaveAllot(resId,projId){
+  var type=gv('wa-type');
+  var partySel=document.getElementById('wa-party-sel');
+  var party=partySel?partySel.value.trim():'';
+  var qty=parseFloat(gv('wa-qty'))||0;
+  if(!type||!party){toast('Party type and name required','warning');return;}
+  if(!qty){toast('Qty required','warning');return;}
   var unitSel=document.getElementById('wa-unit-sel');
   var unit=(unitSel&&unitSel.value)?unitSel.value:null;
+  // Get the planned resource to link back
+  var planRes=WA_PLANNED.find(function(r){return r.id===resId;})||{};
   try{
-    var res=await sbInsert('boq_exec_resources',{project_id:projId,boq_item_id:itemId,jm_id:jmId,date:new Date().toISOString().slice(0,10),exec_type:type,party_name:party,qty:qty,unit:unit,rate:parseFloat(gv('wa-rate'))||0});
+    var res=await sbInsert('boq_exec_resources',{
+      project_id:projId,
+      boq_item_id:planRes.boq_item_id||null,
+      boq_subitem_id:planRes.boq_subitem_id||null,
+      boq_exec_resource_id:resId,
+      date:new Date().toISOString().slice(0,10),
+      exec_type:type,
+      party_name:party,qty:qty,unit:unit,
+      rate:parseFloat(gv('wa-rate'))||0
+    });
     if(res&&res[0])WA_ALLOT.push(res[0]);
-    toast(party+' allotted!','success');closeSheet('ov-exec','sh-exec');execRender();
-  }catch(e){toast('Error: '+e.message,'error');}
+    toast(party+' allotted!','success');
+    closeSheet('ov-exec','sh-exec');
+    execRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
-async function execDelAllot(id){if(!confirm('Remove?'))return;WA_ALLOT=WA_ALLOT.filter(function(a){return a.id!==id;});execRender();try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}}
+
+async function execDelAllot(id){
+  if(!confirm('Remove allotment?'))return;
+  WA_ALLOT=WA_ALLOT.filter(function(a){return a.id!==id;});
+  execRender();
+  try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}
+}
 
 // ════ PETTY CASH ════════════════════════════════════════
 var PC_IN=[],PC_EXP=[],PC_EMPS=[],PC_PROJS=[],PC_ACTIVE=null;
