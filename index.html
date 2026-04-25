@@ -9421,25 +9421,65 @@ function buildUomOpts(sel){
 
 async function planAddRes(subId,itemId,unit){
   await loadUomIfNeeded();
-  var uomOpts=buildUomOpts(unit);
+  var uomOpts = buildUomOpts(unit);
+
+  // Build JM options for this BOQ item
+  var projId = (document.getElementById('plan-proj-sel')||{}).value||'';
+  var itemJMs = [];
+  try{
+    var jmRows = await sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId+'&boq_item_id=eq.'+itemId,order:'jm_number.asc'});
+    itemJMs = Array.isArray(jmRows) ? jmRows : [];
+  }catch(e){}
+
+  var jmOpts = '<option value="">— No JM (manual qty) —</option>'+
+    itemJMs.map(function(j){
+      return '<option value="'+j.id+'" data-qty="'+j.jm_qty+'">JM-'+j.jm_number+' ('+j.jm_qty+' '+unit+')</option>';
+    }).join('');
+
   document.getElementById('plan-sheet-title').textContent='Add Resource';
   document.getElementById('plan-sheet-body').innerHTML=
-    '<label class="flbl">Resource Name *</label><input id="pr-name" class="finp" placeholder="e.g. Cement, Steel, Labour...">'+
+    '<label class="flbl">Resource Name *</label>'+
+    '<input id="pr-name" class="finp" placeholder="e.g. Cement, Steel, Labour...">'+
+
+    // JM selector
+    '<label class="flbl">Link to JM (optional)</label>'+
+    '<select id="pr-jm-sel" class="fsel" onchange="prJmChange()">'+jmOpts+'</select>'+
+
     '<div class="g2">'+
-      '<div><label class="flbl">Qty</label><input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
+      '<div><label class="flbl">Qty <span id="pr-qty-hint" style="font-size:9px;color:var(--text3);font-weight:400;"></span></label>'+
+        '<input id="pr-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
       '<div><label class="flbl">Unit</label>'+
         '<select id="pr-unit-sel" class="fsel">'+uomOpts+'</select>'+
       '</div>'+
     '</div>'+
-    '<label class="flbl">Rate (\u20b9)</label><input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0">';
+    '<label class="flbl">Rate (\u20b9)</label>'+
+    '<input id="pr-rate" class="finp" type="number" step="0.01" placeholder="0">';
+
   var sf=document.getElementById('plan-sheet-foot');
   sf.innerHTML='';
   var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
   cb.onclick=function(){closeSheet('ov-plan','sh-plan');};
-  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#1565C0;color:white;';sb.innerHTML='&#128230; Save';
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#1565C0;color:white;';
+  sb.innerHTML='&#128230; Save';
   sb.onclick=function(){planSaveRes(subId,itemId);};
   sf.appendChild(cb);sf.appendChild(sb);
   openSheet('ov-plan','sh-plan');
+}
+
+function prJmChange(){
+  var sel = document.getElementById('pr-jm-sel');
+  var qtyInp = document.getElementById('pr-qty');
+  var hint = document.getElementById('pr-qty-hint');
+  if(!sel||!qtyInp) return;
+  var opt = sel.options[sel.selectedIndex];
+  var jmQty = opt ? opt.getAttribute('data-qty') : '';
+  if(jmQty){
+    qtyInp.value = jmQty;
+    if(hint) hint.textContent = '(from JM — edit to override)';
+  } else {
+    qtyInp.value = '';
+    if(hint) hint.textContent = '';
+  }
 }
 
 
@@ -9447,10 +9487,19 @@ async function planSaveRes(subId,itemId){
   var name=gv('pr-name'),qty=parseFloat(gv('pr-qty'))||0,rate=parseFloat(gv('pr-rate'))||0;
   var unitSel=document.getElementById('pr-unit-sel');
   var unit=(unitSel&&unitSel.value)?unitSel.value:null;
+  var jmSel=document.getElementById('pr-jm-sel');
+  var jmId=(jmSel&&jmSel.value)?jmSel.value:null;
   if(!name){toast('Name required','warning');return;}
   var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
   try{
-    var res=await sbInsert('boq_exec_resources',{project_id:projId,boq_item_id:itemId,boq_subitem_id:subId||null,date:new Date().toISOString().slice(0,10),exec_type:'planned',party_name:name,qty:qty,unit:unit,rate:rate});
+    var res=await sbInsert('boq_exec_resources',{
+      project_id:projId,boq_item_id:itemId,
+      boq_subitem_id:subId||null,
+      jm_id:jmId,
+      date:new Date().toISOString().slice(0,10),
+      exec_type:'planned',
+      party_name:name,qty:qty,unit:unit,rate:rate
+    });
     if(res&&res[0])PLAN_RES.push(res[0]);
     toast(name+' saved!','success');closeSheet('ov-plan','sh-plan');planRender();
   }catch(e){toast('Error: '+e.message,'error');}
