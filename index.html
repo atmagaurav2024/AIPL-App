@@ -9590,17 +9590,77 @@ async function planDelRes(id){if(!confirm('Delete?'))return;PLAN_RES=PLAN_RES.fi
 
 // ════ WORK ALLOTMENT ════════════════════════════════════
 var WA_ITEMS=[],WA_JMS=[],WA_SUBS=[],WA_PLANNED=[],WA_ALLOT=[];
+var WA_DAILY=[],WA_BILLS=[],WA_PAYMENTS=[];
+var WA_SUBTAB='allot'; // allot | daily | bills
+
 function initExecution(){execLoadProjs();}
 async function execLoadProjs(){var sel=document.getElementById('exec-proj-sel');if(!sel)return;try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}}
 async function execLoadItems(){
-  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';var el=document.getElementById('exec-content');
-  if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';WA_ITEMS=[];return;}
-  if(el)el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);">&#9203; Loading...</div>';
-  try{var r=await Promise.all([sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'}),sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'})]);WA_ITEMS=Array.isArray(r[0])?r[0]:[];WA_SUBS=Array.isArray(r[1])?r[1]:[];var allRes=Array.isArray(r[2])?r[2]:[];WA_PLANNED=allRes.filter(function(r){return r.exec_type==='planned';});WA_ALLOT=allRes.filter(function(r){return r.exec_type!=='planned';});}catch(e){WA_ITEMS=[];console.error(e);}
-  execRender();
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  var el=document.getElementById('exec-content');
+  if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';return;}
+  if(el) el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>';
+  try{
+    var r=await Promise.all([
+      sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),
+      sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'}),
+      sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),
+      sbFetch('work_daily_progress',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'}),
+      sbFetch('work_bills',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'}),
+      sbFetch('work_payments',{select:'*',filter:'project_id=eq.'+projId,order:'payment_date.desc'})
+    ]);
+    WA_ITEMS=Array.isArray(r[0])?r[0]:[];
+    WA_SUBS=Array.isArray(r[1])?r[1]:[];
+    var allRes=Array.isArray(r[2])?r[2]:[];
+    WA_PLANNED=allRes.filter(function(r){return r.exec_type==='planned';});
+    WA_ALLOT=allRes.filter(function(r){return r.exec_type!=='planned';});
+    WA_DAILY=Array.isArray(r[3])?r[3]:[];
+    WA_BILLS=Array.isArray(r[4])?r[4]:[];
+    WA_PAYMENTS=Array.isArray(r[5])?r[5]:[];
+  }catch(e){WA_ITEMS=[];console.error(e);}
+  execRenderShell();
 }
-function execRender(){
+
+function execRenderShell(){
   var el=document.getElementById('exec-content');if(!el)return;
+  var tabs=[
+    {key:'allot',label:'&#128221; Work Allotment'},
+    {key:'daily',label:'&#128197; Daily Progress'},
+    {key:'bills',label:'&#128203; Bills & Payments'}
+  ];
+  var tabBar='<div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;">'+
+    tabs.map(function(t){
+      var active=WA_SUBTAB===t.key;
+      return '<button onclick="waSubTab(\''+t.key+'\')" style="padding:7px 14px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;background:'+(active?'#E65100':'white')+';color:'+(active?'white':'var(--text2)')+';border:'+(active?'none':'1px solid var(--border)')+';flex-shrink:0;">'+t.label+'</button>';
+    }).join('')+
+  '</div>'+
+  '<div id="exec-subtab-content"></div>';
+  el.innerHTML=tabBar;
+  execRenderSubTab();
+}
+
+function waSubTab(tab){
+  WA_SUBTAB=tab;
+  var btns=document.querySelectorAll('#exec-content button[onclick^="waSubTab"]');
+  btns.forEach(function(b){
+    var active=b.getAttribute('onclick').includes("'"+tab+"'");
+    b.style.background=active?'#E65100':'white';
+    b.style.color=active?'white':'var(--text2)';
+    b.style.border=active?'none':'1px solid var(--border)';
+  });
+  execRenderSubTab();
+}
+
+function execRenderSubTab(){
+  var el=document.getElementById('exec-subtab-content');if(!el)return;
+  if(WA_SUBTAB==='allot') execRender();
+  else if(WA_SUBTAB==='daily') execRenderDaily();
+  else if(WA_SUBTAB==='bills') execRenderBills();
+}
+
+
+function execRender(){
+  var el=document.getElementById('exec-subtab-content')||document.getElementById('exec-content');if(!el)return;
   if(!WA_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No BOQ items</div>';return;}
 
   var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
@@ -9792,6 +9852,334 @@ async function execDelAllot(id){
   WA_ALLOT=WA_ALLOT.filter(function(a){return a.id!==id;});
   execRender();
   try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}
+}
+
+// ── Daily Progress ─────────────────────────────────────────────────────
+function execRenderDaily(){
+  var el=document.getElementById('exec-subtab-content');if(!el)return;
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+
+  // Group allotments by party for daily entry
+  var parties={};
+  WA_ALLOT.forEach(function(a){
+    var key=a.exec_type+'::'+a.party_name;
+    if(!parties[key]) parties[key]={type:a.exec_type,name:a.party_name,allotments:[],totalAllot:0};
+    parties[key].allotments.push(a);
+    parties[key].totalAllot+=(parseFloat(a.qty)||0);
+  });
+
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+  var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
+
+  var partyKeys=Object.keys(parties);
+  if(!partyKeys.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:32px;">&#128197;</div><div style="font-weight:700;margin-top:8px;">No allotments yet</div><div style="font-size:11px;margin-top:4px;">Allot work to parties first</div></div>';
+    return;
+  }
+
+  el.innerHTML=
+    '<div style="margin-bottom:10px;display:flex;justify-content:flex-end;">'+
+      '<button onclick="execOpenDailyEntry()" style="background:#E65100;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#43; Daily Entry</button>'+
+    '</div>'+
+    partyKeys.map(function(key){
+      var p=parties[key];
+      var col=tCol[p.type]||'#37474F';
+      var pDone=WA_DAILY.filter(function(d){return d.party_name===p.name&&d.party_type===p.type;});
+      var totalDone=pDone.reduce(function(s,d){return s+(parseFloat(d.qty_done)||0);},0);
+      var bal=Math.max(0,p.totalAllot-totalDone);
+      return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+        '<div style="padding:10px 14px;background:'+col+'10;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
+          '<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:5px;background:'+col+'20;color:'+col+';">'+(tLbl[p.type]||p.type)+'</span>'+
+          '<div style="flex:1;font-size:13px;font-weight:800;">'+p.name+'</div>'+
+          '<div style="text-align:right;font-size:10px;color:var(--text3);">Allot: '+p.totalAllot+' | Done: '+totalDone.toFixed(2)+' | <b style="color:'+(bal>0?col:'#2E7D32')+'">Bal: '+bal.toFixed(2)+'</b></div>'+
+        '</div>'+
+        (pDone.length?
+          '<div style="padding:6px 14px;">'+
+            pDone.slice(0,5).map(function(d){
+              return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F5F5F5;font-size:11px;">'+
+                '<span style="color:var(--text3);flex-shrink:0;">'+d.date+'</span>'+
+                '<div style="flex:1;font-weight:700;">'+d.qty_done+' '+(d.unit||'')+'</div>'+
+                (d.remarks?'<span style="color:var(--text3);">'+d.remarks+'</span>':'')+
+                '<button onclick="execDelDaily(\''+d.id+'\')" style="background:none;border:none;color:#C62828;cursor:pointer;font-size:13px;">&#215;</button>'+
+              '</div>';
+            }).join('')+
+            (pDone.length>5?'<div style="font-size:10px;color:var(--text3);padding:4px 0;">+'+( pDone.length-5)+' more entries</div>':'')+
+          '</div>':
+          '<div style="padding:8px 14px;font-size:11px;color:var(--text3);">No entries yet</div>')+
+      '</div>';
+    }).join('');
+}
+
+async function execOpenDailyEntry(){
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  // Build party options from allotments
+  var parties={};
+  WA_ALLOT.forEach(function(a){
+    var key=a.exec_type+'::'+a.party_name;
+    if(!parties[key]) parties[key]={type:a.exec_type,name:a.party_name};
+  });
+  var partyOpts='<option value="">— Select Party —</option>'+
+    Object.keys(parties).map(function(k){
+      var p=parties[k];
+      return '<option value="'+k+'">'+p.name+' ('+p.type+')</option>';
+    }).join('');
+
+  document.getElementById('exec-sheet-title').textContent='Daily Progress Entry';
+  document.getElementById('exec-sheet-body').innerHTML=
+    '<label class="flbl">Date *</label>'+
+    '<input id="dp-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
+    '<label class="flbl">Party *</label>'+
+    '<select id="dp-party" class="fsel">'+partyOpts+'</select>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Qty Done *</label><input id="dp-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
+      '<div><label class="flbl">Unit</label><input id="dp-unit" class="finp" placeholder="m³, nos..."></div>'+
+    '</div>'+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="dp-remarks" class="finp" placeholder="Any notes...">';
+
+  var sf=document.getElementById('exec-sheet-foot');sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-exec','sh-exec');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#E65100;color:white;';
+  sb.innerHTML='&#10003; Save Entry';
+  sb.onclick=function(){execSaveDailyEntry(projId);};
+  sf.appendChild(cb);sf.appendChild(sb);
+  openSheet('ov-exec','sh-exec');
+}
+
+async function execSaveDailyEntry(projId){
+  var date=gv('dp-date'),qty=parseFloat(gv('dp-qty'))||0;
+  var partyKey=gv('dp-party');
+  if(!date||!partyKey||!qty){toast('Date, party and qty required','warning');return;}
+  var parts=partyKey.split('::');
+  var partyType=parts[0],partyName=parts[1];
+  try{
+    var res=await sbInsert('work_daily_progress',{
+      project_id:projId,date:date,
+      party_type:partyType,party_name:partyName,
+      qty_done:qty,unit:gv('dp-unit')||null,
+      remarks:gv('dp-remarks')||null
+    });
+    if(res&&res[0]) WA_DAILY.push(res[0]);
+    toast('Entry saved!','success');
+    closeSheet('ov-exec','sh-exec');
+    execRenderDaily();
+  }catch(e){toast('Error: '+e.message,'error');}
+}
+
+async function execDelDaily(id){
+  if(!confirm('Delete this entry?'))return;
+  WA_DAILY=WA_DAILY.filter(function(d){return d.id!==id;});
+  execRenderDaily();
+  try{await sbDelete('work_daily_progress',id);}catch(e){console.error(e);}
+}
+
+// ── Bills & Payments ────────────────────────────────────────────────────
+function execRenderBills(){
+  var el=document.getElementById('exec-subtab-content');if(!el)return;
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+
+  // Group by party
+  var parties={};
+  WA_ALLOT.forEach(function(a){
+    var key=a.exec_type+'::'+a.party_name;
+    if(!parties[key]) parties[key]={type:a.exec_type,name:a.party_name,totalAllot:0,totalRate:0,count:0};
+    var qty=parseFloat(a.qty)||0, rate=parseFloat(a.rate)||0;
+    parties[key].totalAllot+=qty;
+    parties[key].totalRate+=qty*rate;
+    parties[key].count++;
+  });
+
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+  var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
+
+  var partyKeys=Object.keys(parties);
+  if(!partyKeys.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No allotments yet</div>';
+    return;
+  }
+
+  el.innerHTML=partyKeys.map(function(key){
+    var p=parties[key];
+    var col=tCol[p.type]||'#37474F';
+    var pDone=WA_DAILY.filter(function(d){return d.party_name===p.name&&d.party_type===p.type;});
+    var totalDone=pDone.reduce(function(s,d){return s+(parseFloat(d.qty_done)||0);},0);
+    // Bills for this party
+    var pBills=WA_BILLS.filter(function(b){return b.party_name===p.name&&b.party_type===p.type;});
+    var totalBilled=pBills.reduce(function(s,b){return s+(parseFloat(b.bill_amount)||0);},0);
+    // Payments for this party
+    var pPaid=WA_PAYMENTS.filter(function(py){return py.party_name===p.name&&py.party_type===p.type;});
+    var totalPaid=pPaid.reduce(function(s,py){return s+(parseFloat(py.amount)||0);},0);
+    var balPayable=Math.max(0,totalBilled-totalPaid);
+
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;">'+
+      // Party header
+      '<div style="padding:10px 14px;background:'+col+'10;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:5px;background:'+col+'20;color:'+col+';">'+(tLbl[p.type]||p.type)+'</span>'+
+        '<div style="flex:1;font-size:13px;font-weight:800;">'+p.name+'</div>'+
+        '<button onclick="execOpenBill(\''+key+'\',\''+projId+'\')" style="background:'+col+';color:white;border:none;border-radius:6px;padding:4px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#128203; Generate Bill</button>'+
+      '</div>'+
+      // Summary row
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid var(--border);">'+
+        '<div style="padding:8px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:9px;color:var(--text3);font-weight:700;">DONE QTY</div><div style="font-size:14px;font-weight:900;color:#333;">'+totalDone.toFixed(2)+'</div></div>'+
+        '<div style="padding:8px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:9px;color:var(--text3);font-weight:700;">BILLED</div><div style="font-size:14px;font-weight:900;color:#1565C0;">&#8377;'+Math.round(totalBilled).toLocaleString('en-IN')+'</div></div>'+
+        '<div style="padding:8px 12px;text-align:center;border-right:1px solid var(--border);"><div style="font-size:9px;color:var(--text3);font-weight:700;">PAID</div><div style="font-size:14px;font-weight:900;color:#2E7D32;">&#8377;'+Math.round(totalPaid).toLocaleString('en-IN')+'</div></div>'+
+        '<div style="padding:8px 12px;text-align:center;"><div style="font-size:9px;color:var(--text3);font-weight:700;">BAL PAYABLE</div><div style="font-size:14px;font-weight:900;color:'+(balPayable>0?'#C62828':'#2E7D32')+';">&#8377;'+Math.round(balPayable).toLocaleString('en-IN')+'</div></div>'+
+      '</div>'+
+      // Bills list
+      (pBills.length?
+        '<div style="padding:8px 14px;border-bottom:1px solid #F0F0F0;">'+
+          '<div style="font-size:10px;font-weight:800;color:var(--text3);margin-bottom:6px;">BILLS</div>'+
+          pBills.map(function(b){
+            var bPaid=WA_PAYMENTS.filter(function(py){return py.bill_id===b.id;});
+            var bPaidAmt=bPaid.reduce(function(s,py){return s+(parseFloat(py.amount)||0);},0);
+            var bBal=Math.max(0,(parseFloat(b.bill_amount)||0)-bPaidAmt);
+            return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F8F8F8;font-size:11px;">'+
+              '<span style="background:#E3F2FD;color:#1565C0;font-weight:800;padding:2px 7px;border-radius:4px;font-size:10px;">Bill #'+b.bill_number+'</span>'+
+              '<div style="flex:1;">'+
+                '<div style="font-weight:700;">&#8377;'+Number(b.bill_amount).toLocaleString('en-IN')+'</div>'+
+                '<div style="font-size:10px;color:var(--text3);">'+b.bill_date+(b.description?' · '+b.description:'')+'</div>'+
+              '</div>'+
+              '<div style="text-align:right;">'+
+                '<div style="font-size:10px;color:#2E7D32;">Paid: &#8377;'+Math.round(bPaidAmt).toLocaleString('en-IN')+'</div>'+
+                '<div style="font-size:10px;color:'+(bBal>0?'#C62828':'#2E7D32')+';">Bal: &#8377;'+Math.round(bBal).toLocaleString('en-IN')+'</div>'+
+              '</div>'+
+              '<button onclick="execOpenPayment(\''+b.id+'\',\''+key+'\',\''+projId+'\','+bBal+')" style="background:#2E7D32;color:white;border:none;border-radius:5px;padding:3px 7px;font-size:9px;font-weight:800;cursor:pointer;">+ Pay</button>'+
+            '</div>';
+          }).join('')+
+        '</div>':'')+
+      // Payments list
+      (pPaid.length?
+        '<div style="padding:8px 14px;">'+
+          '<div style="font-size:10px;font-weight:800;color:var(--text3);margin-bottom:6px;">PAYMENT HISTORY</div>'+
+          pPaid.map(function(py){
+            return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #F8F8F8;font-size:11px;">'+
+              '<span style="font-size:10px;color:var(--text3);">'+py.payment_date+'</span>'+
+              '<div style="flex:1;font-weight:700;">&#8377;'+Number(py.amount).toLocaleString('en-IN')+'</div>'+
+              '<span style="font-size:10px;color:var(--text3);">'+(py.payment_mode||'')+(py.reference?' · '+py.reference:'')+'</span>'+
+              '<button onclick="execDelPayment(\''+py.id+'\')" style="background:none;border:none;color:#C62828;cursor:pointer;font-size:13px;">&#215;</button>'+
+            '</div>';
+          }).join('')+
+        '</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+async function execOpenBill(partyKey,projId){
+  var parts=partyKey.split('::');
+  var partyType=parts[0],partyName=parts[1];
+  // Get done qty for this party
+  var pDone=WA_DAILY.filter(function(d){return d.party_name===partyName&&d.party_type===partyType;});
+  var totalDone=pDone.reduce(function(s,d){return s+(parseFloat(d.qty_done)||0);},0);
+  // Get allotted rate
+  var aRes=WA_ALLOT.filter(function(a){return a.party_name===partyName&&a.exec_type===partyType;});
+  var avgRate=aRes.length?aRes.reduce(function(s,a){return s+(parseFloat(a.rate)||0);},0)/aRes.length:0;
+  var suggestedAmt=Math.round(totalDone*avgRate);
+  var nextBillNo=(WA_BILLS.filter(function(b){return b.party_name===partyName&&b.party_type===partyType;}).length)+1;
+
+  document.getElementById('exec-sheet-title').textContent='Generate Bill — '+partyName;
+  document.getElementById('exec-sheet-body').innerHTML=
+    '<div style="background:#E3F2FD;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:11px;">'+
+      '<div style="font-weight:800;color:#1565C0;margin-bottom:4px;">Bill #'+nextBillNo+' for '+partyName+'</div>'+
+      '<div style="color:var(--text3);">Total Done: '+totalDone.toFixed(3)+' | Avg Rate: &#8377;'+avgRate.toFixed(2)+' | Suggested: &#8377;'+suggestedAmt.toLocaleString('en-IN')+'</div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Bill Date *</label><input id="bl-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+      '<div><label class="flbl">Bill Number</label><input id="bl-no" class="finp" value="'+nextBillNo+'" placeholder="Auto"></div>'+
+    '</div>'+
+    '<label class="flbl">Bill Amount (₹) *</label>'+
+    '<input id="bl-amount" class="finp" type="number" value="'+suggestedAmt+'">'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Qty for this Bill</label><input id="bl-qty" class="finp" type="number" step="0.001" placeholder="'+totalDone+'"></div>'+
+      '<div><label class="flbl">Rate (₹)</label><input id="bl-rate" class="finp" type="number" step="0.01" placeholder="'+avgRate.toFixed(2)+'"></div>'+
+    '</div>'+
+    '<label class="flbl">Description</label>'+
+    '<input id="bl-desc" class="finp" placeholder="e.g. Work done upto 30-06-2025...">';
+
+  var sf=document.getElementById('exec-sheet-foot');sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-exec','sh-exec');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#1565C0;color:white;';
+  sb.innerHTML='&#128203; Generate Bill';
+  sb.onclick=function(){execSaveBill(partyType,partyName,projId,nextBillNo);};
+  sf.appendChild(cb);sf.appendChild(sb);
+  openSheet('ov-exec','sh-exec');
+}
+
+async function execSaveBill(partyType,partyName,projId,billNo){
+  var date=gv('bl-date'),amount=parseFloat(gv('bl-amount'))||0;
+  if(!date||!amount){toast('Date and amount required','warning');return;}
+  try{
+    var res=await sbInsert('work_bills',{
+      project_id:projId,party_type:partyType,party_name:partyName,
+      bill_number:parseInt(gv('bl-no'))||billNo,
+      bill_date:date,bill_amount:amount,
+      bill_qty:parseFloat(gv('bl-qty'))||null,
+      rate:parseFloat(gv('bl-rate'))||null,
+      description:gv('bl-desc')||null
+    });
+    if(res&&res[0]) WA_BILLS.push(res[0]);
+    toast('Bill generated!','success');
+    closeSheet('ov-exec','sh-exec');
+    execRenderBills();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+async function execOpenPayment(billId,partyKey,projId,balAmount){
+  var parts=partyKey.split('::');
+  var partyType=parts[0],partyName=parts[1];
+  document.getElementById('exec-sheet-title').textContent='Record Payment — '+partyName;
+  document.getElementById('exec-sheet-body').innerHTML=
+    '<div style="background:#E8F5E9;border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:11px;font-weight:700;color:#2E7D32;">Balance Payable: &#8377;'+Math.round(balAmount).toLocaleString('en-IN')+'</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Payment Date *</label><input id="py-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'"></div>'+
+      '<div><label class="flbl">Amount (₹) *</label><input id="py-amount" class="finp" type="number" value="'+Math.round(balAmount)+'"></div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Payment Mode</label>'+
+        '<select id="py-mode" class="fsel">'+
+          '<option>Cash</option><option>NEFT</option><option>RTGS</option><option>Cheque</option><option>UPI</option>'+
+        '</select>'+
+      '</div>'+
+      '<div><label class="flbl">Reference / Cheque No.</label><input id="py-ref" class="finp" placeholder="UTR / Cheque no."></div>'+
+    '</div>'+
+    '<label class="flbl">Remarks</label>'+
+    '<input id="py-remarks" class="finp" placeholder="Any notes...">';
+
+  var sf=document.getElementById('exec-sheet-foot');sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-exec','sh-exec');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#2E7D32;color:white;';
+  sb.innerHTML='&#10003; Record Payment';
+  sb.onclick=function(){execSavePayment(billId,partyType,partyName,projId);};
+  sf.appendChild(cb);sf.appendChild(sb);
+  openSheet('ov-exec','sh-exec');
+}
+
+async function execSavePayment(billId,partyType,partyName,projId){
+  var date=gv('py-date'),amount=parseFloat(gv('py-amount'))||0;
+  if(!date||!amount){toast('Date and amount required','warning');return;}
+  try{
+    var res=await sbInsert('work_payments',{
+      project_id:projId,bill_id:billId,
+      party_type:partyType,party_name:partyName,
+      payment_date:date,amount:amount,
+      payment_mode:gv('py-mode')||'Cash',
+      reference:gv('py-ref')||null,
+      remarks:gv('py-remarks')||null
+    });
+    if(res&&res[0]) WA_PAYMENTS.push(res[0]);
+    toast('Payment recorded!','success');
+    closeSheet('ov-exec','sh-exec');
+    execRenderBills();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+async function execDelPayment(id){
+  if(!confirm('Delete this payment record?'))return;
+  WA_PAYMENTS=WA_PAYMENTS.filter(function(p){return p.id!==id;});
+  execRenderBills();
+  try{await sbDelete('work_payments',id);}catch(e){console.error(e);}
 }
 
 // ════ PETTY CASH ════════════════════════════════════════
