@@ -8927,10 +8927,12 @@ async function empSavePay(){
   <!-- Tab Bar -->
   <div style="display:flex;overflow-x:auto;background:#155724;padding:6px 14px 8px;flex-shrink:0;scrollbar-width:none;gap:4px;">
     <button onclick="projModTab('projects',this)" id="pmt-projects" style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:rgba(255,255,255,.2);color:white;">&#127959; Projects</button>
-    <button onclick="projModTab('boq',this)"      id="pmt-boq"      style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128203; BOQ</button>
-    <button onclick="projModTab('jm',this)"       id="pmt-jm"       style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128208; JM</button>
-    <button onclick="projModTab('planning',this)" id="pmt-planning"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Planning</button>
-    <button onclick="projModTab('execution',this)" id="pmt-execution" style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128221; Work Allotment</button>
+    <button onclick="projModTab('boq',this)"       id="pmt-boq"       style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128203; BOQ</button>
+    <button onclick="projModTab('jm',this)"        id="pmt-jm"        style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128208; JM</button>
+    <button onclick="projModTab('planning',this)"  id="pmt-planning"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Planning</button>
+    <button onclick="projModTab('execution',this)" id="pmt-execution"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128221; Work Allotment</button>
+    <button onclick="projModTab('daily',this)"     id="pmt-daily"     style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128197; Daily Progress</button>
+    <button onclick="projModTab('bills',this)"     id="pmt-bills"     style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128203; Bills &amp; Payments</button>
   </div>
   <!-- Content area -->
   <div id="proj-mod-content" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 90px;"></div>
@@ -9095,7 +9097,9 @@ function projModLoadTab(){
     boq:      {cont:'boq-content',  sel:'boq-proj-sel',  fn: function(){ boqLoadItems(); }},
     jm:       {cont:'jm-content',   sel:'jm-proj-sel',   fn: function(){ jmLoadItems(); }},
     planning: {cont:'plan-content', sel:'plan-proj-sel',  fn: function(){ planLoadItems(); }},
-    execution:{cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ execLoadItems(); }}
+    execution:{cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='allot'; execLoadItems(); }},
+    daily:    {cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='daily'; execLoadItems(); }},
+    bills:    {cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='bills'; execLoadItems(); }}
   };
   var cfg = configs[PROJ_MOD_TAB];
   if(!cfg) return;
@@ -9107,19 +9111,19 @@ function projModLoadTab(){
 function projModTab(tab, btn){
   // Permission check
   if(currentUser && currentUser.role!=='admin'){
-    if(!canAccess('proj-'+tab,'view')){
+    var key = (tab==='daily'||tab==='bills') ? 'proj-'+tab : 'proj-'+tab;
+    if(!canAccess(key,'view') && !canAccess('proj-execution','view')){
       toast('Access denied — no permission for '+tab,'warning');
       return;
     }
   }
   PROJ_MOD_TAB = tab;
-  ['projects','boq','jm','planning','execution'].forEach(function(t){
+  ['projects','boq','jm','planning','execution','daily','bills'].forEach(function(t){
     var b = document.getElementById('pmt-'+t);
     if(b){ b.style.background = t===tab?'rgba(255,255,255,.2)':'transparent'; b.style.color = t===tab?'white':'rgba(255,255,255,.6)'; }
   });
   var addBtn = document.getElementById('proj-mod-add-btn');
   if(addBtn) addBtn.style.display = (tab==='projects'||tab==='boq') ? '' : 'none';
-  // Hide shared selector on Projects tab, show on others
   var selRow = document.getElementById('proj-mod-sel-row');
   if(selRow) selRow.style.display = tab==='projects' ? 'none' : '';
   projModLoadTab();
@@ -9131,21 +9135,21 @@ function projModAdd(){
 }
 
 function initProjects(){
-  // Hide tabs user has no access to
-  ['projects','boq','jm','planning','execution'].forEach(function(t){
+  ['projects','boq','jm','planning','execution','daily','bills'].forEach(function(t){
     var b = document.getElementById('pmt-'+t);
     if(!b) return;
-    var hasAccess = (currentUser && currentUser.role==='admin') || 
+    var hasAccess = (currentUser && currentUser.role==='admin') ||
                     !Object.keys(USER_PERMISSIONS).length ||
-                    canAccess('proj-'+t,'view');
+                    canAccess('proj-'+t,'view') ||
+                    canAccess('proj-execution','view'); // daily & bills share execution permission
     b.style.display = hasAccess ? '' : 'none';
   });
-  // Start on first accessible tab
-  var tabs = ['projects','boq','jm','planning','execution'];
+  var tabs = ['projects','boq','jm','planning','execution','daily','bills'];
   var firstTab = tabs.find(function(t){
     return (currentUser && currentUser.role==='admin') ||
            !Object.keys(USER_PERMISSIONS).length ||
-           canAccess('proj-'+t,'view');
+           canAccess('proj-'+t,'view') ||
+           (t==='daily'||t==='bills') && canAccess('proj-execution','view');
   }) || 'projects';
   projModTab(firstTab, document.getElementById('pmt-'+firstTab));
   projModLoadProjects();
@@ -9618,41 +9622,15 @@ async function execLoadItems(){
     WA_BILLS=Array.isArray(r[4])?r[4]:[];
     WA_PAYMENTS=Array.isArray(r[5])?r[5]:[];
   }catch(e){WA_ITEMS=[];console.error(e);}
-  execRenderShell();
-}
-
-function execRenderShell(){
-  var el=document.getElementById('exec-content');if(!el)return;
-  var tabs=[
-    {key:'allot',label:'&#128221; Work Allotment'},
-    {key:'daily',label:'&#128197; Daily Progress'},
-    {key:'bills',label:'&#128203; Bills & Payments'}
-  ];
-  var tabBar='<div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;scrollbar-width:none;">'+
-    tabs.map(function(t){
-      var active=WA_SUBTAB===t.key;
-      return '<button onclick="waSubTab(\''+t.key+'\')" style="padding:7px 14px;border-radius:8px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;background:'+(active?'#E65100':'white')+';color:'+(active?'white':'var(--text2)')+';border:'+(active?'none':'1px solid var(--border)')+';flex-shrink:0;">'+t.label+'</button>';
-    }).join('')+
-  '</div>'+
-  '<div id="exec-subtab-content"></div>';
-  el.innerHTML=tabBar;
   execRenderSubTab();
 }
 
-function waSubTab(tab){
-  WA_SUBTAB=tab;
-  var btns=document.querySelectorAll('#exec-content button[onclick^="waSubTab"]');
-  btns.forEach(function(b){
-    var active=b.getAttribute('onclick').includes("'"+tab+"'");
-    b.style.background=active?'#E65100':'white';
-    b.style.color=active?'white':'var(--text2)';
-    b.style.border=active?'none':'1px solid var(--border)';
-  });
-  execRenderSubTab();
-}
+function execRenderShell(){ execRenderSubTab(); }
+
+function waSubTab(tab){ WA_SUBTAB=tab; execRenderSubTab(); }
+
 
 function execRenderSubTab(){
-  var el=document.getElementById('exec-subtab-content');if(!el)return;
   if(WA_SUBTAB==='allot') execRender();
   else if(WA_SUBTAB==='daily') execRenderDaily();
   else if(WA_SUBTAB==='bills') execRenderBills();
@@ -9660,7 +9638,7 @@ function execRenderSubTab(){
 
 
 function execRender(){
-  var el=document.getElementById('exec-subtab-content')||document.getElementById('exec-content');if(!el)return;
+  var el=document.getElementById('exec-content');if(!el)return;
   if(!WA_ITEMS.length){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">No BOQ items</div>';return;}
 
   var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
@@ -9856,7 +9834,7 @@ async function execDelAllot(id){
 
 // ── Daily Progress ─────────────────────────────────────────────────────
 function execRenderDaily(){
-  var el=document.getElementById('exec-subtab-content');if(!el)return;
+  var el=document.getElementById('exec-content');if(!el)return;
   var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
 
   // Group allotments by party for daily entry
@@ -9976,7 +9954,7 @@ async function execDelDaily(id){
 
 // ── Bills & Payments ────────────────────────────────────────────────────
 function execRenderBills(){
-  var el=document.getElementById('exec-subtab-content');if(!el)return;
+  var el=document.getElementById('exec-content');if(!el)return;
   var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
 
   // Group by party
