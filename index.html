@@ -9657,7 +9657,8 @@ function execRender(){
       if(pobtn) execRegenDoc(pobtn.getAttribute('data-po-id'),'po');
     },{once:true});
   },0);
-  el.innerHTML=WA_ITEMS.map(function(item){
+  el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;"><div style="flex:1;font-size:11px;color:var(--text3);">&#9745; Check resources to include in combined document</div><button onclick="execGenCombinedDoc(\'wo\')" style="background:#E65100;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; WO</button><button onclick="execGenCombinedDoc(\'po\')" style="background:#1565C0;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; PO</button></div>'+
+  WA_ITEMS.map(function(item){
     var iSubs=WA_SUBS.filter(function(s){return s.boq_item_id===item.id;});
     var iRes=WA_PLANNED.filter(function(r){return r.boq_item_id===item.id;});
     if(!iRes.length) return (
@@ -9720,7 +9721,7 @@ function execRender(){
             rAllot.map(function(a){
               var col=tCol[a.exec_type]||'#37474F';var lbl=tLbl[a.exec_type]||a.exec_type;
               return '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #F5F5F5;">'+
-                '<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:'+col+'20;color:'+col+';">'+lbl+'</span>'+
+                '<input type="checkbox" class="wa-sel-chk" data-allot-id="'+a.id+'" style="width:14px;height:14px;accent-color:#E65100;flex-shrink:0;">'+'<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:'+col+'20;color:'+col+';">'+lbl+'</span>'+
                 '<div style="flex:1;font-size:11px;font-weight:700;">'+a.party_name+'</div>'+
                 '<div style="font-size:10px;color:var(--text3);">'+a.qty+' '+(a.unit||'')+(a.rate?' @ ₹'+a.rate:'')+'</div>'+
                 '<button data-wo-id="'+a.id+'" title="Work Order" style="background:#FFF3E0;border:none;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;color:#E65100;">WO</button>'+
@@ -9889,6 +9890,9 @@ async function execDelAllot(id){
   execRender();
   try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}
 }
+
+function execGenCombinedDoc(t){var cc=Array.from(document.querySelectorAll(".wa-sel-chk:checked")).map(function(c){return c.getAttribute("data-allot-id");});if(!cc.length){toast("Check at least one resource row","warning");return;}var aa=cc.map(function(id){return WA_ALLOT.find(function(a){return a.id===id;});}).filter(Boolean);if(!aa.length)return;if(t==="wo")generateCombinedDoc(aa,"WORK ORDER","#E65100","#FFF3E0");else generateCombinedDoc(aa,"PURCHASE ORDER","#1565C0","#E3F2FD");}
+function generateCombinedDoc(allots,title,col,tbg){var proj=PROJ_DATA.find(function(p){return p.id===allots[0].project_id;})||{};var co=COMPANY_DATA||{};var inr=function(n){return "\u20b9"+Number(n||0).toLocaleString("en-IN");};var fmtD=function(d){if(!d)return "";var p=d.split("-");return p.length===3?p[2]+"/"+p[1]+"/"+p[0]:d;};var tot=allots.reduce(function(s,a){return s+Math.round((parseFloat(a.qty)||0)*(parseFloat(a.rate)||0));},0);var dn=(title==="WORK ORDER"?"WO":"PO")+"-"+new Date().getFullYear()+"-"+String(Date.now()).slice(-4);var rows=allots.map(function(a,i){var amt=Math.round((parseFloat(a.qty)||0)*(parseFloat(a.rate)||0));return "<tr><td>"+(i+1)+"</td><td>"+a.party_name+(a.scope?"<br><small>"+a.scope+"</small>":"")+"</td><td>"+(a.qty||0)+" "+(a.unit||"")+"</td><td>"+inr(a.rate)+"</td><td>"+inr(amt)+"</td></tr>";}).join("");var html="<!DOCTYPE html><html><head><meta charset=UTF-8><title>"+title+"</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;font-size:12px;}.hdr{display:flex;justify-content:space-between;border-bottom:3px solid "+col+";padding-bottom:10px;margin-bottom:12px;}.cn{font-size:17px;font-weight:900;color:"+col+";}table{width:100%;border-collapse:collapse;margin:10px 0;}th{background:"+col+";color:white;padding:7px 10px;text-align:left;font-size:11px;}td{padding:7px 10px;border-bottom:1px solid #EEE;}.tr td{font-weight:900;background:"+tbg+";}.ft{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px;}.sg{border-top:1.5px solid #333;padding-top:6px;font-size:11px;color:#666;margin-top:40px;}@media print{button{display:none;}}</style></head><body><button onclick=\"window.print()\" style=\"background:"+col+";color:white;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;margin-bottom:16px;\">Print/Save PDF</button><div class=hdr><div><div class=cn>"+(co.name||"Company")+"</div><div style=\"font-size:10px;color:#666\">"+(co.address||"")+"</div><div style=\"font-size:10px;color:#666\">"+(co.gstin?"GSTIN: "+co.gstin:"")+"</div></div><div style=\"text-align:right\"><div style=\"font-size:19px;font-weight:900;\">"+title+"</div><div style=\"color:#666\">"+dn+"</div><div style=\"color:#666\">Date: "+fmtD(new Date().toISOString().slice(0,10))+"</div><div style=\"color:#666\">Project: "+(proj.name||"")+"</div></div></div><table><tr><th>#</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>"+rows+"<tr class=tr><td colspan=4 style=\"text-align:right\">Total</td><td>"+inr(tot)+"</td></tr></table><div class=ft><div><div class=sg>Issued By<br><br>"+(co.name||"")+"</div></div><div><div class=sg>Authorized Signatory</div></div></div></body></html>";var w=window.open("","_blank");if(w){w.document.write(html);w.document.close();}else toast("Allow popups","warning");}
 
 function generateWorkOrder(allot){
   var proj=PROJ_DATA.find(function(p){return p.id===allot.project_id;})||{};
@@ -10097,10 +10101,12 @@ async function execOpenDailyEntry(){
     var key=a.exec_type+'::'+a.party_name;
     if(!parties[key]) parties[key]={type:a.exec_type,name:a.party_name};
   });
-  var partyOpts='<option value="">— Select Party —</option>'+
+  Object.keys(parties).forEach(function(k){ if(!parties[k].unit) parties[k].unit=(WA_ALLOT.find(function(a){return a.exec_type+'::'+a.party_name===k;})||{}).unit||''; });
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+  var partyOpts='<option value="">\u2014 Select Party \u2014</option>'+
     Object.keys(parties).map(function(k){
       var p=parties[k];
-      return '<option value="'+k+'">'+p.name+' ('+p.type+')</option>';
+      return '<option value="'+k+'" data-unit="'+p.unit+'">' +p.name+' ('+(tLbl[p.type]||p.type)+')</option>';
     }).join('');
 
   document.getElementById('exec-sheet-title').textContent='Daily Progress Entry';
@@ -10108,10 +10114,10 @@ async function execOpenDailyEntry(){
     '<label class="flbl">Date *</label>'+
     '<input id="dp-date" class="finp" type="date" value="'+new Date().toISOString().slice(0,10)+'">'+
     '<label class="flbl">Party *</label>'+
-    '<select id="dp-party" class="fsel">'+partyOpts+'</select>'+
+    '<select id="dp-party" class="fsel" onchange="dpPartyChange()">'+partyOpts+'</select>'+
     '<div class="g2">'+
       '<div><label class="flbl">Qty Done *</label><input id="dp-qty" class="finp" type="number" step="0.001" placeholder="0"></div>'+
-      '<div><label class="flbl">Unit</label><input id="dp-unit" class="finp" placeholder="m³, nos..."></div>'+
+      '<div><label class="flbl">Unit</label><input id="dp-unit" class="finp" placeholder="auto-filled" style="background:#F8FAFC;" readonly></div>'+
     '</div>'+
     '<label class="flbl">Remarks</label>'+
     '<input id="dp-remarks" class="finp" placeholder="Any notes...">';
@@ -10125,6 +10131,8 @@ async function execOpenDailyEntry(){
   sf.appendChild(cb);sf.appendChild(sb);
   openSheet('ov-exec','sh-exec');
 }
+
+function dpPartyChange(){var s=document.getElementById("dp-party");var u=document.getElementById("dp-unit");if(s&&u){var o=s.options[s.selectedIndex];u.value=o?o.getAttribute("data-unit")||"":"";u.readOnly=true;}}
 
 async function execSaveDailyEntry(projId){
   var date=gv('dp-date'),qty=parseFloat(gv('dp-qty'))||0;
