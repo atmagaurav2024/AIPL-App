@@ -10430,6 +10430,7 @@ function execRenderAllotted(){
 }
 
 async function execGenPartyDoc(partyKey, docType){
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
   var parts=partyKey.split('::');
   var partyType=parts[0], partyName=parts.slice(1).join('::');
   var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
