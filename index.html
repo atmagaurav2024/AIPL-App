@@ -9434,13 +9434,46 @@ function planRender(){
     var iRes=PLAN_RES.filter(function(r){return r.boq_item_id===item.id;});
     var totalPlan=iRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
     var subsHtml=iSubs.length?iSubs.map(function(sub){var sRes=iRes.filter(function(r){return r.boq_subitem_id===sub.id;});
-      return '<div style="margin-bottom:6px;"><div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;"><div style="font-size:11px;font-weight:800;color:#1565C0;">'+sub.name+'</div><div style="display:flex;gap:4px;"><button onclick="planAddRes(\''+sub.id+'\',\''+item.id+'\',\''+item.unit+'\')" style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button><button onclick="planDelSub(\''+sub.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div></div>'+sRes.map(function(r){return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F8F9FF;border-radius:8px;margin-top:3px;"><div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+(r.resource_category?'<span style="font-size:9px;background:#E3F2FD;color:#1565C0;padding:1px 5px;border-radius:3px;margin-left:4px;">'+r.resource_category+'</span>':'')+' </div><div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||'')+' @ \u20b9'+r.rate+'</div><div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div><button onclick="planEditRes(\''+r.id+'\',\''+r.boq_subitem_id+'\',\''+r.boq_item_id+'\')" style="background:#E3F2FD;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;">&#9998;</button><button onclick="planDelRes(\''+r.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div>';}).join('')+'</div>';
+      return '<div style="margin-bottom:6px;"><div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;"><div style="font-size:11px;font-weight:800;color:#1565C0;">'+sub.name+'</div><div style="display:flex;gap:4px;"><button onclick="planAddRes(\''+sub.id+'\',\''+item.id+'\',\''+item.unit+'\')" style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button><button onclick="planEditSub(\''+sub.id+'\')" style="background:#BBDEFB;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;">&#9998;</button><button onclick="planDelSub(\''+sub.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div></div>'+sRes.map(function(r){return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F8F9FF;border-radius:8px;margin-top:3px;"><div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+(r.resource_category?'<span style="font-size:9px;background:#E3F2FD;color:#1565C0;padding:1px 5px;border-radius:3px;margin-left:4px;">'+r.resource_category+'</span>':'')+' </div><div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||'')+' @ \u20b9'+r.rate+'</div><div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div><button onclick="planEditRes(\''+r.id+'\',\''+r.boq_subitem_id+'\',\''+r.boq_item_id+'\')" style="background:#E3F2FD;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;">&#9998;</button><button onclick="planDelRes(\''+r.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div>';}).join('')+'</div>';
     }).join(''):'<div style="font-size:11px;color:var(--text3);padding:6px 0;">No activities yet</div>';
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;"><div style="padding:10px 14px;background:#E3F2FD;display:flex;align-items:center;justify-content:space-between;"><div><span style="font-size:10px;font-family:monospace;background:#BBDEFB;color:#1565C0;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span><div style="font-size:10px;color:var(--text3);margin-top:2px;">BOQ: '+item.boq_qty+' '+item.unit+'</div></div><div style="display:flex;align-items:center;gap:6px;">'+(totalPlan?'<span style="font-size:12px;font-weight:900;color:#1565C0;">'+fmtINR(totalPlan)+'</span>':'')+'<button onclick="planAddSub(\''+item.id+'\')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ Activity</button></div></div><div style="padding:10px 14px;">'+subsHtml+'</div></div>';
   }).join('');
 }
 function planAddSub(itemId){document.getElementById('plan-sheet-title').textContent='Add Work Activity';document.getElementById('plan-sheet-body').innerHTML='<label class="flbl">Activity Name *</label><input id="ps-name" class="finp" placeholder="e.g. Bar Bending, Shuttering...">';document.getElementById('plan-sheet-foot').innerHTML='<button class="btn btn-outline" onclick="closeSheet(\'ov-plan\',\'sh-plan\')">Cancel</button><button class="btn" style="background:#1565C0;color:white;" onclick="planSaveSub(\''+itemId+'\')">+ Add</button>';openSheet('ov-plan','sh-plan');}
 async function planSaveSub(itemId){var name=(document.getElementById('ps-name')||{value:''}).value.trim();if(!name){toast('Name required','warning');return;}var projId=(document.getElementById('plan-proj-sel')||{}).value||'';var sortOrder=PLAN_SUBS.filter(function(s){return s.boq_item_id===itemId;}).length+1;try{var res=await sbInsert('boq_subitems',{project_id:projId,boq_item_id:itemId,name:name,sort_order:sortOrder});if(res&&res[0])PLAN_SUBS.push(res[0]);toast(name+' added','success');closeSheet('ov-plan','sh-plan');planRender();}catch(e){toast('Error: '+e.message,'error');}}
+
+function planEditSub(id){
+  var sub=PLAN_SUBS.find(function(s){return s.id===id;});
+  if(!sub){toast('Activity not found','warning');return;}
+  document.getElementById('plan-sheet-title').textContent='Edit Activity';
+  document.getElementById('plan-sheet-body').innerHTML=
+    '<label class="flbl">Activity Name *</label>'+
+    '<input id="ps-name-edit" class="finp" value="'+esc(sub.name||'')+'" placeholder="Activity name">';
+  var sf=document.getElementById('plan-sheet-foot');
+  sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-plan','sh-plan');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#1565C0;color:white;';
+  sb.innerHTML='&#10003; Update';
+  sb.onclick=function(){planUpdateSub(id);};
+  sf.appendChild(cb);sf.appendChild(sb);
+  openSheet('ov-plan','sh-plan');
+}
+
+async function planUpdateSub(id){
+  var name=(document.getElementById('ps-name-edit')||{value:''}).value.trim();
+  if(!name){toast('Activity name required','warning');return;}
+  try{
+    await sbUpdate('boq_subitems',id,{name:name});
+    var idx=PLAN_SUBS.findIndex(function(s){return s.id===id;});
+    if(idx>-1) PLAN_SUBS[idx].name=name;
+    toast('Activity updated!','success');
+    closeSheet('ov-plan','sh-plan');
+    planRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
+
 async function loadUomIfNeeded(){
   try{
     var rows=await Promise.all([
@@ -9792,6 +9825,8 @@ function execRender(){
       if(btn) execOpenAllot(btn.getAttribute('data-res-id'),btn.getAttribute('data-plan-qty'),btn.getAttribute('data-unit'));
       var delbtn=e.target.closest('.wa-del-btn');
       if(delbtn) execDelAllot(delbtn.getAttribute('data-del-id'));
+      var editbtn=e.target.closest('[data-edit-allot-id]');
+      if(editbtn) execEditAllotted(editbtn.getAttribute('data-edit-allot-id'));
       var wobtn=e.target.closest('[data-wo-id]');
       if(wobtn) execRegenDoc(wobtn.getAttribute('data-wo-id'),'wo');
       var pobtn=e.target.closest('[data-po-id]');
@@ -9865,9 +9900,10 @@ function execRender(){
                 '<input type="checkbox" class="wa-sel-chk" data-allot-id="'+a.id+'" style="width:14px;height:14px;accent-color:#E65100;flex-shrink:0;">'+'<span style="font-size:9px;font-weight:800;padding:1px 5px;border-radius:3px;background:'+col+'20;color:'+col+';">'+lbl+'</span>'+
                 '<div style="flex:1;font-size:11px;font-weight:700;">'+a.party_name+'</div>'+
                 '<div style="font-size:10px;color:var(--text3);">'+a.qty+' '+(a.unit||'')+(a.rate?' @ ₹'+a.rate:'')+'</div>'+
+                '<button data-edit-allot-id="'+a.id+'" title="Edit" style="background:#E3F2FD;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;">&#9998;</button>'+
                 '<button data-wo-id="'+a.id+'" title="Work Order" style="background:#FFF3E0;border:none;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;color:#E65100;">WO</button>'+
                 '<button data-po-id="'+a.id+'" title="Purchase Order" style="background:#E3F2FD;border:none;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;color:#1565C0;">PO</button>'+
-                '<button data-del-id="'+a.id+'" class="wa-del-btn" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">×</button>'+
+                '<button data-del-id="'+a.id+'" class="wa-del-btn" title="Delete" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;">&#215;</button>'+
               '</div>';
             }).join('')+
           '</div>':'')+
@@ -10097,7 +10133,13 @@ async function execDelAllotted(id){
 }
 
 async function execDelAllot(id){
-  if(!confirm('Remove allotment?'))return;
+  if(!confirm('Delete this allotment?\n'+(WA_ORDERS.some(function(o){return o.allot_id===id;})
+    ?'Related WO/PO records will also be deleted.':'')
+  )) return;
+  // Delete related orders
+  var relOrds=WA_ORDERS.filter(function(o){return o.allot_id===id;});
+  for(var i=0;i<relOrds.length;i++) try{await sbDelete('work_orders',relOrds[i].id);}catch(e){}
+  WA_ORDERS=WA_ORDERS.filter(function(o){return o.allot_id!==id;});
   WA_ALLOT=WA_ALLOT.filter(function(a){return a.id!==id;});
   execRender();
   try{await sbDelete('boq_exec_resources',id);}catch(e){console.error(e);}
