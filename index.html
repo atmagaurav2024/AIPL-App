@@ -9835,44 +9835,50 @@ function execRender(){
       if(pobtn) execRegenDoc(pobtn.getAttribute('data-po-id'),'po');
     },{once:true});
   },0);
-  el.innerHTML='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;"><div style="flex:1;font-size:11px;color:var(--text3);">&#9745; Check resources to include in combined document</div><button onclick="execGenCombinedDoc(\'wo\')" style="background:#E65100;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; WO</button><button onclick="execGenCombinedDoc(\'po\')" style="background:#1565C0;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; PO</button></div>'+
-  WA_ITEMS.map(function(item){
-    var iSubs=WA_SUBS.filter(function(s){return s.boq_item_id===item.id;});
-    var iRes=WA_PLANNED.filter(function(r){return r.boq_item_id===item.id;});
-    if(!iRes.length) return (
+  if(!WA_PLANNED.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:32px;">&#128230;</div><div style="font-weight:700;margin-top:8px;">No planned resources</div><div style="font-size:12px;margin-top:4px;">Add resources in the Planning tab first</div></div>';
+    return;
+  }
+
+  // Collect BOQ item IDs that have planned resources
+  var itemsWithRes = WA_ITEMS.filter(function(item){
+    return WA_PLANNED.some(function(r){ return r.boq_item_id===item.id; });
+  });
+  // Also collect resources with no matching BOQ item (orphaned / uncategorized)
+  var knownItemIds = WA_ITEMS.map(function(i){ return i.id; });
+  var orphanRes = WA_PLANNED.filter(function(r){ return !knownItemIds.includes(r.boq_item_id); });
       '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;padding:12px 14px;">'+
         '<span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
         '<span style="font-weight:700;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
         '<div style="font-size:11px;color:var(--text3);margin-top:4px;">No planned resources — add resources in Planning first</div>'+
       '</div>'
-    );
 
-    // Group resources by activity (subitem)
-    var subsHtml = iSubs.map(function(sub){
+  var itemsHtml = itemsWithRes.map(function(item){
+    var iSubs=WA_SUBS.filter(function(s){return s.boq_item_id===item.id;});
+    var iRes=WA_PLANNED.filter(function(r){return r.boq_item_id===item.id;});
+    var subsHtml=iSubs.map(function(sub){
       var sRes=iRes.filter(function(r){return r.boq_subitem_id===sub.id;});
       if(!sRes.length) return '';
-      return (
-        '<div style="margin-bottom:8px;">'+
-          '<div style="font-size:10px;font-weight:800;color:#1565C0;padding:5px 8px;background:#E3F2FD;border-radius:6px;margin-bottom:4px;">'+sub.name+'</div>'+
-          sRes.map(function(res){return resRow(res,item.unit,tCol,tLbl);}).join('')+
-        '</div>'
-      );
+      return '<div style="margin-bottom:8px;"><div style="font-size:10px;font-weight:800;color:#1565C0;padding:5px 8px;background:#E3F2FD;border-radius:6px;margin-bottom:4px;">'+sub.name+'</div>'+sRes.map(function(res){return resRow(res,item.unit,tCol,tLbl);}).join('')+'</div>';
     }).join('');
-
-    // Resources with no subitem
     var noSubRes=iRes.filter(function(r){return !r.boq_subitem_id;});
     var noSubHtml=noSubRes.map(function(res){return resRow(res,item.unit,tCol,tLbl);}).join('');
-
-    return (
-      '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
-        '<div style="padding:10px 14px;background:#FFF3E0;">'+
-          '<span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
-          '<span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
-        '</div>'+
-        '<div style="padding:8px 14px;">'+(subsHtml+noSubHtml||'<div style="font-size:11px;color:var(--text3);">No planned resources</div>')+'</div>'+
-      '</div>'
-    );
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#FFF3E0;"><span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span></div>'+
+      '<div style="padding:8px 14px;">'+(subsHtml+noSubHtml||'<div style="font-size:11px;color:var(--text3);">No planned resources</div>')+'</div></div>';
   }).join('');
+
+  var orphanHtml=orphanRes.length?
+    '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#FFF8E1;"><span style="font-size:11px;font-weight:800;color:#E65100;">&#9888; Uncategorized Resources</span></div>'+
+      '<div style="padding:8px 14px;">'+orphanRes.map(function(r){return resRow(r,'',tCol,tLbl);}).join('')+'</div></div>':'';
+
+  var topBar='<div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">'+
+    '<div style="flex:1;font-size:11px;color:var(--text3);">&#9745; Check to include in combined document</div>'+
+    '<button onclick="execGenCombinedDoc(\'wo\')" style="background:#E65100;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; WO</button>'+
+    '<button onclick="execGenCombinedDoc(\'po\')" style="background:#1565C0;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; PO</button></div>';
+
+  el.innerHTML=topBar+itemsHtml+orphanHtml;
 
   function resRow(res,itemUnit,tCol,tLbl){
     var resUnit=res.unit||itemUnit;
