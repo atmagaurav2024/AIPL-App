@@ -9848,11 +9848,6 @@ function execRender(){
   // Also collect resources with no matching BOQ item (orphaned / uncategorized)
   var knownItemIds = WA_ITEMS.map(function(i){ return i.id; });
   var orphanRes = WA_PLANNED.filter(function(r){ return !knownItemIds.includes(r.boq_item_id); });
-      '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;padding:12px 14px;">'+
-        '<span style="font-size:10px;font-family:monospace;background:#FFE0B2;color:#E65100;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span>'+
-        '<span style="font-weight:700;margin-left:8px;">'+(item.short_name||item.description)+'</span>'+
-        '<div style="font-size:11px;color:var(--text3);margin-top:4px;">No planned resources — add resources in Planning first</div>'+
-      '</div>'
 
   var itemsHtml = itemsWithRes.map(function(item){
     var iSubs=WA_SUBS.filter(function(s){return s.boq_item_id===item.id;});
