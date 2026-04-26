@@ -9776,15 +9776,16 @@ async function execLoadItems(){
   var el=document.getElementById('exec-content');
   if(!projId){if(el)el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">Select a project</div>';return;}
   if(el) el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);">&#9203; Loading...</div>';
+  var safe=function(p){return p.catch(function(){return [];});};
   try{
     var r=await Promise.all([
-      sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'}),
-      sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'}),
-      sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),
-      sbFetch('work_daily_progress',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'}),
-      sbFetch('work_bills',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'}),
-      sbFetch('work_payments',{select:'*',filter:'project_id=eq.'+projId,order:'payment_date.desc'}),
-      sbFetch('work_orders',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'})
+      safe(sbFetch('boq_items',{select:'*',filter:'project_id=eq.'+projId,order:'item_code.asc'})),
+      safe(sbFetch('boq_subitems',{select:'*',filter:'project_id=eq.'+projId,order:'sort_order.asc'})),
+      safe(sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'})),
+      safe(sbFetch('work_daily_progress',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'})),
+      safe(sbFetch('work_bills',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'})),
+      safe(sbFetch('work_payments',{select:'*',filter:'project_id=eq.'+projId,order:'payment_date.desc'})),
+      safe(sbFetch('work_orders',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'}))
     ]);
     WA_ITEMS=Array.isArray(r[0])?r[0]:[];
     WA_SUBS=Array.isArray(r[1])?r[1]:[];
