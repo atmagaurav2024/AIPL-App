@@ -8931,6 +8931,7 @@ async function empSavePay(){
     <button onclick="projModTab('jm',this)"        id="pmt-jm"        style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128208; JM</button>
     <button onclick="projModTab('planning',this)"  id="pmt-planning"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Planning</button>
     <button onclick="projModTab('execution',this)" id="pmt-execution"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128221; Work Allotment</button>
+    <button onclick="projModTab('allotted',this)"  id="pmt-allotted"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Allotted Work</button>
     <button onclick="projModTab('daily',this)"     id="pmt-daily"     style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128197; Daily Progress</button>
     <button onclick="projModTab('bills',this)"     id="pmt-bills"     style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128203; Bills &amp; Payments</button>
   </div>
@@ -9098,6 +9099,7 @@ function projModLoadTab(){
     jm:       {cont:'jm-content',   sel:'jm-proj-sel',   fn: function(){ jmLoadItems(); }},
     planning: {cont:'plan-content', sel:'plan-proj-sel',  fn: function(){ planLoadItems(); }},
     execution:{cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='allot'; execLoadItems(); }},
+    allotted: {cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='allotted'; execLoadItems(); }},
     daily:    {cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='daily'; execLoadItems(); }},
     bills:    {cont:'exec-content', sel:'exec-proj-sel',  fn: function(){ WA_SUBTAB='bills'; execLoadItems(); }}
   };
@@ -9118,7 +9120,7 @@ function projModTab(tab, btn){
     }
   }
   PROJ_MOD_TAB = tab;
-  ['projects','boq','jm','planning','execution','daily','bills'].forEach(function(t){
+  ['projects','boq','jm','planning','execution','allotted','daily','bills'].forEach(function(t){
     var b = document.getElementById('pmt-'+t);
     if(b){ b.style.background = t===tab?'rgba(255,255,255,.2)':'transparent'; b.style.color = t===tab?'white':'rgba(255,255,255,.6)'; }
   });
@@ -9135,7 +9137,7 @@ function projModAdd(){
 }
 
 function initProjects(){
-  ['projects','boq','jm','planning','execution','daily','bills'].forEach(function(t){
+  ['projects','boq','jm','planning','execution','allotted','daily','bills'].forEach(function(t){
     var b = document.getElementById('pmt-'+t);
     if(!b) return;
     var hasAccess = (currentUser && currentUser.role==='admin') ||
@@ -9144,7 +9146,7 @@ function initProjects(){
                     canAccess('proj-execution','view'); // daily & bills share execution permission
     b.style.display = hasAccess ? '' : 'none';
   });
-  var tabs = ['projects','boq','jm','planning','execution','daily','bills'];
+  var tabs = ['projects','boq','jm','planning','execution','allotted','daily','bills'];
   var firstTab = tabs.find(function(t){
     return (currentUser && currentUser.role==='admin') ||
            !Object.keys(USER_PERMISSIONS).length ||
@@ -9594,8 +9596,8 @@ async function planDelRes(id){if(!confirm('Delete?'))return;PLAN_RES=PLAN_RES.fi
 
 // ════ WORK ALLOTMENT ════════════════════════════════════
 var WA_ITEMS=[],WA_JMS=[],WA_SUBS=[],WA_PLANNED=[],WA_ALLOT=[];
-var WA_DAILY=[],WA_BILLS=[],WA_PAYMENTS=[];
-var WA_SUBTAB='allot'; // allot | daily | bills
+var WA_DAILY=[],WA_BILLS=[],WA_PAYMENTS=[],WA_ORDERS=[];
+var WA_SUBTAB='allot'; // allot | allotted | daily | bills
 
 function initExecution(){execLoadProjs();}
 async function execLoadProjs(){var sel=document.getElementById('exec-proj-sel');if(!sel)return;try{var d=await sbFetch('projects',{select:'id,name',order:'name.asc'});sel.innerHTML='<option value="">— Select Project —</option>'+(Array.isArray(d)?d:[]).map(function(p){return '<option value="'+p.id+'">'+p.name+'</option>';}).join('');}catch(e){}}
@@ -9611,7 +9613,8 @@ async function execLoadItems(){
       sbFetch('boq_exec_resources',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.asc'}),
       sbFetch('work_daily_progress',{select:'*',filter:'project_id=eq.'+projId,order:'date.desc'}),
       sbFetch('work_bills',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'}),
-      sbFetch('work_payments',{select:'*',filter:'project_id=eq.'+projId,order:'payment_date.desc'})
+      sbFetch('work_payments',{select:'*',filter:'project_id=eq.'+projId,order:'payment_date.desc'}),
+      sbFetch('work_orders',{select:'*',filter:'project_id=eq.'+projId,order:'created_at.desc'})
     ]);
     WA_ITEMS=Array.isArray(r[0])?r[0]:[];
     WA_SUBS=Array.isArray(r[1])?r[1]:[];
@@ -9621,6 +9624,7 @@ async function execLoadItems(){
     WA_DAILY=Array.isArray(r[3])?r[3]:[];
     WA_BILLS=Array.isArray(r[4])?r[4]:[];
     WA_PAYMENTS=Array.isArray(r[5])?r[5]:[];
+    WA_ORDERS=Array.isArray(r[6])?r[6]:[];
   }catch(e){WA_ITEMS=[];console.error(e);}
   execRenderSubTab();
 }
@@ -9632,6 +9636,7 @@ function waSubTab(tab){ WA_SUBTAB=tab; execRenderSubTab(); }
 
 function execRenderSubTab(){
   if(WA_SUBTAB==='allot') execRender();
+  else if(WA_SUBTAB==='allotted') execRenderAllotted();
   else if(WA_SUBTAB==='daily') execRenderDaily();
   else if(WA_SUBTAB==='bills') execRenderBills();
 }
@@ -10038,6 +10043,177 @@ function execRegenDoc(allotId, docType){
 
 
 // ── Daily Progress ─────────────────────────────────────────────────────
+// ── Allotted Work (party-wise with PO/WO tracking) ─────────────────────
+function execRenderAllotted(){
+  var el=document.getElementById('exec-content');if(!el)return;
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  if(!WA_ALLOT.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:32px;">&#128221;</div><div style="font-weight:700;margin-top:8px;">No allotments yet</div><div style="font-size:12px;margin-top:4px;">Allot work in the Work Allotment tab first</div></div>';
+    return;
+  }
+  // Group by party
+  var parties={};
+  WA_ALLOT.forEach(function(a){
+    var key=a.exec_type+'::'+a.party_name;
+    if(!parties[key]) parties[key]={type:a.exec_type,name:a.party_name,items:[]};
+    parties[key].items.push(a);
+  });
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+  var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
+
+  el.innerHTML=Object.keys(parties).map(function(key){
+    var p=parties[key];var col=tCol[p.type]||'#37474F';
+    // Existing orders for this party
+    var pOrders=WA_ORDERS.filter(function(o){return o.party_name===p.name&&o.party_type===p.type;});
+    var totalOrdered=pOrders.reduce(function(s,o){return s+(parseFloat(o.qty)||0);},0);
+    var totalAmt=p.items.reduce(function(s,a){return s+Math.round((parseFloat(a.qty)||0)*(parseFloat(a.rate)||0));},0);
+    var totalQty=p.items.reduce(function(s,a){return s+(parseFloat(a.qty)||0);},0);
+
+    var itemRows=p.items.map(function(a){
+      // Check if this item has an order
+      var itemOrders=WA_ORDERS.filter(function(o){return o.allot_id===a.id;});
+      var orderedQty=itemOrders.reduce(function(s,o){return s+(parseFloat(o.qty)||0);},0);
+      var balQty=Math.max(0,(parseFloat(a.qty)||0)-orderedQty);
+      var hasFullOrder=orderedQty>=(parseFloat(a.qty)||0);
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid #F5F5F5;">'+
+        '<input type="checkbox" class="allot-chk" data-allot-id="'+a.id+'" data-qty="'+a.qty+'" data-rate="'+(a.rate||0)+'" data-unit="'+(a.unit||'')+'" data-bal="'+balQty+'"'+(hasFullOrder?' disabled':'')+' style="width:15px;height:15px;accent-color:'+col+';flex-shrink:0;">'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:12px;font-weight:700;">'+(a.party_name||'Resource')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+(a.unit?a.qty+' '+a.unit:'Qty: '+a.qty)+(a.rate?' @ &#8377;'+a.rate:'')+(a.scope?'<br>'+a.scope:'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;">'+
+          '<div style="font-size:11px;font-weight:800;">&#8377;'+Math.round((parseFloat(a.qty)||0)*(parseFloat(a.rate)||0)).toLocaleString('en-IN')+'</div>'+
+          (orderedQty>0?'<div style="font-size:9px;color:#2E7D32;font-weight:700;">Ordered: '+orderedQty+(parseFloat(a.qty)>orderedQty?' | Bal: '+balQty.toFixed(2):'&#10003;')+'</div>':
+           '<div style="font-size:9px;color:var(--text3);">Not ordered</div>')+
+        '</div>'+
+        (itemOrders.length?itemOrders.map(function(o){
+          return '<div style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 6px;border-radius:4px;font-weight:700;cursor:pointer;" onclick="execViewOrder(\''+o.id+'\')">'+o.doc_type.toUpperCase()+'-'+o.doc_number+'</div>';
+        }).join(''):'')+
+      '</div>';
+    }).join('');
+
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;" id="allotted-'+key.replace(/[^a-z0-9]/gi,'-')+'">'+
+      // Party header
+      '<div style="padding:10px 14px;background:'+col+'10;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:5px;background:'+col+'20;color:'+col+';">'+(tLbl[p.type]||p.type)+'</span>'+
+        '<div style="flex:1;font-size:14px;font-weight:800;">'+p.name+'</div>'+
+        '<div style="text-align:right;font-size:10px;color:var(--text3);">'+p.items.length+' items | &#8377;'+Math.round(totalAmt).toLocaleString('en-IN')+'</div>'+
+      '</div>'+
+      // Items with checkboxes
+      itemRows+
+      // Footer with generate buttons
+      '<div style="padding:10px 14px;background:#FAFAFA;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;">'+
+        '<div style="flex:1;font-size:10px;color:var(--text3);">Select items above to include in document</div>'+
+        '<button onclick="execGenPartyDoc(\''+key+'\',\'wo\')" style="background:#E65100;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; Work Order</button>'+
+        '<button onclick="execGenPartyDoc(\''+key+'\',\'po\')" style="background:#1565C0;color:white;border:none;border-radius:7px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; Purchase Order</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+async function execGenPartyDoc(partyKey, docType){
+  var parts=partyKey.split('::');
+  var partyType=parts[0], partyName=parts.slice(1).join('::');
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  // Collect checked allotments for this party
+  var container=document.getElementById('allotted-'+partyKey.replace(/[^a-z0-9]/gi,'-'));
+  if(!container){toast('Party card not found','warning');return;}
+  var checked=Array.from(container.querySelectorAll('.allot-chk:checked:not(:disabled)'));
+  if(!checked.length){toast('Select at least one item','warning');return;}
+
+  var items=checked.map(function(chk){
+    var allotId=chk.getAttribute('data-allot-id');
+    var allot=WA_ALLOT.find(function(a){return a.id===allotId;})||{};
+    var bal=parseFloat(chk.getAttribute('data-bal'))||0;
+    return {allot:allot, qty:bal, rate:parseFloat(chk.getAttribute('data-rate'))||0, unit:chk.getAttribute('data-unit')||''};
+  });
+
+  var total=items.reduce(function(s,i){return s+Math.round(i.qty*i.rate);},0);
+  var proj=PROJ_DATA.find(function(p){return p.id===projId;})||{};
+  var co=COMPANY_DATA||{};
+  var inr=function(n){return '&#8377;'+Number(n||0).toLocaleString('en-IN');};
+  var fmtD=function(d){if(!d)return '';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};
+  var today=new Date().toISOString().slice(0,10);
+
+  // Generate doc number
+  var prefix=docType==='wo'?'WO':'PO';
+  var existingNos=WA_ORDERS.filter(function(o){return o.doc_type===docType;}).map(function(o){return parseInt(o.doc_number)||0;});
+  var nextNo=(existingNos.length?Math.max.apply(null,existingNos):0)+1;
+  var docNumber=String(nextNo).padStart(4,'0');
+  var fullDocNo=prefix+'-'+new Date().getFullYear()+'-'+docNumber;
+
+  // Save to DB first
+  try{
+    toast('Generating '+fullDocNo+'...','info');
+    var orderRows=[];
+    for(var i=0;i<items.length;i++){
+      var it=items[i];
+      var res=await sbInsert('work_orders',{
+        project_id:projId, party_type:partyType, party_name:partyName,
+        allot_id:it.allot.id, doc_type:docType, doc_number:docNumber,
+        doc_date:today, qty:it.qty, rate:it.rate, unit:it.unit,
+        amount:Math.round(it.qty*it.rate),
+        boq_item_id:it.allot.boq_item_id||null
+      });
+      if(res&&res[0]){WA_ORDERS.push(res[0]);orderRows.push(res[0]);}
+    }
+    toast(fullDocNo+' saved!','success');
+  }catch(e){toast('Error saving: '+e.message,'error');console.error(e);return;}
+
+  // Build and open document
+  var rows=items.map(function(it,idx){
+    var amt=Math.round(it.qty*it.rate);
+    return '<tr><td>'+(idx+1)+'</td><td>'+(it.allot.party_name||'Work')+(it.allot.scope?'<br><small style="color:#666">'+it.allot.scope+'</small>':'')+'</td>'+
+      '<td>'+it.qty+' '+it.unit+'</td><td>'+inr(it.rate)+'</td><td>'+inr(amt)+'</td></tr>';
+  }).join('');
+  var titleStr=docType==='wo'?'WORK ORDER':'PURCHASE ORDER';
+  var col=docType==='wo'?'#E65100':'#1565C0';
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+titleStr+'</title>'+
+    '<style>body{font-family:Arial,sans-serif;margin:0;padding:20px;font-size:12px;color:#222;}'+
+    'table{width:100%;border-collapse:collapse;margin:10px 0;}th{background:'+col+';color:white;padding:7px 10px;text-align:left;font-size:11px;}'+
+    'td{padding:7px 10px;border-bottom:1px solid #EEE;}.tr td{font-weight:900;background:'+(docType==='wo'?'#FFF3E0':'#E3F2FD')+';}'+
+    '.hdr{display:flex;justify-content:space-between;border-bottom:3px solid '+col+';padding-bottom:10px;margin-bottom:14px;}'+
+    '.cn{font-size:18px;font-weight:900;color:'+col+';}'+
+    '.ft{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px;}'+
+    '.sg{border-top:1.5px solid #333;padding-top:6px;font-size:11px;color:#666;margin-top:40px;}'+
+    '@media print{button{display:none;}}</style></head><body>'+
+    '<button onclick="window.print()" style="background:'+col+';color:white;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;margin-bottom:16px;">&#128438; Print / Save PDF</button>'+
+    '<div class="hdr"><div><div class="cn">'+(co.name||'Company Name')+'</div>'+
+      '<div style="font-size:10px;color:#666;">'+(co.address||'')+'</div>'+
+      '<div style="font-size:10px;color:#666;">'+(co.gstin?'GSTIN: '+co.gstin:'')+'</div></div>'+
+      '<div style="text-align:right"><div style="font-size:20px;font-weight:900;">'+titleStr+'</div>'+
+        '<div style="color:#666;">'+fullDocNo+'</div>'+
+        '<div style="color:#666;">Date: '+fmtD(today)+'</div>'+
+        '<div style="color:#666;">Project: '+(proj.name||'')+'</div></div></div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">'+
+      '<div style="background:#F8FAFC;border-radius:8px;padding:10px;">'+
+        '<div style="font-size:10px;color:#666;font-weight:700;margin-bottom:4px;">'+(docType==='wo'?'CONTRACTOR / PARTY':'VENDOR / SUPPLIER')+'</div>'+
+        '<div style="font-weight:800;font-size:14px;">'+partyName+'</div>'+
+        '<div style="font-size:10px;color:#666;text-transform:uppercase;">'+(tLbl[partyType]||partyType)+'</div></div>'+
+      '<div style="background:#F8FAFC;border-radius:8px;padding:10px;">'+
+        '<div style="font-size:10px;color:#666;font-weight:700;margin-bottom:4px;">PROJECT / SITE</div>'+
+        '<div style="font-weight:800;font-size:14px;">'+(proj.name||'')+'</div>'+
+        '<div style="font-size:10px;color:#666;">'+(proj.location||proj.code||'')+'</div></div></div>'+
+    '<table><tr><th>#</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>'+
+    rows+'<tr class="tr"><td colspan="4" style="text-align:right;font-weight:900;">Total Amount</td><td>'+inr(total)+'</td></tr></table>'+
+    '<div class="ft"><div><div class="sg">Issued By<br><br>'+(co.name||'')+'<br>Authorized Signatory</div></div>'+
+    '<div><div class="sg">Accepted By<br><br>'+partyName+'</div></div></div>'+
+    '</body></html>';
+
+  var w=window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else toast('Allow popups to open document','warning');
+
+  // Refresh view
+  setTimeout(function(){execRenderAllotted();},500);
+}
+
+function execViewOrder(orderId){
+  var o=WA_ORDERS.find(function(x){return x.id===orderId;});
+  if(!o){toast('Order not found','warning');return;}
+  toast((o.doc_type==='wo'?'WO':'PO')+'-'+o.doc_number+': &#8377;'+Math.round(o.amount).toLocaleString('en-IN')+' | '+o.doc_date,'info');
+}
+
 function execRenderDaily(){
   var el=document.getElementById('exec-content');if(!el)return;
   var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
@@ -10050,6 +10226,8 @@ function execRenderDaily(){
     parties[key].allotments.push(a);
     parties[key].totalAllot+=(parseFloat(a.qty)||0);
   });
+  // Only show daily entries for currently allotted parties
+  var activeKeys={}; Object.keys(parties).forEach(function(k){activeKeys[parties[k].name]=true;});
 
   var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
   var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
@@ -10067,7 +10245,7 @@ function execRenderDaily(){
     partyKeys.map(function(key){
       var p=parties[key];
       var col=tCol[p.type]||'#37474F';
-      var pDone=WA_DAILY.filter(function(d){return d.party_name===p.name&&d.party_type===p.type;});
+      var pDone=WA_DAILY.filter(function(d){return d.party_name===p.name&&d.party_type===p.type&&activeKeys[d.party_name];});
       var totalDone=pDone.reduce(function(s,d){return s+(parseFloat(d.qty_done)||0);},0);
       var bal=Math.max(0,p.totalAllot-totalDone);
       return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;">'+
