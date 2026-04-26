@@ -9889,6 +9889,19 @@ async function execSaveAllot(resId,projId){
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
+async function execDelAllotted(id){
+  // Warn if WO/PO already generated for this allotment
+  var hasOrder=WA_ORDERS.some(function(o){return o.allot_id===id;});
+  var msg=hasOrder
+    ? 'A WO/PO has already been generated for this allotment.\nDeleting will NOT cancel the issued document.\n\nDelete allotment anyway?'
+    : 'Delete this allotment?';
+  if(!confirm(msg)) return;
+  WA_ALLOT=WA_ALLOT.filter(function(a){return a.id!==id;});
+  execRenderAllotted();
+  try{ await sbDelete('boq_exec_resources',id); }
+  catch(e){ console.error(e); }
+}
+
 async function execDelAllot(id){
   if(!confirm('Remove allotment?'))return;
   WA_ALLOT=WA_ALLOT.filter(function(a){return a.id!==id;});
@@ -10089,6 +10102,7 @@ function execRenderAllotted(){
         (itemOrders.length?itemOrders.map(function(o){
           return '<div style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 6px;border-radius:4px;font-weight:700;cursor:pointer;" onclick="execViewOrder(\''+o.id+'\')">'+o.doc_type.toUpperCase()+'-'+o.doc_number+'</div>';
         }).join(''):'')+
+        '<button onclick="execDelAllotted(\''+a.id+'\')" title="Delete allotment" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;flex-shrink:0;">&#215;</button>'+
       '</div>';
     }).join('');
 
