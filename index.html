@@ -9434,7 +9434,7 @@ function planRender(){
     var iRes=PLAN_RES.filter(function(r){return r.boq_item_id===item.id;});
     var totalPlan=iRes.reduce(function(s,r){return s+(parseFloat(r.qty)||0)*(parseFloat(r.rate)||0);},0);
     var subsHtml=iSubs.length?iSubs.map(function(sub){var sRes=iRes.filter(function(r){return r.boq_subitem_id===sub.id;});
-      return '<div style="margin-bottom:6px;"><div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;"><div style="font-size:11px;font-weight:800;color:#1565C0;">'+sub.name+'</div><div style="display:flex;gap:4px;"><button onclick="planAddRes(\''+sub.id+'\',\''+item.id+'\',\''+item.unit+'\')" style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button><button onclick="planDelSub(\''+sub.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div></div>'+sRes.map(function(r){return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F8F9FF;border-radius:8px;margin-top:3px;"><div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+'</div><div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||'')+' @ \u20b9'+r.rate+'</div><div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div><button onclick="planDelRes(\''+r.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div>';}).join('')+'</div>';
+      return '<div style="margin-bottom:6px;"><div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:#E3F2FD;border-radius:8px;"><div style="font-size:11px;font-weight:800;color:#1565C0;">'+sub.name+'</div><div style="display:flex;gap:4px;"><button onclick="planAddRes(\''+sub.id+'\',\''+item.id+'\',\''+item.unit+'\')" style="background:#1565C0;color:white;border:none;border-radius:6px;padding:3px 8px;font-size:10px;font-weight:800;cursor:pointer;">+ Resource</button><button onclick="planDelSub(\''+sub.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div></div>'+sRes.map(function(r){return '<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;background:#F8F9FF;border-radius:8px;margin-top:3px;"><div style="flex:1;font-size:11px;font-weight:600;">'+r.party_name+(r.resource_category?'<span style="font-size:9px;background:#E3F2FD;color:#1565C0;padding:1px 5px;border-radius:3px;margin-left:4px;">'+r.resource_category+'</span>':'')+' </div><div style="font-size:10px;color:var(--text3);">'+r.qty+' '+(r.unit||'')+' @ \u20b9'+r.rate+'</div><div style="font-size:11px;font-weight:800;color:#1565C0;">'+fmtINR((r.qty||0)*(r.rate||0))+'</div><button onclick="planEditRes(\''+r.id+'\',\''+r.boq_subitem_id+'\',\''+r.boq_item_id+'\')" style="background:#E3F2FD;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;">&#9998;</button><button onclick="planDelRes(\''+r.id+'\')" style="background:none;border:none;color:#C62828;font-size:13px;cursor:pointer;">\u00d7</button></div>';}).join('')+'</div>';
     }).join(''):'<div style="font-size:11px;color:var(--text3);padding:6px 0;">No activities yet</div>';
     return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:10px;overflow:hidden;"><div style="padding:10px 14px;background:#E3F2FD;display:flex;align-items:center;justify-content:space-between;"><div><span style="font-size:10px;font-family:monospace;background:#BBDEFB;color:#1565C0;padding:2px 7px;border-radius:4px;">'+item.item_code+'</span><span style="font-size:13px;font-weight:800;margin-left:8px;">'+(item.short_name||item.description)+'</span><div style="font-size:10px;color:var(--text3);margin-top:2px;">BOQ: '+item.boq_qty+' '+item.unit+'</div></div><div style="display:flex;align-items:center;gap:6px;">'+(totalPlan?'<span style="font-size:12px;font-weight:900;color:#1565C0;">'+fmtINR(totalPlan)+'</span>':'')+'<button onclick="planAddSub(\''+item.id+'\')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:11px;font-weight:800;cursor:pointer;">+ Activity</button></div></div><div style="padding:10px 14px;">'+subsHtml+'</div></div>';
   }).join('');
@@ -9599,38 +9599,74 @@ function prJmCheck(){}  // kept for compat, logic moved to addEventListener
 function prJmQtyCheck(){}
 
 
+async function planEditRes(resId, subId, itemId){
+  await loadUomIfNeeded();
+  var r=PLAN_RES.find(function(x){return x.id===resId;});
+  if(!r){toast('Resource not found','warning');return;}
+  var uomOpts=buildUomOpts(r.unit||'');
+  var catOpts=buildResourceCatOpts(r.resource_category||'');
+
+  // Build JM options
+  var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
+  var itemJMs=[];
+  try{var jmRows=await sbFetch('boq_jm',{select:'*',filter:'project_id=eq.'+projId+'&boq_item_id=eq.'+itemId,order:'jm_number.asc'});itemJMs=Array.isArray(jmRows)?jmRows:[];}catch(e){}
+
+  var jmOpts='<option value="">— No JM —</option>'+itemJMs.map(function(j){return '<option value="'+j.id+'"'+(r.jm_id===j.id?' selected':'')+'>JM-'+j.jm_number+' ('+j.jm_qty+')</option>';}).join('');
+
+  document.getElementById('plan-sheet-title').textContent='Edit Resource';
+  document.getElementById('plan-sheet-body').innerHTML=
+    '<label class="flbl">Resource Name *</label>'+
+    '<input id="pr-name" class="finp" value="'+esc(r.party_name||'')+'" placeholder="Resource name">'+
+    '<label class="flbl">Resource Category</label>'+
+    '<select id="pr-cat" class="fsel">'+catOpts+'</select>'+
+    '<label class="flbl">Link to JM</label>'+
+    '<select id="pr-jm-edit" class="fsel">'+jmOpts+'</select>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Qty *</label><input id="pr-qty" class="finp" type="number" step="0.001" value="'+(r.qty||0)+'"></div>'+
+      '<div><label class="flbl">Unit</label><select id="pr-unit-sel" class="fsel">'+uomOpts+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Rate (₹)</label>'+
+    '<input id="pr-rate" class="finp" type="number" step="0.01" value="'+(r.rate||0)+'">';
+
+  var sf=document.getElementById('plan-sheet-foot');
+  sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-plan','sh-plan');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#1565C0;color:white;';
+  sb.innerHTML='&#10003; Update Resource';
+  sb.onclick=function(){planUpdateRes(resId);};
+  sf.appendChild(cb);sf.appendChild(sb);
+  openSheet('ov-plan','sh-plan');
+}
+
 async function planSaveRes(subId,itemId){
   var name=gv('pr-name'),qty=parseFloat(gv('pr-qty'))||0,rate=parseFloat(gv('pr-rate'))||0;
   var unitSel=document.getElementById('pr-unit-sel');
   var unit=(unitSel&&unitSel.value)?unitSel.value:null;
+  var cat=(document.getElementById('pr-cat')||{value:''}).value||null;
   if(!name){toast('Resource name required','warning');return;}
   if(!qty){toast('Resource qty required','warning');return;}
-
   // Collect checked JM links
   var jmLinks=[];
   document.querySelectorAll('[id^="jm-chk-"]').forEach(function(chk){
-    if(!chk.checked) return;
+    if(!chk.checked)return;
     var jmId=chk.id.replace('jm-chk-','');
     var planQtyInp=document.getElementById('jm-qty-'+jmId);
     var planQty=planQtyInp?parseFloat(planQtyInp.value)||0:0;
     if(planQty>0) jmLinks.push({jm_id:jmId,plan_qty:planQty});
   });
-
   var projId=(document.getElementById('plan-proj-sel')||{}).value||'';
-  // Use first linked JM id as primary (for backward compat)
   var primaryJmId=jmLinks.length?jmLinks[0].jm_id:null;
-
   try{
     var res=await sbInsert('boq_exec_resources',{
-      project_id:projId,
-      boq_item_id:itemId,
+      project_id:projId,boq_item_id:itemId,
       boq_subitem_id:subId||null,
       jm_id:primaryJmId,
       jm_links:jmLinks.length?JSON.stringify(jmLinks):null,
       date:new Date().toISOString().slice(0,10),
       exec_type:'planned',
       party_name:name,qty:qty,unit:unit,rate:rate,
-      resource_category:(document.getElementById('pr-cat')||{value:''}).value||null
+      resource_category:cat
     });
     if(res&&res[0])PLAN_RES.push(res[0]);
     toast(name+' saved!','success');
@@ -9638,6 +9674,24 @@ async function planSaveRes(subId,itemId){
     planRender();
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
+
+async function planUpdateRes(resId){
+  var name=gv('pr-name'),qty=parseFloat(gv('pr-qty'))||0,rate=parseFloat(gv('pr-rate'))||0;
+  var unitSel=document.getElementById('pr-unit-sel');
+  var unit=(unitSel&&unitSel.value)?unitSel.value:null;
+  var cat=(document.getElementById('pr-cat')||{value:''}).value||null;
+  var jmId=(document.getElementById('pr-jm-edit')||{value:''}).value||null;
+  if(!name){toast('Name required','warning');return;}
+  try{
+    await sbUpdate('boq_exec_resources',resId,{party_name:name,qty:qty,unit:unit,rate:rate,resource_category:cat,jm_id:jmId});
+    var idx=PLAN_RES.findIndex(function(r){return r.id===resId;});
+    if(idx>-1) Object.assign(PLAN_RES[idx],{party_name:name,qty:qty,unit:unit,rate:rate,resource_category:cat,jm_id:jmId});
+    toast('Resource updated!','success');
+    closeSheet('ov-plan','sh-plan');
+    planRender();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
 async function planDelSub(id){
   if(!confirm('Delete this activity?\nThis will also delete all resources, allotments and WO/POs under it.'))return;
   // Delete WO/POs for allotments under this sub-activity
@@ -9971,6 +10025,61 @@ async function execSaveAllot(resId,projId){
   }catch(e){toast('Error: '+e.message,'error');console.error(e);}
 }
 
+async function execEditAllotted(id){
+  var a=WA_ALLOT.find(function(x){return x.id===id;});
+  if(!a){toast('Allotment not found','warning');return;}
+  await loadUomIfNeeded();
+  var uomOpts=buildUomOpts(a.unit||'');
+  var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
+  var planRes=WA_PLANNED.find(function(r){return r.id===a.boq_exec_resource_id;})||{};
+
+  document.getElementById('exec-sheet-title').textContent='Edit Allotment — '+a.party_name;
+  document.getElementById('exec-sheet-body').innerHTML=
+    '<div style="background:#FFF3E0;border-radius:10px;padding:8px 12px;margin-bottom:12px;font-size:11px;">'+
+      '<div style="font-weight:800;color:#E65100;">'+a.party_name+'</div>'+
+      '<div style="color:var(--text3);">Party type: '+(a.exec_type||'—')+'</div>'+
+    '</div>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Qty *</label><input id="ea-qty" class="finp" type="number" step="0.001" value="'+(a.qty||0)+'"></div>'+
+      '<div><label class="flbl">Unit</label><select id="ea-unit-sel" class="fsel">'+uomOpts+'</select></div>'+
+    '</div>'+
+    '<label class="flbl">Allotment Rate (₹) *</label>'+
+    '<input id="ea-rate" class="finp" type="number" step="0.01" value="'+(a.rate||0)+'">'+
+    '<label class="flbl">Scope / Terms</label>'+
+    '<textarea id="ea-scope" class="ftxt" rows="2" style="margin-bottom:8px;">'+esc(a.scope||'')+'</textarea>'+
+    '<div class="g2">'+
+      '<div><label class="flbl">Start Date</label><input id="ea-start" class="finp" type="date" value="'+(a.start_date||'')+'"></div>'+
+      '<div><label class="flbl">End Date</label><input id="ea-end" class="finp" type="date" value="'+(a.end_date||'')+'"></div>'+
+    '</div>';
+
+  var sf=document.getElementById('exec-sheet-foot');
+  sf.innerHTML='';
+  var cb=document.createElement('button');cb.className='btn btn-outline';cb.textContent='Cancel';
+  cb.onclick=function(){closeSheet('ov-exec','sh-exec');};
+  var sb=document.createElement('button');sb.className='btn';sb.style.cssText='background:#E65100;color:white;';
+  sb.innerHTML='&#10003; Update Allotment';
+  sb.onclick=function(){execUpdateAllotted(id);};
+  sf.appendChild(cb);sf.appendChild(sb);
+  openSheet('ov-exec','sh-exec');
+}
+
+async function execUpdateAllotted(id){
+  var qty=parseFloat(gv('ea-qty'))||0;
+  var rate=parseFloat(gv('ea-rate'))||0;
+  var unitSel=document.getElementById('ea-unit-sel');
+  var unit=(unitSel&&unitSel.value)?unitSel.value:null;
+  if(!qty||!rate){toast('Qty and rate required','warning');return;}
+  var updates={qty:qty,rate:rate,unit:unit,scope:gv('ea-scope')||null,start_date:gv('ea-start')||null,end_date:gv('ea-end')||null};
+  try{
+    await sbUpdate('boq_exec_resources',id,updates);
+    var idx=WA_ALLOT.findIndex(function(a){return a.id===id;});
+    if(idx>-1) Object.assign(WA_ALLOT[idx],updates);
+    toast('Allotment updated!','success');
+    closeSheet('ov-exec','sh-exec');
+    execRenderAllotted();
+  }catch(e){toast('Error: '+e.message,'error');console.error(e);}
+}
+
 async function execDelAllotted(id){
   var hasOrder=WA_ORDERS.some(function(o){return o.allot_id===id;});
   var msg=hasOrder
@@ -10250,6 +10359,7 @@ function execRenderAllotted(){
         (itemOrders.length?itemOrders.map(function(o){
           return '<div style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 6px;border-radius:4px;font-weight:700;cursor:pointer;" onclick="execViewOrder(\''+o.id+'\')">'+o.doc_type.toUpperCase()+'-'+o.doc_number+'</div>';
         }).join(''):'')+
+        '<button onclick="execEditAllotted(\''+a.id+'\')" title="Edit" style="background:#E3F2FD;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;flex-shrink:0;">&#9998;</button>'+
         '<button onclick="execDelAllotted(\''+a.id+'\')" title="Delete allotment" style="background:none;border:none;color:#C62828;font-size:16px;cursor:pointer;flex-shrink:0;">&#215;</button>'+
       '</div>';
     }).join('');
