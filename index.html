@@ -6453,6 +6453,29 @@ function empSalaryHTML(){
   return header+rows+logSection;
 }
 
+function salBuildLogSection(logMap, logKeys){
+  if(!logKeys || !logKeys.length) return '<div style="text-align:center;padding:20px;color:var(--text3);font-size:13px;">No salary records yet</div>';
+  return '<div style="margin-top:16px;"><div style="font-size:12px;font-weight:800;color:var(--text3);padding:6px 0;margin-bottom:6px;border-top:2px solid var(--border);text-transform:uppercase;letter-spacing:1px;">Salary Log</div>'+
+    logKeys.map(function(key){
+      var entry=logMap[key];
+      return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:8px;overflow:hidden;">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:#F8FAFC;cursor:pointer;" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display===\'none\'?\'block\':\'none\'">'+
+          '<div style="font-size:13px;font-weight:800;">'+(entry.label||key)+'</div>'+
+          '<div style="font-size:12px;font-weight:700;color:#1B5E20;">&#8377;'+Number(entry.total||0).toLocaleString('en-IN')+'</div>'+
+        '</div>'+
+        '<div style="display:none;padding:10px 14px;">'+
+          entry.records.map(function(r){
+            return '<div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F5F5F5;">'+
+              '<div style="font-size:12px;">'+(r.emp_name||r.employee_id||'')+'</div>'+
+              '<div style="font-size:12px;font-weight:700;color:#1B5E20;">&#8377;'+Number(r.net_payable||0).toLocaleString('en-IN')+'</div>'+
+              '<div style="font-size:10px;color:var(--text3);">'+(r.status||'')+'</div>'+
+            '</div>';
+          }).join('')+
+        '</div>'+
+      '</div>';
+    }).join('')+'</div>';
+}
+
 function salToggleRow(empId, event){
   var body = document.getElementById('sal-body-'+empId);
   var arr  = document.getElementById('sal-arr-'+empId);
@@ -6958,7 +6981,124 @@ function empFinaliseSalary(){
 }
 
 // ════ INCREMENT ══════════════════════════════════════
-function empIncrementHTML(){
+function empAnnualHTML(){
+  var el=document.getElementById('emp-content');if(!el)return;
+  var yr=new Date().getFullYear();
+  var opts='';for(var y=yr;y>=yr-5;y--) opts+='<option value="'+y+'"'+( y===yr?' selected':'')+'>'+y+'-'+(y+1)+'</option>';
+  el.innerHTML='<div style="padding:4px 0 12px;">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">'+
+      '<select id="ann-year" class="fsel" style="width:auto;padding:8px 12px;font-size:13px;">'+opts+'</select>'+
+      '<button onclick="annGenerate()" class="btn" style="background:#1B5E20;color:white;padding:8px 18px;font-size:13px;">Generate Statement</button>'+
+    '</div>'+
+    '<div id="ann-results"></div>'+
+  '</div>';
+}
+
+async function annGenerate(){
+  var yr=parseInt((document.getElementById('ann-year')||{value:new Date().getFullYear()}).value);
+  var el=document.getElementById('ann-results');if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);">&#9203; Loading...</div>';
+  var startM=yr+'-04',endM=(yr+1)+'-03';
+  try{
+    var recs=await sbFetch('salary_records',{select:'*',filter:'month=gte.'+startM+'-01&month=lte.'+endM+'-31',order:'month.asc'});
+    if(!Array.isArray(recs)||!recs.length){el.innerHTML='<div style="text-align:center;padding:20px;color:var(--text3);">No records for '+yr+'-'+(yr+1)+'</div>';return;}
+    annBuildStatement(recs,yr+'-'+(yr+1));
+  }catch(e){el.innerHTML='<div style="color:#C62828;padding:10px;">Error: '+e.message+'</div>';}
+}
+
+function annBuildStatement(records,periodLabel){
+  var el=document.getElementById('ann-results');if(!el)return;
+  if(!records.length){el.innerHTML='<div style="text-align:center;padding:30px;color:var(--text3);background:white;border-radius:12px;">No salary records found for this period.</div>';return;}
+  // Group by employee
+  var empMap={};
+  records.forEach(function(r){
+    if(!empMap[r.employee_id]) empMap[r.employee_id]={name:r.employee_name||'Employee',records:[]};
+    empMap[r.employee_id].records.push(r);
+  });
+  var html=Object.keys(empMap).map(function(eid){
+    var ed=empMap[eid];
+    var totalGross=ed.records.reduce(function(s,r){return s+(parseFloat(r.gross_salary)||0);},0);
+    var totalNet=ed.records.reduce(function(s,r){return s+(parseFloat(r.net_salary)||0);},0);
+    var rows=ed.records.map(function(r){
+      var d=r.month?r.month.slice(0,7):'';
+      return '<tr><td style="padding:6px 10px;border-bottom:1px solid #EEE;">'+d+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid #EEE;text-align:right;">&#8377;'+Number(r.gross_salary||0).toLocaleString('en-IN')+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid #EEE;text-align:right;">&#8377;'+Number(r.pf_employee||0).toLocaleString('en-IN')+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid #EEE;text-align:right;">&#8377;'+Number(r.tds||0).toLocaleString('en-IN')+'</td>'+
+        '<td style="padding:6px 10px;border-bottom:1px solid #EEE;text-align:right;font-weight:700;">&#8377;'+Number(r.net_salary||0).toLocaleString('en-IN')+'</td></tr>';
+    }).join('');
+    return '<div style="background:white;border-radius:12px;border:1px solid var(--border);margin-bottom:12px;overflow:hidden;">'+
+      '<div style="padding:10px 14px;background:#E8F5E9;display:flex;align-items:center;justify-content:space-between;">'+
+        '<div style="font-size:13px;font-weight:800;">'+ed.name+'</div>'+
+        '<div style="font-size:11px;color:#2E7D32;font-weight:700;">Net Total: &#8377;'+Math.round(totalNet).toLocaleString('en-IN')+'</div>'+
+      '</div>'+
+      '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12px;">'+
+        '<tr style="background:#F5F5F5;"><th style="padding:6px 10px;text-align:left;">Month</th><th style="padding:6px 10px;text-align:right;">Gross</th><th style="padding:6px 10px;text-align:right;">PF</th><th style="padding:6px 10px;text-align:right;">TDS</th><th style="padding:6px 10px;text-align:right;">Net</th></tr>'+
+        rows+
+        '<tr style="background:#F1F8E9;font-weight:800;"><td style="padding:6px 10px;">Total</td><td style="padding:6px 10px;text-align:right;">&#8377;'+Math.round(totalGross).toLocaleString('en-IN')+'</td><td style="padding:6px 10px;"></td><td style="padding:6px 10px;"></td><td style="padding:6px 10px;text-align:right;">&#8377;'+Math.round(totalNet).toLocaleString('en-IN')+'</td></tr>'+
+      '</table></div>'+
+    '</div>';
+  }).join('');
+  el.innerHTML=html;
+}
+
+function empDownloadHTML(){
+  var emps=(EMP_LIST||[]).filter(function(e){return e.status==='active';});
+  if(!emps.length) return '<div style="text-align:center;padding:30px;color:var(--text3);">No active employees</div>';
+  return '<div>'+emps.map(function(e){
+    return '<div style="background:white;border-radius:12px;border:1px solid var(--border);padding:12px 14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;">'+
+      '<div style="width:40px;height:40px;border-radius:50%;background:#E8F5E9;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#1B5E20;flex-shrink:0;">'+(e.name||'?')[0].toUpperCase()+'</div>'+
+      '<div style="flex:1;"><div style="font-size:13px;font-weight:800;">'+e.name+'</div>'+
+      '<div style="font-size:11px;color:var(--text3);">'+( e.emp_id||'')+(e.dept?' | '+e.dept:'')+'</div></div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<button onclick="downloadIDCard(\''+e.id+'\')" style="background:#1B5E20;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#127397; ID Card</button>'+
+        '<button onclick="downloadPayslipPDF(\''+e.id+'\')" style="background:#1565C0;color:white;border:none;border-radius:8px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer;">&#128196; Payslip</button>'+
+      '</div>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+
+function downloadIDCard(empId){
+  var emp=(EMP_LIST||[]).find(function(e){return e.id===empId;});
+  if(!emp){toast('Employee not found','warning');return;}
+  var co=COMPANY_DATA||{};
+  var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>ID Card</title>'+
+    '<style>body{font-family:Arial,sans-serif;display:flex;justify-content:center;padding:30px;}'+
+    '.card{width:320px;border-radius:16px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.15);}'+
+    '.card-head{background:#1B5E20;padding:16px;text-align:center;color:white;}'+
+    '.card-body{background:white;padding:16px;text-align:center;}'+
+    '.photo{width:80px;height:80px;border-radius:50%;background:#E8F5E9;border:3px solid white;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:32px;font-weight:900;color:#1B5E20;}'+
+    '@media print{button{display:none;}}</style></head><body>'+
+    '<div><button onclick="window.print()" style="display:block;margin:0 auto 20px;background:#1B5E20;color:white;border:none;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:13px;">Print ID Card</button>'+
+    '<div class="card">'+
+      '<div class="card-head"><div style="font-size:16px;font-weight:900;">'+(co.name||'Company')+'</div><div style="font-size:10px;opacity:.8;">'+(co.address||'')+'</div></div>'+
+      '<div class="card-body">'+
+        '<div class="photo">'+(emp.name||'?')[0].toUpperCase()+'</div>'+
+        '<div style="font-size:18px;font-weight:900;color:#1B5E20;margin-bottom:4px;">'+emp.name+'</div>'+
+        '<div style="font-size:12px;color:#666;margin-bottom:2px;">'+(emp.designation||emp.role||'')+'</div>'+
+        '<div style="font-size:12px;color:#666;margin-bottom:10px;">'+(emp.dept||'')+'</div>'+
+        '<div style="background:#F5F5F5;border-radius:8px;padding:8px;font-size:11px;text-align:left;">'+
+          '<div><b>Emp ID:</b> '+(emp.emp_id||'—')+'</div>'+
+          '<div><b>Phone:</b> '+(emp.phone||'—')+'</div>'+
+          (emp.blood_group?'<div><b>Blood Group:</b> '+emp.blood_group+'</div>':'')+
+        '</div>'+
+      '</div>'+
+      '<div style="background:#1B5E20;padding:8px;text-align:center;color:white;font-size:9px;">'+
+        (co.gstin?'GSTIN: '+co.gstin+' | ':'')+( co.phone||co.email||'')+'</div>'+
+    '</div></div></body></html>';
+  var w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}else toast('Allow popups','warning');
+}
+
+function downloadPayslipPDF(empId){
+  var emp=(EMP_LIST||[]).find(function(e){return e.id===empId;});
+  if(!emp){toast('Employee not found','warning');return;}
+  // Find latest salary record for this employee
+  var recs=(SALARY_RECORDS||[]).filter(function(r){return r.employee_id===empId;});
+  recs.sort(function(a,b){return (b.month||'').localeCompare(a.month||'');});
+  var rec=recs[0];
+  if(!rec){toast('No salary record found for '+emp.name,'warning');return;}
+  empShowPayslip(empId, rec.month?rec.month.slice(0,7):'');
+}
   var active = EMP_LIST.filter(function(e){ return e.status==='active'; });
   if(!active.length) return '<div style="text-align:center;padding:40px;color:var(--text3);">No active employees.</div>';
 
@@ -7016,7 +7156,6 @@ function empIncrementHTML(){
       (pays.length?'<div style="padding:8px 14px 10px;border-top:1px solid #F0F4F8;">'+logRows+'</div>':'')+
     '</div>';
   }).join('');
-}
 
 function empOpenIncrement(empId, empName, curBasic){
   document.getElementById('emp-sheet-title').textContent = 'Increment — '+empName;
