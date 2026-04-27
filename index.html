@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
 <title>AIPL — Construction Management</title>
@@ -2436,7 +2439,66 @@ var timer = 30;
 var timerInt;
 var showPass = false;
 var remembered = true;
+var USER_PERMISSIONS = {};
 var COMPANY_DATA = {};
+var currentUser = null;
+var currentSession = null;
+
+async function loadUserPermissions(){
+  if(!currentUser) return;
+  USER_PERMISSIONS = {};
+  try{
+    var empFilter = 'employee_id=eq.'+currentUser.id;
+    var roleFilter = 'role=eq.'+(currentUser.access||currentUser.role||'');
+    var results = await Promise.all([
+      sbFetch('access_permissions',{select:'*',filter:empFilter}),
+      sbFetch('access_permissions',{select:'*',filter:roleFilter})
+    ]);
+    if(Array.isArray(results[1])) results[1].forEach(function(r){
+      if(!USER_PERMISSIONS[r.module]) USER_PERMISSIONS[r.module]={};
+      USER_PERMISSIONS[r.module][r.permission] = r.granted;
+    });
+    if(Array.isArray(results[0])) results[0].forEach(function(r){
+      if(!USER_PERMISSIONS[r.module]) USER_PERMISSIONS[r.module]={};
+      USER_PERMISSIONS[r.module][r.permission] = r.granted;
+    });
+  }catch(e){
+    USER_PERMISSIONS = {};
+    console.warn('loadUserPermissions failed:',e);
+  }
+  if(typeof applyDrawerPermissions==='function') applyDrawerPermissions();
+}
+
+function canAccess(module, permission){
+  if(currentUser && currentUser.role==='admin') return true;
+  if(!Object.keys(USER_PERMISSIONS).length) return true;
+  var mp = USER_PERMISSIONS[module];
+  if(!mp) return false;
+  return mp[permission||'view'] === true;
+}
+
+function getEmpDataScope(){
+  if(!currentUser || currentUser.role==='admin') return 'all';
+  if(!Object.keys(USER_PERMISSIONS).length) return 'all';
+  var mp = USER_PERMISSIONS['emp-data-scope'];
+  if(!mp) return 'all';
+  if(mp['self']===true) return 'self';
+  if(mp['department']===true) return 'department';
+  return 'all';
+}
+
+var EMP_TAB_KEYS = {
+  active:'emp-active', pending:'emp-pending', pay:'emp-pay',
+  salary:'emp-salary', increment:'emp-increment', transfer:'emp-transfer',
+  annual:'emp-annual', downloads:'emp-downloads', resigned:'emp-resigned'
+};
+
+function empTabAllowed(tab){
+  if(!currentUser || currentUser.role==='admin') return true;
+  if(!Object.keys(USER_PERMISSIONS).length) return true;
+  var key = EMP_TAB_KEYS[tab];
+  return key ? canAccess(key,'view') : true;
+}
 
 async function preloadCompanyData(){
   try{
@@ -2510,8 +2572,8 @@ async function doLogin(){
         updateDashboardUser();
         showApp('dashboard');
         loadPendingApprovals();
-        loadUserPermissions();
-        toast('Welcome back, '+currentUser.name+'!','success');
+    loadUserPermissions();
+    toast('Welcome back, '+currentUser.name+'!','success');
       } else {
         // Auth succeeded but no employee record — could be admin
         currentUser = {name:'Admin', role:'admin', accessToken:result.access_token};
@@ -5526,7 +5588,6 @@ async function authUpdatePassword(accessToken, newPassword){
   return res.json();
 }
 
-var currentSession = null; // stores Supabase auth session
 
 
 function updateDashboardUser(){
@@ -5885,19 +5946,6 @@ async function initEmpMgmt(){
 }
 
 // Tab → AC_MODS key mapping
-var EMP_TAB_KEYS = {
-  active:'emp-active', pending:'emp-pending', pay:'emp-pay',
-  salary:'emp-salary', increment:'emp-increment', transfer:'emp-transfer',
-  annual:'emp-annual', downloads:'emp-downloads', resigned:'emp-resigned'
-};
-
-function empTabAllowed(tab){
-  if(!currentUser || currentUser.role==='admin') return true;
-  if(!Object.keys(USER_PERMISSIONS).length) return true;
-  var key = EMP_TAB_KEYS[tab];
-  return key ? canAccess(key,'view') : true;
-}
-
 function empHideForbiddenTabs(){
   Object.keys(EMP_TAB_KEYS).forEach(function(tab){
     var btn = document.getElementById('emp-t-'+tab);
