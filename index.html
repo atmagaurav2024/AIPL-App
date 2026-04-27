@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏗️</text></svg>">
 <title>AIPL — Construction Management</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -2435,7 +2436,26 @@ var timer = 30;
 var timerInt;
 var showPass = false;
 var remembered = true;
-var currentUser = null;
+var COMPANY_DATA = {};
+
+async function preloadCompanyData(){
+  try{
+    var rows = await sbFetch('company_details',{select:'*',order:'created_at.desc'});
+    if(Array.isArray(rows) && rows.length){
+      var c = rows[0];
+      COMPANY_DATA = {
+        name: c.name||'',
+        address: c.address||'',
+        gstin: c.gstin||'',
+        pan: c.pan||'',
+        cin: c.cin||'',
+        phone: c.phone||'',
+        email: c.email||'',
+        logo: c.logo||''
+      };
+    }
+  }catch(e){ console.warn('preloadCompanyData:',e); }
+}
 
 // ── SCREENS ────────────────────────────────────────────────────────────
 function showScreen(id){
@@ -2515,7 +2535,10 @@ async function doLogin(){
     }
   } catch(e){
     showScreen('scr-login');
-    toast('Connection error. Check internet.','error');
+    var msg = e && e.message && e.message.includes('fetch') 
+      ? 'Cannot reach server. Check internet or Supabase may be paused — visit supabase.com/dashboard to restore.'
+      : 'Connection error: '+(e&&e.message||'Unknown');
+    toast(msg,'error');
     console.error(e);
   }
 }
