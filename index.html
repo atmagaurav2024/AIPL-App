@@ -7200,6 +7200,247 @@ function empIncrementHTML(){
   }).join('')+'</div>';
 }
 
+function annToggleDates(){
+var fy = (document.getElementById('ann-fy')||{}).value||'';
+var custom = document.getElementById('ann-custom');
+if(custom) custom.style.display = (fy==='custom') ? 'grid' : 'none';
+}
+
+async function empAnnualHTMLAsync(){
+  // Always reload salary records from DB to get all FYs
+  await salLoadRecords();
+
+  var now = new Date();
+  var curFYStart = now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear()-1;
+  var curFYEnd   = curFYStart + 1;
+
+  // Only show FYs that have actual salary records
+  var fySet = {};
+  SALARY_RECORDS.forEach(function(r){
+    var fy = r.month >= 4 ? r.year : r.year - 1;
+    fySet[fy] = true;
+  });
+  var fyList = Object.keys(fySet).map(Number).sort().reverse();
+
+  var fyOpts = fyList.length
+    ? fyList.map(function(fy){
+        var label = 'FY '+fy+'-'+(fy+1).toString().slice(-2);
+        var sel = (fy === curFYStart) ? ' selected' : '';
+        return '<option value="'+fy+'"'+sel+'>'+label+'</option>';
+      }).join('')
+    : '<option value="">\u2014 No salary records found \u2014</option>';
+
+  var html =
+    '<div style="background:white;border-radius:14px;padding:14px;margin-bottom:12px;">'+
+    '<div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:10px;">&#128200; Annual Salary Statement</div>'+
+    '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end;margin-bottom:10px;">'+
+      '<div>'+
+        '<label class="flbl">Financial Year</label>'+
+        '<select id="ann-fy" class="fsel" onchange="annToggleDates()">'+
+          fyOpts+
+          '<option value="custom">&#128197; Custom Date Range</option>'+
+        '</select>'+
+      '</div>'+
+      '<button onclick="annGenerate()" style="padding:10px 16px;background:#1565C0;color:white;border:none;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:Nunito,sans-serif;">&#128200; Generate</button>'+
+    '</div>'+
+    '<div id="ann-custom" style="display:none;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
+      '<div><label class="flbl">From Date</label><input id="ann-from" class="finp" type="date" value="'+curFYStart+'-04-01"></div>'+
+      '<div><label class="flbl">To Date</label><input id="ann-to" class="finp" type="date" value="'+curFYEnd+'-03-31"></div>'+
+    '</div>'+
+    '</div>'+
+    '<div id="ann-results">'+
+      '<div style="text-align:center;padding:40px;color:var(--text3);">'+
+        '<div style="font-size:36px;margin-bottom:10px;">&#128200;</div>'+
+        '<div style="font-weight:700;">Select a period and click Generate</div>'+
+        '<div style="font-size:11px;margin-top:6px;">'+fyList.length+' financial year(s) with data found</div>'+
+      '</div>'+
+    '</div>';
+
+  var el = document.getElementById('emp-content');
+  if(el) el.innerHTML = html;
+}
+
+function downloadTransferOrder(empId, type, details){
+  // type: 'transfer' | 'promotion'
+  var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
+  var name = ((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'\u2014';
+  var code  = emp.employee_code||emp.emp_id||'\u2014';
+  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
+  var compAddr = typeof coAddr==='function'?coAddr():'';
+  var compCIN  = typeof coCIN==='function'?coCIN():'';
+  var compGST  = typeof coGST==='function'?coGST():'';
+  var isPromo  = type==='promotion';
+  var titleStr = isPromo ? 'PROMOTION ORDER' : 'TRANSFER ORDER';
+  var effectiveDate = details.date || today;
+  var wefFmt = effectiveDate&&effectiveDate!==today ?
+    new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}) : effectiveDate;
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>'+titleStr+' - '+name+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}'+
+    '.page{max-width:720px;margin:0 auto;padding:40px 50px;}'+
+    '.header{text-align:center;border-bottom:3px double '+(isPromo?'#1565C0':'#6A1B9A')+';padding-bottom:14px;margin-bottom:20px;}'+
+    '.logo{font-size:20px;font-weight:900;color:'+(isPromo?'#1565C0':'#6A1B9A')+';letter-spacing:1px;}'+
+    '.sub{font-size:10px;color:#555;margin-top:3px;}'+
+    '.ref{display:flex;justify-content:space-between;margin-bottom:18px;font-size:12px;}'+
+    '.title{font-size:15px;font-weight:700;text-align:center;text-decoration:underline;margin:0 0 18px;color:'+(isPromo?'#1565C0':'#6A1B9A')+'}'+
+    '.info-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}'+
+    '.info-table td{padding:6px 10px;border:1px solid #ddd;}'+
+    '.info-table td:first-child{background:#F8F9FA;font-weight:600;width:40%;}'+
+    '.clause{font-size:12px;line-height:1.8;margin-bottom:10px;text-align:justify;}'+
+    '.sign{margin-top:50px;display:flex;justify-content:space-between;}'+
+    '.sign-box{text-align:center;min-width:180px;}'+
+    '.sign-line{border-top:1px solid #999;padding-top:6px;font-size:11px;color:#555;}'+
+    '@media print{@page{size:A4;margin:12mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'+
+    '</style></head><body><div class="page">'+
+
+    '<div class="header">'+
+      '<div class="logo">'+compName.toUpperCase()+'</div>'+
+      (compAddr?'<div class="sub">'+compAddr+'</div>':'')+
+      '<div class="sub">'+(compCIN?'CIN: '+compCIN+' | ':'')+( compGST?'GSTIN: '+compGST:'')+'</div>'+
+    '</div>'+
+
+    '<div class="ref">'+
+      '<div><b>Order No.:</b> AIPL/'+(isPromo?'PRO':'TRF')+'/'+code+'/'+new Date().getFullYear()+'</div>'+
+      '<div><b>Date:</b> '+today+'</div>'+
+    '</div>'+
+
+    '<div class="title">'+titleStr+'</div>'+
+
+    '<table class="info-table">'+
+      '<tr><td>Employee Name</td><td><b>'+name+'</b></td></tr>'+
+      '<tr><td>Employee Code</td><td>'+code+'</td></tr>'+
+      '<tr><td>Current Designation</td><td>'+(emp.designation||emp.role||'\u2014')+'</td></tr>'+
+      '<tr><td>Department</td><td>'+(emp.department||'\u2014')+'</td></tr>'+
+      '<tr><td>Effective Date</td><td>'+wefFmt+'</td></tr>'+
+      (isPromo
+        ? '<tr><td>Promoted To</td><td><b>'+( details.newRole||'\u2014')+'</b></td></tr>'+
+          (details.grade?'<tr><td>New Grade</td><td>'+details.grade+'</td></tr>':'')
+        : '<tr><td>Transferred To (Dept)</td><td><b>'+(details.newDept||'\u2014')+'</b></td></tr>'+
+          '<tr><td>New Project</td><td>'+(details.newProject||'\u2014')+'</td></tr>'
+      )+
+      (details.remarks?'<tr><td>Remarks / Order Ref.</td><td>'+details.remarks+'</td></tr>':'')+
+    '</table>'+
+
+    '<p class="clause">Dear <b>'+name+'</b>,</p>'+
+    (isPromo
+      ? '<p class="clause">We are pleased to inform you that the Management of <b>'+compName+'</b> has decided to promote you to the position of <b>'+(details.newRole||'\u2014')+'</b> with effect from <b>'+wefFmt+'</b>, in recognition of your dedicated service and performance.</p>'
+      : '<p class="clause">This is to inform you that the Management of <b>'+compName+'</b> has decided to transfer you to the <b>'+(details.newDept||'\u2014')+'</b> department'+(details.newProject?' at <b>'+details.newProject+'</b>':'')+' with effect from <b>'+wefFmt+'</b>.</p>'
+    )+
+    '<p class="clause">You are requested to report to your new assignment on the effective date. All other terms and conditions of your appointment shall remain unchanged.</p>'+
+    '<p class="clause">Please sign and return a copy of this order as acknowledgment.</p>'+
+
+    '<div class="sign">'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Employee Signature<br>'+name+'</div></div>'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Authorised Signatory<br>'+compName+'</div></div>'+
+    '</div>'+
+
+    '<p style="font-size:10px;color:#888;text-align:center;margin-top:30px;border-top:1px solid #eee;padding-top:8px;">'+
+      'This is a computer-generated order. | '+compName+' | Generated on '+today+
+    '</p>'+
+    '</div>'+
+    '<script>window.onload=function(){window.print();}<\\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('Allow popups to download PDF','warning');}
+}
+
+function downloadIncrementLetter(empId, newBasic, oldBasic, effectiveDate, remarks){
+  var emp = EMP_LIST.find(function(e){return e.id===empId;})||{};
+  var name = ((emp.first_name||'')+(emp.last_name?' '+emp.last_name:'')).trim()||'\u2014';
+  var desig = emp.designation||emp.role||'\u2014';
+  var dept  = emp.department||'\u2014';
+  var code  = emp.employee_code||emp.emp_id||'\u2014';
+  var today = new Date().toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'});
+  var wefFmt = effectiveDate ? new Date(effectiveDate).toLocaleDateString('en-IN',{day:'2-digit',month:'long',year:'numeric'}) : today;
+  var increment = Number(newBasic) - Number(oldBasic);
+  var pct = oldBasic>0 ? ((increment/Number(oldBasic))*100).toFixed(1) : '0';
+  var compName = typeof coName==='function'?coName():'Atmagaurav Infra Pvt. Ltd.';
+  var compAddr = typeof coAddr==='function'?coAddr():'';
+  var compGST  = typeof coGST==='function'?coGST():'';
+  var compCIN  = typeof coCIN==='function'?coCIN():'';
+
+  var html = '<!DOCTYPE html><html><head><meta charset="UTF-8">'+
+    '<title>Increment Letter - '+name+'</title>'+
+    '<style>'+
+    'body{font-family:Arial,sans-serif;font-size:13px;color:#222;margin:0;padding:0;}'+
+    '.page{max-width:720px;margin:0 auto;padding:40px 50px;}'+
+    '.header{text-align:center;border-bottom:3px double #1B5E20;padding-bottom:14px;margin-bottom:20px;}'+
+    '.logo{font-size:20px;font-weight:900;color:#1B5E20;letter-spacing:1px;}'+
+    '.sub{font-size:10px;color:#555;margin-top:3px;}'+
+    '.ref{display:flex;justify-content:space-between;margin-bottom:18px;font-size:12px;}'+
+    '.title{font-size:15px;font-weight:700;text-align:center;text-decoration:underline;margin:0 0 18px;}'+
+    '.info-table{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}'+
+    '.info-table td{padding:5px 10px;border:1px solid #ddd;}'+
+    '.info-table td:first-child{background:#F8F9FA;font-weight:600;width:40%;}'+
+    '.highlight{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:12px 16px;margin:16px 0;font-size:13px;}'+
+    '.clause{font-size:12px;line-height:1.8;margin-bottom:10px;text-align:justify;}'+
+    '.sign{margin-top:50px;display:flex;justify-content:space-between;}'+
+    '.sign-box{text-align:center;min-width:180px;}'+
+    '.sign-line{border-top:1px solid #999;padding-top:6px;font-size:11px;color:#555;}'+
+    '@media print{@page{size:A4;margin:12mm;}body{-webkit-print-color-adjust:exact;print-color-adjust:exact;}}'+
+    '</style></head><body><div class="page">'+
+
+    '<div class="header">'+
+      '<div class="logo">'+compName.toUpperCase()+'</div>'+
+      (compAddr?'<div class="sub">'+compAddr+'</div>':'')+
+      '<div class="sub">'+(compCIN?'CIN: '+compCIN+' | ':'')+( compGST?'GSTIN: '+compGST:'')+'</div>'+
+    '</div>'+
+
+    '<div class="ref">'+
+      '<div><b>Ref No.:</b> AIPL/INC/'+code+'/'+new Date().getFullYear()+'</div>'+
+      '<div><b>Date:</b> '+today+'</div>'+
+    '</div>'+
+
+    '<p style="font-size:12px;">To,<br><b>'+name+'</b><br>'+desig+', '+dept+'<br>Employee Code: '+code+'</p>'+
+
+    '<div class="title">LETTER OF INCREMENT / SALARY REVISION</div>'+
+
+    '<p class="clause">Dear <b>'+name+'</b>,</p>'+
+    '<p class="clause">We are pleased to inform you that based on your performance and contribution to the organisation, the Management of <b>'+compName+'</b> has decided to revise your salary with effect from <b>'+wefFmt+'</b>.</p>'+
+
+    '<table class="info-table">'+
+      '<tr><td>Employee Name</td><td>'+name+'</td></tr>'+
+      '<tr><td>Employee Code</td><td>'+code+'</td></tr>'+
+      '<tr><td>Designation</td><td>'+desig+'</td></tr>'+
+      '<tr><td>Department</td><td>'+dept+'</td></tr>'+
+      '<tr><td>Effective Date</td><td>'+wefFmt+'</td></tr>'+
+    '</table>'+
+
+    '<div class="highlight">'+
+      '<table style="width:100%;font-size:13px;border-collapse:collapse;">'+
+        '<tr><td style="width:50%;padding:4px 0;"><b>Previous Basic Salary:</b></td><td>\u20b9'+Number(oldBasic).toLocaleString('en-IN',{minimumFractionDigits:2})+'</td></tr>'+
+        '<tr><td style="padding:4px 0;"><b>Revised Basic Salary:</b></td><td><b style="color:#1B5E20;font-size:15px;">\u20b9'+Number(newBasic).toLocaleString('en-IN',{minimumFractionDigits:2})+'</b></td></tr>'+
+        '<tr><td style="padding:4px 0;">Increment Amount:</td><td>\u20b9'+Number(increment).toLocaleString('en-IN',{minimumFractionDigits:2})+' ('+pct+'%)</td></tr>'+
+      '</table>'+
+    '</div>'+
+
+    (remarks?'<p class="clause"><b>Remarks:</b> '+remarks+'</p>':'')+
+
+    '<p class="clause">All other terms and conditions of your appointment remain unchanged. Please sign and return a copy of this letter as acknowledgment.</p>'+
+    '<p class="clause">We appreciate your continued dedication and look forward to your valuable contributions to the growth of '+compName+'.</p>'+
+
+    '<div class="sign">'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Employee Signature<br>'+name+'</div></div>'+
+      '<div class="sign-box"><br><br><br><div class="sign-line">Authorised Signatory<br>'+compName+'</div></div>'+
+    '</div>'+
+
+    '<p style="font-size:10px;color:#888;text-align:center;margin-top:30px;border-top:1px solid #eee;padding-top:8px;">'+
+      'This is a computer-generated letter. | '+compName+' | Generated on '+today+
+    '</p>'+
+    '</div>'+
+    '<script>window.onload=function(){window.print();}<\\/script>'+
+    '</body></html>';
+
+  var w = window.open('','_blank');
+  if(w){w.document.write(html);w.document.close();}
+  else{toast('Allow popups to download PDF','warning');}
+}
+
 function empOpenIncrement(empId, empName, curBasic){
   document.getElementById('emp-sheet-title').textContent = 'Increment — '+empName;
   document.getElementById('emp-sheet-body').innerHTML =
