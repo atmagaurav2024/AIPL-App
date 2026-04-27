@@ -8946,7 +8946,7 @@ async function empSavePay(){
     <button onclick="projModTab('jm',this)"        id="pmt-jm"        style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128208; JM</button>
     <button onclick="projModTab('planning',this)"  id="pmt-planning"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Planning</button>
     <button onclick="projModTab('execution',this)" id="pmt-execution"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128221; Work Allotment</button>
-    <button onclick="projModTab('allotted',this)"  id="pmt-allotted"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128230; Allotted Work</button>
+    <button onclick="projModTab('allotted',this)"  id="pmt-allotted"  style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128196; Generate Orders</button>
     <button onclick="projModTab('daily',this)"     id="pmt-daily"     style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128197; Daily Progress</button>
     <button onclick="projModTab('bills',this)"     id="pmt-bills"     style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128203; Bills &amp; Payments</button>
     <button onclick="projModTab('orders',this)"    id="pmt-orders"    style="padding:6px 12px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;border:none;font-family:Nunito,sans-serif;border-radius:8px;background:transparent;color:rgba(255,255,255,.6);">&#128196; Orders</button>
@@ -10038,8 +10038,6 @@ function execRender(){
                 '<div style="flex:1;font-size:11px;font-weight:700;">'+a.party_name+'</div>'+
                 '<div style="font-size:10px;color:var(--text3);">'+a.qty+' '+(a.unit||'')+(a.rate?' @ ₹'+a.rate:'')+'</div>'+
                 '<button data-edit-allot-id="'+a.id+'" title="Edit" style="background:#E3F2FD;border:none;color:#1565C0;font-size:11px;border-radius:5px;padding:2px 7px;cursor:pointer;font-weight:800;">&#9998;</button>'+
-                '<button data-wo-id="'+a.id+'" title="Work Order" style="background:#FFF3E0;border:none;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;color:#E65100;">WO</button>'+
-                '<button data-po-id="'+a.id+'" title="Purchase Order" style="background:#E3F2FD;border:none;border-radius:4px;padding:2px 6px;font-size:9px;font-weight:800;cursor:pointer;color:#1565C0;">PO</button>'+
                 '<button data-del-id="'+a.id+'" class="wa-del-btn" title="Delete" style="background:none;border:none;color:#C62828;font-size:14px;cursor:pointer;">&#215;</button>'+
               '</div>';
             }).join('')+
@@ -10563,102 +10561,119 @@ function execRenderAllotted(){
 }
 
 async function execGenPartyDoc(partyKey, docType){
-  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
   var parts=partyKey.split('::');
   var partyType=parts[0], partyName=parts.slice(1).join('::');
   var projId=(document.getElementById('exec-proj-sel')||{}).value||'';
-  // Collect checked allotments for this party
-  var container=document.getElementById('allotted-'+partyKey.replace(/[^a-z0-9]/gi,'-'));
-  if(!container){toast('Party card not found','warning');return;}
-  var checked=Array.from(container.querySelectorAll('.allot-chk:checked:not(:disabled)'));
+  var safeKey=partyKey.replace(/[^a-z0-9]/gi,'-');
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+
+  // Collect checked items
+  var checked=Array.from(document.querySelectorAll('.order-chk-'+safeKey+':checked'));
   if(!checked.length){toast('Select at least one item','warning');return;}
 
   var items=checked.map(function(chk){
     var allotId=chk.getAttribute('data-allot-id');
     var allot=WA_ALLOT.find(function(a){return a.id===allotId;})||{};
-    var bal=parseFloat(chk.getAttribute('data-bal'))||0;
-    return {allot:allot, qty:bal, rate:parseFloat(chk.getAttribute('data-rate'))||0, unit:chk.getAttribute('data-unit')||''};
-  });
+    var balQty=parseFloat(chk.getAttribute('data-qty'))||0;
+    var rate=parseFloat(chk.getAttribute('data-rate'))||0;
+    var unit=chk.getAttribute('data-unit')||'';
+    return {allot:allot,qty:balQty,rate:rate,unit:unit,allotId:allotId};
+  }).filter(function(it){return it.qty>0;});
 
-  var total=items.reduce(function(s,i){return s+Math.round(i.qty*i.rate);},0);
-  var proj=PROJ_DATA.find(function(p){return p.id===projId;})||{};
-  var co=COMPANY_DATA||{};
-  var inr=function(n){return '&#8377;'+Number(n||0).toLocaleString('en-IN');};
-  var fmtD=function(d){if(!d)return '';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};
-  var today=new Date().toISOString().slice(0,10);
+  if(!items.length){toast('Selected items have no balance qty','warning');return;}
 
-  // Generate doc number
+  // Generate sequential doc number
   var prefix=docType==='wo'?'WO':'PO';
   var existingNos=WA_ORDERS.filter(function(o){return o.doc_type===docType;}).map(function(o){return parseInt(o.doc_number)||0;});
   var nextNo=(existingNos.length?Math.max.apply(null,existingNos):0)+1;
   var docNumber=String(nextNo).padStart(4,'0');
   var fullDocNo=prefix+'-'+new Date().getFullYear()+'-'+docNumber;
+  var today=new Date().toISOString().slice(0,10);
 
-  // Save to DB first
+  toast('Generating '+fullDocNo+'...','info');
+
+  // Save all items under SAME doc number
   try{
-    toast('Generating '+fullDocNo+'...','info');
-    var orderRows=[];
     for(var i=0;i<items.length;i++){
       var it=items[i];
       var res=await sbInsert('work_orders',{
         project_id:projId, party_type:partyType, party_name:partyName,
-        allot_id:it.allot.id, doc_type:docType, doc_number:docNumber,
+        allot_id:it.allotId, doc_type:docType, doc_number:docNumber,
         doc_date:today, qty:it.qty, rate:it.rate, unit:it.unit,
         amount:Math.round(it.qty*it.rate),
         boq_item_id:it.allot.boq_item_id||null
       });
-      if(res&&res[0]){WA_ORDERS.push(res[0]);orderRows.push(res[0]);}
+      if(res&&res[0]) WA_ORDERS.push(res[0]);
     }
     toast(fullDocNo+' saved!','success');
   }catch(e){toast('Error saving: '+e.message,'error');console.error(e);return;}
 
-  // Build and open document
-  var rows=items.map(function(it,idx){
-    var amt=Math.round(it.qty*it.rate);
-    return '<tr><td>'+(idx+1)+'</td><td>'+(it.allot.party_name||'Work')+(it.allot.scope?'<br><small style="color:#666">'+it.allot.scope+'</small>':'')+'</td>'+
-      '<td>'+it.qty+' '+it.unit+'</td><td>'+inr(it.rate)+'</td><td>'+inr(amt)+'</td></tr>';
-  }).join('');
+  // Build and open combined document
+  var proj=PROJ_DATA.find(function(p){return p.id===projId;})||{};
+  var co=COMPANY_DATA||{};
+  var inr=function(n){return '&#8377;'+Number(n||0).toLocaleString('en-IN');};
+  var fmtD=function(d){if(!d)return '';var p=d.split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:d;};
+  var total=items.reduce(function(s,it){return s+Math.round(it.qty*it.rate);},0);
   var titleStr=docType==='wo'?'WORK ORDER':'PURCHASE ORDER';
   var col=docType==='wo'?'#E65100':'#1565C0';
+  var tbg=docType==='wo'?'#FFF3E0':'#E3F2FD';
+  var rows=items.map(function(it,idx){
+    var amt=Math.round(it.qty*it.rate);
+    var desc=it.allot.party_name||'Work';
+    // Get BOQ item name
+    var boqItem=WA_ITEMS.find(function(b){return b.id===it.allot.boq_item_id;});
+    if(boqItem) desc=(boqItem.item_code?boqItem.item_code+' - ':'')+( boqItem.short_name||boqItem.description||desc);
+    return '<tr><td>'+(idx+1)+'</td><td>'+desc+(it.allot.scope?'<br><small style="color:#666">'+it.allot.scope+'</small>':'')+'</td>'+
+      '<td>'+it.qty+' '+it.unit+'</td><td>'+inr(it.rate)+'</td><td>'+inr(amt)+'</td></tr>';
+  }).join('');
+
   var html='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+titleStr+'</title>'+
-    '<style>body{font-family:Arial,sans-serif;margin:0;padding:20px;font-size:12px;color:#222;}'+
-    'table{width:100%;border-collapse:collapse;margin:10px 0;}th{background:'+col+';color:white;padding:7px 10px;text-align:left;font-size:11px;}'+
-    'td{padding:7px 10px;border-bottom:1px solid #EEE;}.tr td{font-weight:900;background:'+(docType==='wo'?'#FFF3E0':'#E3F2FD')+';}'+
-    '.hdr{display:flex;justify-content:space-between;border-bottom:3px solid '+col+';padding-bottom:10px;margin-bottom:14px;}'+
+    '<style>body{font-family:Arial,sans-serif;margin:0;padding:24px;font-size:12px;color:#222;}'+
+    '.hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid '+col+';padding-bottom:12px;margin-bottom:14px;}'+
     '.cn{font-size:18px;font-weight:900;color:'+col+';}'+
-    '.ft{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:30px;}'+
-    '.sg{border-top:1.5px solid #333;padding-top:6px;font-size:11px;color:#666;margin-top:40px;}'+
+    'table{width:100%;border-collapse:collapse;margin:12px 0;}'+
+    'th{background:'+col+';color:white;padding:8px 10px;text-align:left;font-size:11px;}'+
+    'td{padding:7px 10px;border-bottom:1px solid #EEE;}'+
+    '.tr td{font-weight:900;background:'+tbg+';font-size:13px;}'+
+    '.party{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px;}'+
+    '.pbox{background:#F8FAFC;border-radius:8px;padding:10px;}'+
+    '.plbl{font-size:10px;color:#666;font-weight:700;margin-bottom:3px;}'+
+    '.pval{font-size:13px;font-weight:800;}'+
+    '.psub{font-size:10px;color:#666;}'+
+    '.ft{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:36px;}'+
+    '.sg{border-top:1.5px solid #333;padding-top:6px;font-size:11px;color:#666;margin-top:44px;}'+
     '@media print{button{display:none;}}</style></head><body>'+
-    '<button onclick="window.print()" style="background:'+col+';color:white;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;margin-bottom:16px;">&#128438; Print / Save PDF</button>'+
-    '<div class="hdr"><div><div class="cn">'+(co.name||'Company Name')+'</div>'+
-      '<div style="font-size:10px;color:#666;">'+(co.address||'')+'</div>'+
-      '<div style="font-size:10px;color:#666;">'+(co.gstin?'GSTIN: '+co.gstin:'')+'</div></div>'+
-      '<div style="text-align:right"><div style="font-size:20px;font-weight:900;">'+titleStr+'</div>'+
-        '<div style="color:#666;">'+fullDocNo+'</div>'+
+    '<button onclick="window.print()" style="background:'+col+';color:white;border:none;padding:8px 24px;border-radius:6px;cursor:pointer;margin-bottom:18px;font-size:13px;font-weight:700;">&#128438; Print / Save PDF</button>'+
+    '<div class="hdr">'+
+      '<div><div class="cn">'+(co.name||'Company Name')+'</div>'+
+        '<div style="font-size:10px;color:#666;margin-top:3px;">'+(co.address||'')+'</div>'+
+        '<div style="font-size:10px;color:#666;">'+(co.gstin?'GSTIN: '+co.gstin:'')+(co.pan?' | PAN: '+co.pan:'')+'</div></div>'+
+      '<div style="text-align:right">'+
+        '<div style="font-size:22px;font-weight:900;letter-spacing:1px;">'+titleStr+'</div>'+
+        '<div style="color:#666;font-weight:700;">'+fullDocNo+'</div>'+
         '<div style="color:#666;">Date: '+fmtD(today)+'</div>'+
-        '<div style="color:#666;">Project: '+(proj.name||'')+'</div></div></div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">'+
-      '<div style="background:#F8FAFC;border-radius:8px;padding:10px;">'+
-        '<div style="font-size:10px;color:#666;font-weight:700;margin-bottom:4px;">'+(docType==='wo'?'CONTRACTOR / PARTY':'VENDOR / SUPPLIER')+'</div>'+
-        '<div style="font-weight:800;font-size:14px;">'+partyName+'</div>'+
-        '<div style="font-size:10px;color:#666;text-transform:uppercase;">'+(tLbl[partyType]||partyType)+'</div></div>'+
-      '<div style="background:#F8FAFC;border-radius:8px;padding:10px;">'+
-        '<div style="font-size:10px;color:#666;font-weight:700;margin-bottom:4px;">PROJECT / SITE</div>'+
-        '<div style="font-weight:800;font-size:14px;">'+(proj.name||'')+'</div>'+
-        '<div style="font-size:10px;color:#666;">'+(proj.location||proj.code||'')+'</div></div></div>'+
+        '<div style="color:#666;">Project: '+(proj.name||'')+(proj.code?' ('+proj.code+')':'')+'</div></div></div>'+
+    '<div class="party">'+
+      '<div class="pbox"><div class="plbl">'+(docType==='wo'?'CONTRACTOR / PARTY':'VENDOR / SUPPLIER')+'</div>'+
+        '<div class="pval">'+partyName+'</div><div class="psub">'+(tLbl[partyType]||partyType)+'</div></div>'+
+      '<div class="pbox"><div class="plbl">DELIVERY / SITE</div>'+
+        '<div class="pval">'+(proj.name||'')+'</div><div class="psub">'+(proj.location||proj.code||'')+'</div></div></div>'+
     '<table><tr><th>#</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>'+
-    rows+'<tr class="tr"><td colspan="4" style="text-align:right;font-weight:900;">Total Amount</td><td>'+inr(total)+'</td></tr></table>'+
-    '<div class="ft"><div><div class="sg">Issued By<br><br>'+(co.name||'')+'<br>Authorized Signatory</div></div>'+
-    '<div><div class="sg">Accepted By<br><br>'+partyName+'</div></div></div>'+
+    rows+
+    '<tr class="tr"><td colspan="4" style="text-align:right">Total Amount</td><td>'+inr(total)+'</td></tr></table>'+
+    '<div class="ft">'+
+      '<div><div class="sg">Issued By<br><br>'+(co.name||'')+'<br>Authorized Signatory</div></div>'+
+      '<div><div class="sg">Accepted By<br><br>'+partyName+'</div></div></div>'+
     '</body></html>';
 
   var w=window.open('','_blank');
   if(w){w.document.write(html);w.document.close();}
   else toast('Allow popups to open document','warning');
 
-  // Refresh view
-  setTimeout(function(){execRenderAllotted();},500);
+  // Refresh to show new order badges and updated colors
+  setTimeout(function(){execRenderAllotted();},400);
 }
+
 
 function execViewOrder(orderId){
   var o=WA_ORDERS.find(function(x){return x.id===orderId;});
@@ -14027,4 +14042,83 @@ function annDownloadPDF(){
   else{toast('Allow popups to download PDF','warning');}
 }
 </script>
-</html>
+</html
+// ── Generate Orders (party-wise) ──────────────────────────────────────
+function execRenderAllotted(){
+  var el=document.getElementById('exec-content');if(!el)return;
+  if(!WA_ALLOT.length){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--text3);"><div style="font-size:32px;">&#128196;</div><div style="font-weight:700;margin-top:8px;">No allotments yet</div><div style="font-size:12px;margin-top:4px;">Allot work first in Work Allotment tab</div></div>';
+    return;
+  }
+  var tLbl={vendor:'Vendor',sc:'SC',labour_contractor:'Labour Contr.',labour:'Labour',machinery:'Machinery'};
+  var tCol={vendor:'#1565C0',sc:'#6A1B9A',labour_contractor:'#2E7D32',labour:'#37474F',machinery:'#E65100'};
+
+  // Group by party
+  var parties={};
+  WA_ALLOT.forEach(function(a){
+    var key=a.exec_type+'::'+a.party_name;
+    if(!parties[key]) parties[key]={type:a.exec_type,name:a.party_name,items:[]};
+    parties[key].items.push(a);
+  });
+
+  el.innerHTML=Object.keys(parties).map(function(key){
+    var p=parties[key];var col=tCol[p.type]||'#37474F';
+    var safeKey=key.replace(/[^a-z0-9]/gi,'-');
+    var totalAmt=p.items.reduce(function(s,a){return s+Math.round((parseFloat(a.qty)||0)*(parseFloat(a.rate)||0));},0);
+
+    var itemRows=p.items.map(function(a){
+      var itemOrders=WA_ORDERS.filter(function(o){return o.allot_id===a.id;});
+      var orderedQty=itemOrders.reduce(function(s,o){return s+(parseFloat(o.qty)||0);},0);
+      var balQty=Math.max(0,(parseFloat(a.qty)||0)-orderedQty);
+      var fullyOrdered=orderedQty>=(parseFloat(a.qty)||0);
+      var rowBg=fullyOrdered?'#E8F5E9':'white';
+      var textCol=fullyOrdered?'#2E7D32':'var(--navy)';
+      return '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #F5F5F5;background:'+rowBg+';">'+
+        '<input type="checkbox" class="order-chk-'+safeKey+'" data-allot-id="'+a.id+'" data-qty="'+balQty+'" data-rate="'+(a.rate||0)+'" data-unit="'+(a.unit||'')+'"'+(fullyOrdered?' disabled title="Fully ordered"':'')+' style="width:15px;height:15px;accent-color:'+col+';flex-shrink:0;">'+
+        '<div style="flex:1;min-width:0;">'+
+          '<div style="font-size:12px;font-weight:700;color:'+textCol+';">'+(a.party_name||'Resource')+'</div>'+
+          '<div style="font-size:10px;color:var(--text3);">'+(a.unit?a.qty+' '+a.unit:'Qty: '+a.qty)+(a.rate?' @ &#8377;'+a.rate:'')+'</div>'+
+        '</div>'+
+        '<div style="text-align:right;flex-shrink:0;">'+
+          '<div style="font-size:11px;font-weight:800;color:'+col+';">&#8377;'+Math.round((parseFloat(a.qty)||0)*(parseFloat(a.rate)||0)).toLocaleString('en-IN')+'</div>'+
+          (fullyOrdered
+            ?'<div style="font-size:9px;font-weight:800;color:#2E7D32;">&#10003; Fully Ordered</div>'
+            :(orderedQty>0?'<div style="font-size:9px;color:#E65100;">Partial: '+orderedQty+' | Bal: '+balQty.toFixed(2).replace(/\.?0+$/,'')+'</div>':'')
+          )+
+          (itemOrders.length?'<div style="display:flex;gap:3px;justify-content:flex-end;margin-top:2px;">'+itemOrders.map(function(o){
+            return '<span style="font-size:9px;background:#E8F5E9;color:#2E7D32;padding:1px 5px;border-radius:3px;font-weight:700;cursor:pointer;" onclick="execViewOrder(''+o.id+'')">'+o.doc_type.toUpperCase()+'-'+o.doc_number+'</span>';
+          }).join('')+'</div>':'')+
+        '</div>'+
+      '</div>';
+    }).join('');
+
+    return '<div style="background:white;border-radius:14px;border:1px solid var(--border);margin-bottom:14px;overflow:hidden;">'+
+      // Party header
+      '<div style="padding:10px 14px;background:'+col+'15;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">'+
+        '<span style="font-size:11px;font-weight:800;padding:2px 8px;border-radius:5px;background:'+col+'25;color:'+col+';">'+(tLbl[p.type]||p.type)+'</span>'+
+        '<div style="flex:1;font-size:14px;font-weight:800;">'+p.name+'</div>'+
+        '<label style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3);cursor:pointer;">'+
+          '<input type="checkbox" id="selall-'+safeKey+'" onchange="execSelectAll(''+safeKey+'',this.checked)" style="width:14px;height:14px;accent-color:'+col+';">'+
+          'Select All'+
+        '</label>'+
+        '<div style="font-size:11px;font-weight:800;color:'+col+';">&#8377;'+Math.round(totalAmt).toLocaleString('en-IN')+'</div>'+
+      '</div>'+
+      // Item rows
+      itemRows+
+      // Footer buttons
+      '<div style="padding:10px 14px;background:#FAFAFA;border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;">'+
+        '<div style="flex:1;font-size:10px;color:var(--text3);">Select items above then generate</div>'+
+        '<button onclick="execGenPartyDoc(''+key+'','wo')" style="background:#E65100;color:white;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; Work Order</button>'+
+        '<button onclick="execGenPartyDoc(''+key+'','po')" style="background:#1565C0;color:white;border:none;border-radius:7px;padding:6px 14px;font-size:11px;font-weight:800;cursor:pointer;">&#128203; Purchase Order</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function execSelectAll(safeKey, checked){
+  document.querySelectorAll('.order-chk-'+safeKey+':not(:disabled)').forEach(function(chk){
+    chk.checked=checked;
+  });
+}
+
+>
